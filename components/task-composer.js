@@ -10,6 +10,8 @@ class TaskComposer extends LitElement {
     value: { state: true },
   };
 
+
+
   static styles = css`
     :host {
       display: block;
@@ -22,38 +24,58 @@ class TaskComposer extends LitElement {
 
     .composer-form {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      width: 100%;
+      grid-template-columns: minmax(0, 1fr) 64px;
       align-items: stretch;
       column-gap: 12px;
       row-gap: 0;
     }
 
-    .text-input {
+    wa-input {
       width: 100%;
-      min-height: 60px;
-      border: 1px solid color-mix(in srgb, var(--text-strong) 14%, transparent);
-      border-radius: 16px;
-      padding: 14px 16px;
-      font: inherit;
-      color: var(--text-strong);
-      background: color-mix(in srgb, var(--panel-background) 92%, transparent);
-      transition: border-color 160ms ease, box-shadow 160ms ease;
-    }
-
-    .text-input::placeholder {
-      color: color-mix(in srgb, var(--text-muted) 80%, transparent);
-    }
-
-    .text-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+      --wa-form-control-height: 60px;
+      --wa-form-control-border-radius: 16px;
+      --wa-input-background-color: color-mix(in srgb, var(--panel-background) 92%, transparent);
+      --wa-input-border-color: color-mix(in srgb, var(--text-strong) 14%, transparent);
+      --wa-input-border-color-hover: color-mix(in srgb, var(--text-strong) 22%, transparent);
+      --wa-input-border-color-focus: var(--accent);
+      --wa-input-color: var(--text-strong);
+      --wa-input-placeholder-color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+      --wa-focus-ring-color: color-mix(in srgb, var(--accent) 18%, transparent);
+      --wa-focus-ring-width: 4px;
+      --wa-font-size-m: 1rem;
     }
 
     .composer-actions {
       display: flex;
       justify-content: flex-end;
       align-self: stretch;
+      min-width: 64px;
+    }
+
+    wa-button {
+      display: block;
+      width: 64px;
+      min-width: 64px;
+      align-self: stretch;
+      --wa-form-control-height: 60px;
+      --wa-form-control-border-radius: 16px;
+      --wa-font-size-l: 1.15rem;
+      --wa-font-weight-action: 700;
+    }
+
+    wa-button::part(base) {
+      width: 64px;
+      min-width: 64px;
+      min-height: 60px;
+      height: 60px;
+      border-radius: 16px;
+      padding-inline: 0;
+    }
+
+    wa-button::part(label) {
+      line-height: 1;
+      font-size: 1.5rem;
     }
 
     .validation {
@@ -63,46 +85,7 @@ class TaskComposer extends LitElement {
       font-size: 0.92rem;
     }
 
-    .button {
-      border: 0;
-      border-radius: 999px;
-      padding: 12px 18px;
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
-    }
-
-    .button:hover,
-    .button:focus-visible {
-      transform: translateY(-1px);
-      outline: none;
-    }
-
-    .button-brand {
-      background: var(--accent);
-      color: white;
-    }
-
-    .button-brand:hover,
-    .button-brand:focus-visible {
-      background: var(--accent-strong);
-    }
-
-    .button-icon {
-      min-width: 60px;
-      min-height: 60px;
-      height: 100%;
-      padding: 0;
-      border-radius: 16px;
-      font-size: 1.8rem;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    @media (max-width: 820px) {
+    @media (max-width: 640px) {
       .composer-form {
         grid-template-columns: 1fr;
         row-gap: 10px;
@@ -111,10 +94,17 @@ class TaskComposer extends LitElement {
       .composer-actions {
         justify-content: flex-start;
         align-self: auto;
+        min-width: 0;
       }
 
-      .button-icon {
+      wa-button {
         width: 100%;
+        min-width: 0;
+      }
+
+      wa-button::part(base) {
+        width: 100%;
+        min-width: 0;
       }
     }
   `;
@@ -125,23 +115,32 @@ class TaskComposer extends LitElement {
     this.value = '';
   }
 
+  updated(changedProperties) {
+    if (!changedProperties.has('value')) {
+      return;
+    }
+
+    const input = this.renderRoot?.querySelector('wa-input');
+    if (input && input.value !== this.value) {
+      input.value = this.value;
+    }
+  }
+
   render() {
     return html`
       <div class="composer">
         <form class="composer-form" @submit=${this.handleSubmit}>
-          <input
+          <wa-input
             class="text-input"
+            id="task-input"
             name="task"
-            type="text"
             placeholder="Add a task"
             aria-label="Add a task"
             .value=${this.value}
-            @input=${this.handleInput}
-          />
+            @wa-input=${this.handleInput}
+          ></wa-input>
           <div class="composer-actions">
-            <button class="button button-brand button-icon" type="submit" aria-label="Add task">
-              +
-            </button>
+            <wa-button variant="brand" type="submit" aria-label="Add task">+</wa-button>
           </div>
           ${this.errorMessage
             ? html`<p class="validation" role="status" aria-live="polite">${this.errorMessage}</p>`

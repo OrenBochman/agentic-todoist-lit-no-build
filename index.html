@@ -12,9 +12,19 @@
     />
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.3.1/dist/styles/webawesome.css"
+      href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
     />
     <link rel="stylesheet" href="./styles.css" />
+    <script type="module">
+      import {
+        setBasePath,
+        startLoader,
+      } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
+
+      setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
+      startLoader();
+      import './script.js';
+    </script>
     <script>
       window.__webmcpStatus = 'loading';
     </script>
@@ -23,9 +33,8 @@
       onload="window.__webmcpStatus='loaded'"
       onerror="window.__webmcpStatus='failed'"
     ></script>
-    <script type="module" src="./script.js"></script>
   </head>
   <body>
-    <task-manager-app></task-manager-app>
+    <task-manager-app data-wa-preload="wa-button wa-input"></task-manager-app>
   </body>
   </html>
