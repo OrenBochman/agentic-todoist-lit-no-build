@@ -22,9 +22,11 @@
 - Preserve browser-safe code paths that work without module resolution or transpilation.
 
 ## Naming Conventions
+
 - Use PascalCase for custom element classes.
 - Use camelCase for variables, functions, methods, and reactive properties.
 - Use ALL_CAPS for constants.
+- Prefix private class members with underscore (_)
 
 ## UI Requirements
 
@@ -44,6 +46,11 @@
 ## Code Quality
 
 - Use meaningful variable and function names.
+- Include helpful comments for complex logic.
 - Keep rendering logic readable and split complex behavior into small methods.
 - Add error handling for user input and browser storage access.
 - Preserve accessibility when changing markup, keyboard flows, labels, or control sizes.
+
+# skills
+
+use the `webawesome` skill to properly integrate the WebMCP widget and tools, ensuring they work seamlessly with the task manager app and provide a good user experience when accessed from chat.
