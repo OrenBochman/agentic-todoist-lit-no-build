@@ -1,0 +1,52 @@
+:root {
+  color-scheme: light;
+  --page-background:
+    radial-gradient(circle at top left, rgba(10, 132, 255, 0.18), transparent 32%),
+    radial-gradient(circle at top right, rgba(255, 122, 89, 0.16), transparent 28%),
+    linear-gradient(180deg, #f5f7fb 0%, #eef3f9 100%);
+  --panel-background: rgba(255, 255, 255, 0.78);
+  --panel-border: rgba(15, 23, 42, 0.08);
+  --panel-shadow: 0 24px 80px rgba(15, 23, 42, 0.14);
+  --text-strong: #10233d;
+  --text-muted: #5c6b82;
+  --accent: #0a84ff;
+  --accent-strong: #005fcb;
+  --accent-soft: rgba(10, 132, 255, 0.12);
+  --success-soft: rgba(52, 199, 89, 0.16);
+  --danger-soft: rgba(255, 69, 58, 0.14);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page-background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(249, 115, 22, 0.12), transparent 24%),
+    linear-gradient(180deg, #08111e 0%, #101a2c 100%);
+  --panel-background: rgba(11, 19, 32, 0.78);
+  --panel-border: rgba(148, 163, 184, 0.16);
+  --panel-shadow: 0 24px 80px rgba(2, 6, 23, 0.5);
+  --text-strong: #eff6ff;
+  --text-muted: #a8b3c7;
+  --accent: #38bdf8;
+  --accent-strong: #0284c7;
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --success-soft: rgba(74, 222, 128, 0.14);
+  --danger-soft: rgba(248, 113, 113, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Atkinson Hyperlegible', sans-serif;
+  background: var(--page-background);
+  color: var(--text-strong);
+  transition: background 220ms ease, color 220ms ease;
+}

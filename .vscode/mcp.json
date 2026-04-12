@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "webmcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jason.today/webmcp@latest",
+        "--mcp"
+      ]
+    }
+  }
+}
