@@ -46,6 +46,26 @@ class TaskComposer extends LitElement {
       --wa-font-size-m: 1rem;
     }
 
+    wa-input::part(input) {
+      color: var(--wa-color-text-normal);
+      caret-color: var(--wa-color-text-normal);
+      -webkit-text-fill-color: var(--wa-color-text-normal);
+    }
+
+    wa-input::part(input)::selection {
+      color: var(--wa-color-text-normal);
+      background: color-mix(in srgb, var(--accent) 28%, white);
+    }
+
+    wa-input::part(input):-webkit-autofill,
+    wa-input::part(input):-webkit-autofill:hover,
+    wa-input::part(input):-webkit-autofill:focus,
+    wa-input::part(input):-webkit-autofill:active {
+      -webkit-text-fill-color: var(--wa-color-text-normal);
+      caret-color: var(--wa-color-text-normal);
+      box-shadow: 0 0 0 1000px var(--wa-input-background-color) inset;
+    }
+
     .composer-actions {
       display: flex;
       justify-content: flex-end;
@@ -138,6 +158,9 @@ class TaskComposer extends LitElement {
             aria-label="Add a task"
             .value=${this.value}
             @wa-input=${this.handleInput}
+            @wa-change=${this.handleInput}
+            @input=${this.handleInput}
+            @change=${this.handleInput}
           ></wa-input>
           <div class="composer-actions">
             <wa-button variant="brand" type="submit" aria-label="Add task">+</wa-button>
@@ -154,8 +177,16 @@ class TaskComposer extends LitElement {
    * Keeps the input value in sync and clears any prior validation state.
    */
   handleInput(event) {
-    this.value = event.target.value;
-    if (this.errorMessage) {
+    const input = this.renderRoot?.querySelector('wa-input');
+    const nextValue = typeof event?.target?.value === 'string'
+      ? event.target.value
+      : typeof input?.value === 'string'
+        ? input.value
+        : '';
+
+    this.value = nextValue;
+
+    if (this.errorMessage && nextValue.trim()) {
       this.errorMessage = '';
     }
   }

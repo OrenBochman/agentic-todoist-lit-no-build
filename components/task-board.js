@@ -114,6 +114,7 @@ class TaskBoard extends LitElement {
    * Emits a filter update request so the parent can keep filter state centralized.
    */
   emitFilterChange(event) {
+    event.stopPropagation();
     const filter = event.detail.filter;
     this.dispatchEvent(
       new CustomEvent('filter-change', {
@@ -128,6 +129,7 @@ class TaskBoard extends LitElement {
    * Emits a toggle request for a specific task id.
    */
   emitToggle(event) {
+    event.stopPropagation();
     const taskId = event.detail.taskId;
     this.dispatchEvent(
       new CustomEvent('task-toggle', {
@@ -142,6 +144,7 @@ class TaskBoard extends LitElement {
    * Emits a delete request for a specific task id.
    */
   emitDelete(event) {
+    event.stopPropagation();
     const taskId = event.detail.taskId;
     this.dispatchEvent(
       new CustomEvent('task-delete', {

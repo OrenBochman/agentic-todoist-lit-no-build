@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Task Composer Regression Test</title>
+    <title>Task Manager Add Task Regression Test</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
@@ -34,7 +34,7 @@
       }
 
       main {
-        width: min(900px, 100%);
+        width: min(980px, 100%);
         margin: 0 auto;
       }
 
@@ -95,24 +95,23 @@
   <body>
     <main>
       <section class="card">
-        <h1>Task Composer Regression Test</h1>
+        <h1>Task Manager Add Task Regression Test</h1>
         <p>
-          This page tests the click-on-<code>+</code> regression where the visible Web Awesome input had
-          text, but submit still raised the “Enter a task before adding it.” validation message.
+          This page tests the full add-task path through the root app to make sure clicking the
+          <code>+</code> button inserts a task into app state and renders it in the board.
         </p>
 
-        <div id="mount" data-wa-preload="wa-button wa-input"></div>
+        <div id="mount"></div>
         <div id="results" class="results" aria-live="polite"></div>
       </section>
     </main>
 
     <script type="module">
-      import {
-        discover,
-        setBasePath,
-        startLoader,
-      } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
-      import '../components/task-composer.js';
+      import { setBasePath, startLoader } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
+      import '../script.js';
+
+      const STORAGE_KEY = 'task-manager-items';
+      const THEME_STORAGE_KEY = 'task-manager-theme';
 
       setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
       startLoader();
@@ -138,64 +137,64 @@
         }
       };
 
-      const composer = document.createElement('task-composer');
-      mount.append(composer);
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(THEME_STORAGE_KEY);
 
-      await customElements.whenDefined('task-composer');
-      await discover(mount);
+      const app = document.createElement('task-manager-app');
+      app.setAttribute('data-wa-preload', 'wa-button wa-input');
+      mount.append(app);
+
+      await customElements.whenDefined('task-manager-app');
       await customElements.whenDefined('wa-input');
       await customElements.whenDefined('wa-button');
       await waitForRender();
 
-      const shadow = composer.shadowRoot;
-      const input = shadow.querySelector('wa-input');
-      const button = shadow.querySelector('wa-button');
+      const appShadow = app.shadowRoot;
+      const composer = appShadow.querySelector('task-composer');
+      const composerShadow = composer.shadowRoot;
+      const input = composerShadow.querySelector('wa-input');
+      const button = composerShadow.querySelector('wa-button');
+      const board = appShadow.querySelector('task-board');
 
       const tests = [
         {
-          name: 'Clicking plus submits the typed text test 123',
+          name: 'Clicking plus adds a task to the root app',
           run: async () => {
-            let payload = null;
-            composer.addEventListener(
-              'task-add',
-              (event) => {
-                payload = event.detail;
-              },
-              { once: true },
-            );
-
-            input.value = 'test 123';
-            button.click();
-            await waitForRender();
-
-            assert(payload?.text === 'test 123', 'task-add did not use the typed value test 123');
-            assert(!shadow.querySelector('.validation'), 'validation should not be shown for non-empty input');
-            assert(input.value === '', 'input should clear after successful submit');
-          },
-        },
-        {
-          name: 'Empty click still shows validation',
-          run: async () => {
-            input.value = '';
-            button.click();
-            await waitForRender();
-
-            const validation = shadow.querySelector('.validation')?.textContent?.trim() ?? '';
-            assert(validation === 'Enter a task before adding it.', 'empty submit should show validation');
-          },
-        },
-        {
-          name: 'Validation clears once text exists again',
-          run: async () => {
-            input.value = '';
-            button.click();
-            await waitForRender();
+            const beforeCount = app.tasks.length;
 
             input.value = 'test 123';
             input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
             await waitForRender();
 
-            assert(!shadow.querySelector('.validation'), 'validation should clear after the input has text');
+            button.click();
+            await waitForRender();
+
+            const boardItems = [...board.shadowRoot.querySelectorAll('task-item')];
+            const firstTaskText = boardItems[0]?.task?.text ?? '';
+
+            assert(app.tasks.length === beforeCount + 1, 'root app task count did not increase');
+            assert(app.tasks[0]?.text === 'test 123', 'new task was not inserted at the top of app state');
+            assert(firstTaskText === 'test 123', 'new task was not rendered in the task board');
+          },
+        },
+        {
+          name: 'Clicking the task toggle marks the task completed',
+          run: async () => {
+            const firstItem = board.shadowRoot.querySelector('task-item');
+            const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
+
+            assert(toggle, 'task toggle was not rendered');
+            assert(app.tasks[0]?.completed === false, 'expected the task to start pending');
+
+            toggle.click();
+            await waitForRender();
+
+            const updatedFirstItem = board.shadowRoot.querySelector('task-item');
+            const meta = updatedFirstItem?.shadowRoot?.querySelector('.task-meta')?.textContent?.trim() ?? '';
+
+            assert(app.tasks[0]?.completed === true, 'clicking the task toggle did not mark the task completed');
+            assert(updatedFirstItem?.task?.completed === true, 'task-item did not receive completed state');
+            assert(meta === 'Completed', 'completed task status was not rendered');
           },
         },
       ];
@@ -208,6 +207,9 @@
           addResult(test.name, false, error instanceof Error ? error.message : String(error));
         }
       }
+
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(THEME_STORAGE_KEY);
     </script>
   </body>
-  </html>
+</html>

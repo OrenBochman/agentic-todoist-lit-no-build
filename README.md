@@ -18,11 +18,15 @@ This
 
 Open [index.html](./index.html) in VS Code preview, or serve the folder with any static file server.
 
-## Regression Test
+## Regression Tests
 
 There is a browser-run regression test for the task composer click-submit bug at [tests/task-composer-regression.html](./tests/task-composer-regression.html).
 
 Open it through the same static server used for the app. It checks that clicking the `+` button uses the live `wa-input` value and that empty submit still shows validation.
+
+There is also an app-level regression test at [tests/task-manager-add-task-regression.html](./tests/task-manager-add-task-regression.html).
+
+Open it through the same static server used for the app. It checks that clicking the `+` button adds a task to the root app state and renders that task in the board.
 
 ## WebMCP
 
