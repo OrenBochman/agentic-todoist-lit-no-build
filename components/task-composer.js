@@ -165,7 +165,11 @@ class TaskComposer extends LitElement {
    */
   handleSubmit(event) {
     event.preventDefault();
-    const taskText = this.value.trim();
+    const input = this.renderRoot?.querySelector('wa-input');
+    const currentValue = typeof input?.value === 'string' ? input.value : this.value;
+    const taskText = currentValue.trim();
+
+    this.value = currentValue;
 
     if (!taskText) {
       this.errorMessage = 'Enter a task before adding it.';

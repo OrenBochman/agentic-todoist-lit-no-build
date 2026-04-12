@@ -18,6 +18,12 @@ This
 
 Open [index.html](./index.html) in VS Code preview, or serve the folder with any static file server.
 
+## Regression Test
+
+There is a browser-run regression test for the task composer click-submit bug at [tests/task-composer-regression.html](./tests/task-composer-regression.html).
+
+Open it through the same static server used for the app. It checks that clicking the `+` button uses the live `wa-input` value and that empty submit still shows validation.
+
 ## WebMCP
 
 The page loads the official WebMCP widget from `https://webmcp.dev/src/webmcp.js`.

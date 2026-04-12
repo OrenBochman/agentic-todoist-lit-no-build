@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Composer Regression Test</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --page-background: #09111d;
+        --panel-background: rgba(11, 19, 32, 0.82);
+        --panel-border: rgba(148, 163, 184, 0.18);
+        --text-strong: #eff6ff;
+        --text-muted: #a8b3c7;
+        --accent: #38bdf8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 32px;
+        font-family: "Atkinson Hyperlegible", sans-serif;
+        background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 28%),
+          linear-gradient(180deg, #08111e 0%, #101a2c 100%);
+        color: var(--text-strong);
+      }
+
+      main {
+        width: min(900px, 100%);
+        margin: 0 auto;
+      }
+
+      .card {
+        border-radius: 24px;
+        padding: 24px;
+        background: var(--panel-background);
+        border: 1px solid var(--panel-border);
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 1.5rem;
+      }
+
+      p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      #mount {
+        margin-top: 20px;
+      }
+
+      .results {
+        display: grid;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .result {
+        border-radius: 16px;
+        padding: 14px 16px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(15, 23, 42, 0.44);
+      }
+
+      .result[data-status='passed'] {
+        border-color: rgba(74, 222, 128, 0.36);
+      }
+
+      .result[data-status='failed'] {
+        border-color: rgba(248, 113, 113, 0.4);
+      }
+
+      .result strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .result code {
+        font-family: ui-monospace, monospace;
+        font-size: 0.92rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <h1>Task Composer Regression Test</h1>
+        <p>
+          This page tests the click-on-<code>+</code> regression where the visible Web Awesome input had
+          text, but submit still raised the “Enter a task before adding it.” validation message.
+        </p>
+
+        <div id="mount" data-wa-preload="wa-button wa-input"></div>
+        <div id="results" class="results" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      import {
+        discover,
+        setBasePath,
+        startLoader,
+      } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
+      import '../components/task-composer.js';
+
+      setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
+      startLoader();
+
+      const mount = document.getElementById('mount');
+      const results = document.getElementById('results');
+
+      const waitForRender = async () => {
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      };
+
+      const addResult = (name, passed, detail) => {
+        const item = document.createElement('div');
+        item.className = 'result';
+        item.dataset.status = passed ? 'passed' : 'failed';
+        item.innerHTML = `<strong>${passed ? 'PASS' : 'FAIL'}: ${name}</strong><code>${detail}</code>`;
+        results.append(item);
+      };
+
+      const assert = (condition, message) => {
+        if (!condition) {
+          throw new Error(message);
+        }
+      };
+
+      const composer = document.createElement('task-composer');
+      mount.append(composer);
+
+      await customElements.whenDefined('task-composer');
+      await discover(mount);
+      await customElements.whenDefined('wa-input');
+      await customElements.whenDefined('wa-button');
+      await waitForRender();
+
+      const shadow = composer.shadowRoot;
+      const input = shadow.querySelector('wa-input');
+      const button = shadow.querySelector('wa-button');
+
+      const tests = [
+        {
+          name: 'Clicking plus uses the live input value',
+          run: async () => {
+            let payload = null;
+            composer.addEventListener(
+              'task-add',
+              (event) => {
+                payload = event.detail;
+              },
+              { once: true },
+            );
+
+            input.value = 'regression click value';
+            button.click();
+            await waitForRender();
+
+            assert(payload?.text === 'regression click value', 'task-add did not use the live input value');
+            assert(!shadow.querySelector('.validation'), 'validation should not be shown for non-empty input');
+            assert(input.value === '', 'input should clear after successful submit');
+          },
+        },
+        {
+          name: 'Empty click still shows validation',
+          run: async () => {
+            input.value = '';
+            button.click();
+            await waitForRender();
+
+            const validation = shadow.querySelector('.validation')?.textContent?.trim() ?? '';
+            assert(validation === 'Enter a task before adding it.', 'empty submit should show validation');
+          },
+        },
+      ];
+
+      for (const test of tests) {
+        try {
+          await test.run();
+          addResult(test.name, true, 'ok');
+        } catch (error) {
+          addResult(test.name, false, error instanceof Error ? error.message : String(error));
+        }
+      }
+    </script>
+  </body>
+  </html>
