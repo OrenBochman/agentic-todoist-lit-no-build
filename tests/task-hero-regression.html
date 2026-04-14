@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Hero Regression Test</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
+    />
     <style>
       :root {
         color-scheme: dark;
@@ -105,7 +109,15 @@
     </main>
 
     <script type="module">
+      import {
+        discover,
+        setBasePath,
+        startLoader,
+      } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
       import '../components/task-hero.js';
+
+      setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
+      startLoader();
 
       const mount = document.getElementById('mount');
       const results = document.getElementById('results');
@@ -129,6 +141,7 @@
       };
 
       const hero = document.createElement('task-hero');
+      hero.setAttribute('data-wa-preload', 'wa-icon');
       hero.totalTasks = 12;
       hero.pendingTasks = 5;
       hero.completedTasks = 7;
@@ -137,11 +150,23 @@
       mount.append(hero);
 
       await customElements.whenDefined('task-hero');
+  await discover(mount);
+  await customElements.whenDefined('wa-icon');
       await waitForRender();
 
       const shadow = hero.shadowRoot;
 
       const tests = [
+        {
+          name: 'Hero includes the app icon with the configured Web Awesome glyph',
+          run: async () => {
+            const icon = shadow.querySelector('wa-icon');
+
+            assert(icon, 'hero icon was not rendered');
+            assert(icon.getAttribute('name') === 'list-check', `unexpected hero icon name: ${icon.getAttribute('name')}`);
+            assert(icon.style.color === 'rgb(255, 212, 59)', `unexpected hero icon color: ${icon.style.color}`);
+          },
+        },
         {
           name: 'Counter labels use All, Pending, and Done',
           run: async () => {

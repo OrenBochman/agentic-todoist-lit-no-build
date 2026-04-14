@@ -141,12 +141,13 @@
       window.localStorage.removeItem(THEME_STORAGE_KEY);
 
       const app = document.createElement('task-manager-app');
-      app.setAttribute('data-wa-preload', 'wa-button wa-input');
+      app.setAttribute('data-wa-preload', 'wa-button wa-input wa-icon');
       mount.append(app);
 
       await customElements.whenDefined('task-manager-app');
       await customElements.whenDefined('wa-input');
       await customElements.whenDefined('wa-button');
+      await customElements.whenDefined('wa-icon');
       await waitForRender();
 
       const appShadow = app.shadowRoot;

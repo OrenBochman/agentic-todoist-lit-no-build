@@ -48,12 +48,21 @@ class TaskHero extends LitElement {
     }
 
     .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       margin: 0 0 12px;
       font-size: 0.8rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--accent);
       font-weight: 700;
+    }
+
+    wa-icon {
+      flex: none;
+      font-size: 1rem;
+      color: rgb(255, 212, 59);
     }
 
     h1 {
@@ -256,7 +265,7 @@ class TaskHero extends LitElement {
       <article class="card">
         <div class="panel">
           <div class="hero-header">
-            <p class="eyebrow">ToDo&gt;</p>
+            <p class="eyebrow"><wa-icon name="list-check" style="color: rgb(255, 212, 59);"></wa-icon>ToDo&gt;</p>
             <div class="hero-actions">
               <span class="status-pill" data-status=${this.webMcpStatus}>
                 ${this.getWebMcpLabel()}

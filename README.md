@@ -11,6 +11,7 @@ This workspace contains a task manager web app built with Lit in plain JavaScrip
 - Persist tasks in localStorage
 - Import tasks from JSON backups
 - Export tasks as JSON backups
+- App icon in the hero using Web Awesome
 - WebMCP widget with task tools for browsing, adding, completing, and deleting tasks from chat
 
 ## Run
