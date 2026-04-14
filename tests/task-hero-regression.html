@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Hero Regression Test</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --page-background: #09111d;
+        --panel-background: rgba(11, 19, 32, 0.82);
+        --panel-border: rgba(148, 163, 184, 0.18);
+        --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+        --text-strong: #eff6ff;
+        --text-muted: #a8b3c7;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 32px;
+        font-family: "Atkinson Hyperlegible", sans-serif;
+        background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 28%),
+          linear-gradient(180deg, #08111e 0%, #101a2c 100%);
+        color: var(--text-strong);
+      }
+
+      main {
+        width: min(980px, 100%);
+        margin: 0 auto;
+      }
+
+      .card {
+        border-radius: 24px;
+        padding: 24px;
+        background: var(--panel-background);
+        border: 1px solid var(--panel-border);
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 1.5rem;
+      }
+
+      p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      #mount {
+        margin-top: 20px;
+      }
+
+      .results {
+        display: grid;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .result {
+        border-radius: 16px;
+        padding: 14px 16px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(15, 23, 42, 0.44);
+      }
+
+      .result[data-status='passed'] {
+        border-color: rgba(74, 222, 128, 0.36);
+      }
+
+      .result[data-status='failed'] {
+        border-color: rgba(248, 113, 113, 0.4);
+      }
+
+      .result strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .result code {
+        font-family: ui-monospace, monospace;
+        font-size: 0.92rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <h1>Task Hero Regression Test</h1>
+        <p>
+          This page checks the counter labels and makes sure the stat cards respond to available
+          width by shrinking and expanding instead of staying fixed.
+        </p>
+
+        <div id="mount"></div>
+        <div id="results" class="results" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      import '../components/task-hero.js';
+
+      const mount = document.getElementById('mount');
+      const results = document.getElementById('results');
+
+      const waitForRender = async () => {
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      };
+
+      const addResult = (name, passed, detail) => {
+        const item = document.createElement('div');
+        item.className = 'result';
+        item.dataset.status = passed ? 'passed' : 'failed';
+        item.innerHTML = `<strong>${passed ? 'PASS' : 'FAIL'}: ${name}</strong><code>${detail}</code>`;
+        results.append(item);
+      };
+
+      const assert = (condition, message) => {
+        if (!condition) {
+          throw new Error(message);
+        }
+      };
+
+      const hero = document.createElement('task-hero');
+      hero.totalTasks = 12;
+      hero.pendingTasks = 5;
+      hero.completedTasks = 7;
+      hero.theme = 'dark';
+      hero.webMcpStatus = 'ready';
+      mount.append(hero);
+
+      await customElements.whenDefined('task-hero');
+      await waitForRender();
+
+      const shadow = hero.shadowRoot;
+
+      const tests = [
+        {
+          name: 'Counter labels use All, Pending, and Done',
+          run: async () => {
+            const labels = [...shadow.querySelectorAll('.stat-label')].map((node) => node.textContent.trim());
+            assert(labels.join('|') === 'All|Pending|Done', `unexpected labels: ${labels.join(', ')}`);
+          },
+        },
+        {
+          name: 'Counter grid keeps three columns at desktop width',
+          run: async () => {
+            mount.style.width = '900px';
+            await waitForRender();
+
+            const stats = shadow.querySelector('.stats');
+            const style = getComputedStyle(stats);
+            const columns = style.gridTemplateColumns.split(' ').filter(Boolean);
+
+            assert(columns.length === 3, `expected 3 stat columns, received ${style.gridTemplateColumns}`);
+          },
+        },
+        {
+          name: 'Counter grid keeps three columns at current narrow card width',
+          run: async () => {
+            mount.style.width = '353px';
+            await waitForRender();
+
+            const stats = shadow.querySelector('.stats');
+            const columns = getComputedStyle(stats).gridTemplateColumns.split(' ').filter(Boolean);
+
+            assert(columns.length === 3, `expected 3 columns at current narrow width, received ${columns.length}`);
+          },
+        },
+        {
+          name: 'Counter cards expand when more width is available',
+          run: async () => {
+            mount.style.width = '353px';
+            await waitForRender();
+
+            const narrowWidth = shadow.querySelector('.stat').getBoundingClientRect().width;
+
+            mount.style.width = '900px';
+            await waitForRender();
+
+            const wideWidth = shadow.querySelector('.stat').getBoundingClientRect().width;
+
+            assert(wideWidth > narrowWidth, `expected stats to expand, got narrow=${narrowWidth} wide=${wideWidth}`);
+          },
+        },
+        {
+          name: 'Counter grid does not overflow the card at current narrow width',
+          run: async () => {
+            mount.style.width = '353px';
+            await waitForRender();
+
+            const stats = shadow.querySelector('.stats');
+            assert(stats.scrollWidth <= stats.clientWidth + 1, `stats overflowed: scroll=${stats.scrollWidth} client=${stats.clientWidth}`);
+          },
+        },
+        {
+          name: 'Counter grid reduces columns only at very small widths',
+          run: async () => {
+            mount.style.width = '280px';
+            await waitForRender();
+
+            const stats = shadow.querySelector('.stats');
+            const columns = getComputedStyle(stats).gridTemplateColumns.split(' ').filter(Boolean);
+
+            assert(columns.length < 3, `expected fewer than 3 columns at very small width, received ${columns.length}`);
+          },
+        },
+      ];
+
+      for (const test of tests) {
+        try {
+          await test.run();
+          addResult(test.name, true, 'ok');
+        } catch (error) {
+          addResult(test.name, false, error instanceof Error ? error.message : String(error));
+        }
+      }
+    </script>
+  </body>
+</html>

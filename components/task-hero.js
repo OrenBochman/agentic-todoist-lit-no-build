@@ -19,6 +19,7 @@ class TaskHero extends LitElement {
 
     .card {
       display: block;
+      container-type: inline-size;
       border-radius: 28px;
       overflow: hidden;
       backdrop-filter: blur(20px);
@@ -74,13 +75,17 @@ class TaskHero extends LitElement {
     .stats {
       display: grid;
       gap: 14px;
+      width: 100%;
+      min-width: 0;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       margin-top: 28px;
     }
 
     .stat {
       border-radius: 20px;
-      padding: 18px;
+      min-width: 0;
+      overflow: hidden;
+      padding: clamp(12px, 2vw, 18px);
       background: linear-gradient(180deg, var(--accent-soft), color-mix(in srgb, var(--panel-background) 84%, transparent));
       border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
     }
@@ -88,18 +93,22 @@ class TaskHero extends LitElement {
     .stat-label {
       display: block;
       color: var(--text-muted);
-      font-size: 0.8rem;
+      font-size: clamp(0.68rem, 1.8vw, 0.8rem);
       text-transform: uppercase;
       letter-spacing: 0.08em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stat-value {
       display: block;
       margin-top: 8px;
-      font-size: 2rem;
+      font-size: clamp(1.35rem, 4vw, 2rem);
       line-height: 1;
       font-weight: 700;
       color: var(--text-strong);
+      min-width: 0;
     }
 
     .status-pill {
@@ -161,13 +170,41 @@ class TaskHero extends LitElement {
       background: color-mix(in srgb, var(--panel-background) 90%, transparent);
     }
 
+    @container (max-width: 380px) {
+      .stats {
+        gap: 8px;
+      }
+
+      .stat {
+        padding: 10px;
+      }
+
+      .stat-label {
+        font-size: 0.64rem;
+        letter-spacing: 0.06em;
+      }
+
+      .stat-value {
+        margin-top: 6px;
+        font-size: 1.65rem;
+      }
+    }
+
+    @container (max-width: 300px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @container (max-width: 210px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 820px) {
       .hero-header {
         flex-direction: column;
-      }
-
-      .stats {
-        grid-template-columns: 1fr;
       }
 
       .hero-actions {
@@ -187,6 +224,20 @@ class TaskHero extends LitElement {
       .hero-actions > * {
         width: 100%;
         justify-content: center;
+      }
+
+      .stats {
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .stats {
+        gap: 8px;
+      }
+
+      .stat {
+        border-radius: 16px;
       }
     }
   `;
@@ -222,7 +273,7 @@ class TaskHero extends LitElement {
           </p>
           <div class="stats" aria-label="Task statistics">
             <div class="stat">
-              <span class="stat-label">All tasks</span>
+              <span class="stat-label">All</span>
               <span class="stat-value">${this.totalTasks}</span>
             </div>
             <div class="stat">
@@ -230,7 +281,7 @@ class TaskHero extends LitElement {
               <span class="stat-value">${this.pendingTasks}</span>
             </div>
             <div class="stat">
-              <span class="stat-label">Completed</span>
+              <span class="stat-label">Done</span>
               <span class="stat-value">${this.completedTasks}</span>
             </div>
           </div>

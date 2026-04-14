@@ -9,6 +9,8 @@ This workspace contains a task manager web app built with Lit in plain JavaScrip
 - Delete tasks
 - Filter tasks by status
 - Persist tasks in localStorage
+- Import tasks from JSON backups
+- Export tasks as JSON backups
 - WebMCP widget with task tools for browsing, adding, completing, and deleting tasks from chat
 
 ## Run
@@ -27,6 +29,14 @@ Open it through the same static server used for the app. It checks that clicking
 There is also an app-level regression test at [tests/task-manager-add-task-regression.html](./tests/task-manager-add-task-regression.html).
 
 Open it through the same static server used for the app. It checks that clicking the `+` button adds a task to the root app state and renders that task in the board.
+
+There is also a hero regression test at [tests/task-hero-regression.html](./tests/task-hero-regression.html).
+
+Open it through the same static server used for the app. It checks the counter labels and verifies the hero stats stay in three shrinking columns at a narrow width.
+
+There is also a transfer regression test at [tests/task-transfer-regression.html](./tests/task-transfer-regression.html).
+
+Open it through the same static server used for the app. It checks that export creates a JSON backup payload and that import preserves existing tasks, adds only missing ones, and reports invalid files.
 
 ## WebMCP
 

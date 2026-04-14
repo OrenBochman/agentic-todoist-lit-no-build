@@ -2,10 +2,13 @@ import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/co
 import './components/task-composer.js';
 import './components/task-board.js';
 import './components/task-hero.js';
+import './components/task-snackbar.js';
+import './components/task-transfer-controls.js';
 
 const STORAGE_KEY = 'task-manager-items';
 const THEME_STORAGE_KEY = 'task-manager-theme';
 const WEBMCP_TOOLS_KEY = '__taskManagerWebMcpToolsRegistered';
+const EXPORT_VERSION = 1;
 
 function getWebMcpConstructor() {
   if (typeof globalThis.WebMCP === 'function') {
@@ -28,6 +31,8 @@ class TaskManagerApp extends LitElement {
     filter: { state: true },
     tasks: { state: true },
     theme: { state: true },
+    transferStatusMessage: { state: true },
+    transferStatusTone: { state: true },
     webMcpStatus: { state: true },
   };
 
@@ -67,6 +72,10 @@ class TaskManagerApp extends LitElement {
       gap: 24px;
     }
 
+    .transfer-card {
+      margin-top: 0;
+    }
+
     @media (max-width: 640px) {
       .shell {
         width: min(100vw - 20px, 980px);
@@ -84,7 +93,10 @@ class TaskManagerApp extends LitElement {
     this.filter = 'all';
     this.tasks = this.loadTasks();
     this.theme = this.loadTheme();
+    this.transferStatusMessage = '';
+    this.transferStatusTone = 'neutral';
     this.webMcpStatus = window.__webmcpStatus || 'loading';
+    this._transferStatusTimeout = null;
   }
 
   connectedCallback() {
@@ -126,7 +138,23 @@ class TaskManagerApp extends LitElement {
             @task-toggle=${this.handleTaskToggle}
             @task-delete=${this.handleTaskDelete}
           ></task-board>
+
+          <article class="card transfer-card">
+            <div class="panel">
+              <task-transfer-controls
+                @tasks-export=${this.handleTasksExport}
+                @tasks-import=${this.handleTasksImport}
+              ></task-transfer-controls>
+            </div>
+          </article>
         </section>
+
+        <task-snackbar
+          .message=${this.transferStatusMessage}
+          .tone=${this.transferStatusTone}
+          .open=${Boolean(this.transferStatusMessage)}
+          @snackbar-dismiss=${this.clearTransferStatus}
+        ></task-snackbar>
       </main>
     `;
   }
@@ -213,6 +241,7 @@ class TaskManagerApp extends LitElement {
       ...this.tasks,
     ];
     this.saveTasks();
+    this.clearTransferStatus();
   }
 
   /**
@@ -231,6 +260,7 @@ class TaskManagerApp extends LitElement {
       task.id === taskId ? { ...task, completed: !task.completed } : task,
     );
     this.saveTasks();
+    this.clearTransferStatus();
   }
 
   /**
@@ -240,6 +270,181 @@ class TaskManagerApp extends LitElement {
     const taskId = event.detail.taskId;
     this.tasks = this.tasks.filter((task) => task.id !== taskId);
     this.saveTasks();
+    this.clearTransferStatus();
+  }
+
+  /**
+   * Clears stale transfer feedback after ordinary task mutations.
+   */
+  clearTransferStatus() {
+    if (this._transferStatusTimeout) {
+      window.clearTimeout(this._transferStatusTimeout);
+      this._transferStatusTimeout = null;
+    }
+
+    if (!this.transferStatusMessage) {
+      return;
+    }
+
+    this.transferStatusMessage = '';
+    this.transferStatusTone = 'neutral';
+  }
+
+  showTransferStatus(message, tone = 'neutral') {
+    if (this._transferStatusTimeout) {
+      window.clearTimeout(this._transferStatusTimeout);
+    }
+
+    this.transferStatusMessage = message;
+    this.transferStatusTone = tone;
+    this._transferStatusTimeout = window.setTimeout(() => {
+      this._transferStatusTimeout = null;
+      this.clearTransferStatus();
+    }, 3600);
+  }
+
+  /**
+   * Creates a portable JSON backup of the current task collection.
+   */
+  handleTasksExport = () => {
+    const payload = {
+      version: EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      tasks: this.tasks.map((task) => ({
+        id: task.id,
+        text: task.text,
+        completed: task.completed,
+        createdAt: task.createdAt,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = objectUrl;
+    link.download = this.getExportFileName();
+    link.click();
+    window.URL.revokeObjectURL(objectUrl);
+
+    this.showTransferStatus(
+      this.tasks.length
+        ? `Exported ${this.tasks.length} ${this.tasks.length === 1 ? 'task' : 'tasks'} to JSON.`
+        : 'Exported an empty task list to JSON.',
+      'success',
+    );
+  };
+
+  /**
+   * Imports tasks from a JSON backup file and merges in only missing tasks.
+   */
+  handleTasksImport = async (event) => {
+    const file = event.detail?.file;
+
+    if (!(file instanceof File)) {
+      this.showTransferStatus('Choose a JSON file to import.', 'error');
+      return;
+    }
+
+    try {
+      const fileContents = await file.text();
+      const parsed = JSON.parse(fileContents);
+      const importedTasks = this.normalizeImportedTasks(parsed);
+      const existingTaskKeys = new Set(this.tasks.flatMap((task) => this.getTaskKeys(task)));
+      const tasksToAdd = importedTasks.filter((task) => {
+        const keys = this.getTaskKeys(task);
+        const isNewTask = keys.every((key) => !existingTaskKeys.has(key));
+
+        if (!isNewTask) {
+          return false;
+        }
+
+        keys.forEach((key) => existingTaskKeys.add(key));
+        return true;
+      });
+
+      this.tasks = [...tasksToAdd, ...this.tasks];
+      this.filter = 'all';
+      this.saveTasks();
+      this.showTransferStatus(
+        tasksToAdd.length
+          ? `Imported ${tasksToAdd.length} new ${tasksToAdd.length === 1 ? 'task' : 'tasks'} from ${file.name}.`
+          : `No new tasks were imported from ${file.name}.`,
+        'success',
+      );
+    } catch (error) {
+      this.showTransferStatus(
+        error instanceof Error ? error.message : 'Could not import that JSON file.',
+        'error',
+      );
+    }
+  };
+
+  /**
+   * Builds the dedupe keys used to decide whether a task already exists.
+   */
+  getTaskKeys(task) {
+    const keys = [];
+    const id = typeof task?.id === 'string' ? task.id.trim() : '';
+    const text = typeof task?.text === 'string' ? task.text.trim().toLocaleLowerCase() : '';
+
+    if (id) {
+      keys.push(`id:${id}`);
+    }
+
+    if (text) {
+      keys.push(`text:${text}`);
+    }
+
+    return keys;
+  }
+
+  /**
+   * Normalizes a parsed JSON payload into the internal task shape.
+   */
+  normalizeImportedTasks(payload) {
+    const rawTasks = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.tasks)
+        ? payload.tasks
+        : null;
+
+    if (!rawTasks) {
+      throw new Error('Import JSON must contain a tasks array.');
+    }
+
+    return rawTasks.map((task, index) => this.normalizeImportedTask(task, index));
+  }
+
+  /**
+   * Validates a single imported task record.
+   */
+  normalizeImportedTask(task, index) {
+    if (!task || typeof task !== 'object') {
+      throw new Error(`Task ${index + 1} is not a valid object.`);
+    }
+
+    const text = typeof task.text === 'string' ? task.text.trim() : '';
+
+    if (!text) {
+      throw new Error(`Task ${index + 1} is missing task text.`);
+    }
+
+    const id = typeof task.id === 'string' && task.id.trim() ? task.id : crypto.randomUUID();
+    const createdAt = typeof task.createdAt === 'string' && !Number.isNaN(Date.parse(task.createdAt))
+      ? task.createdAt
+      : new Date().toISOString();
+
+    return {
+      id,
+      text,
+      completed: Boolean(task.completed),
+      createdAt,
+    };
+  }
+
+  getExportFileName() {
+    const stamp = new Date().toISOString().slice(0, 10);
+    return `task-manager-${stamp}.json`;
   }
 
   /**
