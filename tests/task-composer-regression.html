@@ -174,6 +174,61 @@
           },
         },
         {
+          name: 'Typing in the native control then clicking plus submits',
+          run: async () => {
+            let payload = null;
+            composer.addEventListener(
+              'task-add',
+              (event) => {
+                payload = event.detail;
+              },
+              { once: true },
+            );
+
+            const internalInput = input.shadowRoot?.querySelector('input');
+            assert(internalInput, 'native input was not rendered');
+
+            internalInput.value = 'native typed submit';
+            internalInput.dispatchEvent(new InputEvent('input', {
+              bubbles: true,
+              composed: true,
+              data: 't',
+              inputType: 'insertText',
+            }));
+            await waitForRender();
+
+            button.click();
+            await waitForRender();
+
+            assert(payload?.text === 'native typed submit', 'button click did not use the live native input value');
+            assert(input.value === '', 'input should clear after native typed submit');
+          },
+        },
+        {
+          name: 'Pressing Enter still submits the typed text',
+          run: async () => {
+            let payload = null;
+            composer.addEventListener(
+              'task-add',
+              (event) => {
+                payload = event.detail;
+              },
+              { once: true },
+            );
+
+            input.value = 'enter submit';
+            input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
+            await waitForRender();
+
+            const form = shadow.querySelector('.composer-form');
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            await waitForRender();
+
+            assert(payload?.text === 'enter submit', 'submit event did not use the current typed value');
+            assert(input.value === '', 'input should clear after submit event');
+          },
+        },
+        {
           name: 'Empty click still shows validation',
           run: async () => {
             input.value = '';

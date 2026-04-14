@@ -135,14 +135,32 @@ class TaskComposer extends LitElement {
     this.value = '';
   }
 
-  updated(changedProperties) {
-    if (!changedProperties.has('value')) {
-      return;
+  getCurrentInputValue(event, includeInternalFallback = false) {
+    const input = this.renderRoot?.querySelector('wa-input');
+    const hostValue = typeof event?.target?.value === 'string'
+      ? event.target.value
+      : typeof input?.value === 'string'
+        ? input.value
+        : '';
+
+    if (hostValue || !includeInternalFallback) {
+      return hostValue;
     }
 
+    const internalInput = input?.shadowRoot?.querySelector('input');
+    return typeof internalInput?.value === 'string' ? internalInput.value : '';
+  }
+
+  clearInput() {
     const input = this.renderRoot?.querySelector('wa-input');
-    if (input && input.value !== this.value) {
-      input.value = this.value;
+    const internalInput = input?.shadowRoot?.querySelector('input');
+
+    if (input) {
+      input.value = '';
+    }
+
+    if (internalInput) {
+      internalInput.value = '';
     }
   }
 
@@ -159,11 +177,9 @@ class TaskComposer extends LitElement {
             .value=${this.value}
             @wa-input=${this.handleInput}
             @wa-change=${this.handleInput}
-            @input=${this.handleInput}
-            @change=${this.handleInput}
           ></wa-input>
           <div class="composer-actions">
-            <wa-button variant="brand" type="submit" aria-label="Add task">+</wa-button>
+            <wa-button variant="brand" type="button" aria-label="Add task" @click=${this.handleSubmit}>+</wa-button>
           </div>
           ${this.errorMessage
             ? html`<p class="validation" role="status" aria-live="polite">${this.errorMessage}</p>`
@@ -177,12 +193,14 @@ class TaskComposer extends LitElement {
    * Keeps the input value in sync and clears any prior validation state.
    */
   handleInput(event) {
-    const input = this.renderRoot?.querySelector('wa-input');
-    const nextValue = typeof event?.target?.value === 'string'
-      ? event.target.value
-      : typeof input?.value === 'string'
-        ? input.value
-        : '';
+    const nextValue = this.getCurrentInputValue(event);
+
+    if (nextValue === this.value) {
+      if (this.errorMessage && nextValue.trim()) {
+        this.errorMessage = '';
+      }
+      return;
+    }
 
     this.value = nextValue;
 
@@ -195,9 +213,8 @@ class TaskComposer extends LitElement {
    * Normalizes the entered text and bubbles a task creation request upward.
    */
   handleSubmit(event) {
-    event.preventDefault();
-    const input = this.renderRoot?.querySelector('wa-input');
-    const currentValue = typeof input?.value === 'string' ? input.value : this.value;
+    event?.preventDefault?.();
+    const currentValue = this.getCurrentInputValue(event, true) || this.value;
     const taskText = currentValue.trim();
 
     this.value = currentValue;
@@ -216,6 +233,7 @@ class TaskComposer extends LitElement {
     );
 
     this.value = '';
+    this.clearInput();
     this.errorMessage = '';
   }
 }

@@ -7,6 +7,30 @@
 - The current Lit import pattern is CDN-based and should stay browser-safe.
 - The app includes the official WebMCP widget and exposes task tools for agentic browsing, adding, completing, and deleting tasks.
 
+## Features:
+
+Work on each feature one at a time, to facilitate focused code review and easier regression testing and clearer git commits.
+
+
+- [x] Add tasks
+- [x] Mark tasks as completed
+- [x] Delete tasks
+- [x] Filter tasks by status
+- [x] Persist tasks in localStorage
+- [x] WebMCP widget with task tools for browsing, adding, completing, and deleting tasks from chat
+- [x] Use Webawesome `wa-input` and `wa-button` components for the add task composer, ensuring they are properly styled and functional across browsers and viewports.
+- [x] Dark mode support with appropriate color choices for text, backgrounds, and controls to maintain readability and visual appeal in both light and dark themes.
+- [ ] Import/export tasks as JSON files to allow users to back up their tasks or transfer them between instances of the app.
+- [ ] Service worker integration for offline support, allowing the app to function without an internet connection and sync changes when connectivity is restored.
+- [ ] Implement the PRPL pattern (Push, Render, Pre-cache, Lazy-load) to optimize performance and load times, especially on slower networks or devices.
+- [ ] Add edit task by long-pressing a task to open an edit form, allowing users to modify existing tasks without needing to delete and recreate them.
+- [ ] Add an app icon `<wa-icon name="list-check" style="color: rgb(255, 212, 59);"></wa-icon>`
+- [ ] Adjust css to make the Counters able to shrink to minimal size, replace `ALL tasks` to `All` and  `Completed` to `Done`.
+- [ ] Responsive design that maintains usability and visual integrity across a range of device sizes, from mobile to desktop, ensuring that task toggles and controls are easily accessible and not visually squished.
+
+
+
+
 ## Architecture
 
 - Keep each custom element in its own file.
@@ -20,6 +44,8 @@
 - Prefer modern JavaScript features such as `const`, `let`, arrow functions, destructuring, and template literals.
 - Keep UI state local, explicit, and easy to inspect.
 - Preserve browser-safe code paths that work without module resolution or transpilation.
+- Keep web components short and focused, ideally under 200 lines, 
+- Where possible split complex web components into a child components to keep them manageable and reusable.
 
 ## Naming Conventions
 
@@ -50,6 +76,10 @@
 - Keep rendering logic readable and split complex behavior into small methods.
 - Add error handling for user input and browser storage access.
 - Preserve accessibility when changing markup, keyboard flows, labels, or control sizes.
+- When an issue is found fix it before moving on to the next task.
+- Do not deflect (use a fix that simply sidesteps the underlying issue) engage with it directly.
+  e.g. removing autocomplete at the app level to sidestep problems with `wa-input` styles when auo-fill is used.
+- Once an issue is fixed add a regression test that verifies the fix and prevents future breakage.
 
 # skills
 

@@ -175,6 +175,32 @@
             assert(app.tasks.length === beforeCount + 1, 'root app task count did not increase');
             assert(app.tasks[0]?.text === 'test 123', 'new task was not inserted at the top of app state');
             assert(firstTaskText === 'test 123', 'new task was not rendered in the task board');
+            assert(input.value === '', 'composer input did not clear after successful add');
+          },
+        },
+        {
+          name: 'Typing in the native control then clicking plus adds a task',
+          run: async () => {
+            const beforeCount = app.tasks.length;
+            const internalInput = input.shadowRoot?.querySelector('input');
+
+            assert(internalInput, 'native input was not rendered');
+
+            internalInput.value = 'native add task';
+            internalInput.dispatchEvent(new InputEvent('input', {
+              bubbles: true,
+              composed: true,
+              data: 'k',
+              inputType: 'insertText',
+            }));
+            await waitForRender();
+
+            button.click();
+            await waitForRender();
+
+            assert(app.tasks.length === beforeCount + 1, 'task count did not increase after native input typing');
+            assert(app.tasks[0]?.text === 'native add task', 'root app did not use the live native input value');
+            assert(board.shadowRoot.querySelector('task-item')?.task?.text === 'native add task', 'board did not render the native typed task');
           },
         },
         {
