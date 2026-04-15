@@ -122,16 +122,20 @@ class TaskManagerApp extends LitElement {
 
     return html`
       <main class="shell">
-        <section aria-label="Task manager overview">
+        <div class="app-header-row" style="display: flex; align-items: flex-start; gap: 1rem; width: 100%;">
           <task-hero
+            style="flex: 1 1 0%; min-width: 0;"
             total-tasks=${totalTasks}
             pending-tasks=${pendingTasks}
             completed-tasks=${completedTasks}
-            theme=${this.theme}
-            webmcp-status=${this.webMcpStatus}
-            @theme-toggle=${this.toggleTheme}
           ></task-hero>
-        </section>
+          <task-utility-bar
+            style="flex: 0 0 auto;"
+            .theme=${this.theme}
+            @theme-toggle=${this.toggleTheme}
+            @webmcp-menu=${this.handleWebMcpMenu}
+          ></task-utility-bar>
+        </div>
 
         <section class="board" aria-label="Task list">
           <article class="card composer-card">
@@ -218,6 +222,11 @@ class TaskManagerApp extends LitElement {
     this.theme = this.theme === 'dark' ? 'light' : 'dark';
     this.applyTheme();
     this.saveTheme();
+  };
+
+  handleWebMcpMenu = () => {
+    // Optionally focus or open WebMCP widget
+    // Placeholder for future logic
   };
 
   syncWebMcpStatus() {

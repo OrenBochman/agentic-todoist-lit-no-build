@@ -12,14 +12,15 @@ class TaskHero extends LitElement {
   static properties = {
     completedTasks: { type: Number, attribute: 'completed-tasks' },
     pendingTasks: { type: Number, attribute: 'pending-tasks' },
-    theme: { type: String },
     totalTasks: { type: Number, attribute: 'total-tasks' },
-    webMcpStatus: { type: String, attribute: 'webmcp-status' },
   };
 
   static styles = css`
     :host {
       display: block;
+      /* DEBUG: Add visible outline and background for troubleshooting */
+      outline: 3px dashed red;
+      background: rgba(255,255,0,0.15);
     }
     :host([theme='dark']) .card,
     :host([theme='dark']) .stat,
@@ -284,14 +285,7 @@ class TaskHero extends LitElement {
         <div class="panel">
           <div class="hero-header">
             <p class="eyebrow"><wa-icon name="list-check" style="color: rgb(255, 212, 59);"></wa-icon>ToDo&gt;</p>
-            <div class="hero-actions">
-              <span class="status-pill" data-status=${this.webMcpStatus}>
-                ${this.getWebMcpLabel()}
-              </span>
-              <button class="button button-ghost" type="button" @click=${this.emitThemeToggle}>
-                ${this.theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              </button>
-            </div>
+            <div class="hero-actions"></div>
           </div>
           <h1>Agentic Task Flow</h1>
           <p class="hero-copy">
@@ -318,28 +312,11 @@ class TaskHero extends LitElement {
   }
 
   emitThemeToggle = () => {
-    this.dispatchEvent(
-      new CustomEvent('theme-toggle', {
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    // Removed theme toggle functionality
   };
 
   getWebMcpLabel() {
-    if (this.webMcpStatus === 'ready') {
-      return 'WebMCP ready';
-    }
-
-    if (this.webMcpStatus === 'loaded') {
-      return 'WebMCP script loaded';
-    }
-
-    if (this.webMcpStatus === 'failed') {
-      return 'WebMCP failed';
-    }
-
-    return 'WebMCP loading';
+    // Removed WebMCP label functionality
   }
 }
 

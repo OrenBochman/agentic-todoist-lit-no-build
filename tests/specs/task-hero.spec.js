@@ -9,34 +9,8 @@ describe('Task Hero Regression', () => {
     fixture = await mountTaskHero();
   });
 
-  it('toggles dark mode and updates theme property and button label', async () => {
-    // Start with default (dark) theme
-    expect(fixture.hero.theme).to.equal('dark');
-    const button = fixture.shadow.querySelector('.button-ghost');
-    expect(button).to.exist;
-    expect(button.textContent).to.contain('Light mode');
 
-    // Click to toggle to light mode
-    button.click();
-    await waitForRender();
-    expect(fixture.hero.theme).to.equal('light');
-    expect(button.textContent).to.contain('Dark mode');
-
-    // Click again to toggle back to dark mode
-    button.click();
-    await waitForRender();
-    expect(fixture.hero.theme).to.equal('dark');
-    expect(button.textContent).to.contain('Light mode');
-  });
-
-  it('hero icon feature renders list-check with the configured Web Awesome color in task-hero', () => {
-    const icon = fixture.shadow.querySelector('wa-icon');
-
-    // Assert: the hero renders the expected Web Awesome glyph and preserves the requested brand color.
-    expect(icon).to.exist;
-    expect(icon.getAttribute('name')).to.equal('list-check');
-    expect(icon.style.color).to.equal('rgb(255, 212, 59)');
-  });
+  // No theme toggle test: theme toggle is now in utility bar, not hero
 
   it('counter copy feature uses All, Pending, and Done labels in task-hero', () => {
     const labels = [...fixture.shadow.querySelectorAll('.stat-label')].map((node) => node.textContent.trim());
@@ -83,6 +57,7 @@ describe('Task Hero Regression', () => {
 
     // Assert: the three-column hero row still fits inside its card without horizontal scrolling at the current narrow width.
     expect(stats.scrollWidth).to.be.at.most(stats.clientWidth + 1);
+      // No theme toggle test: theme toggle is now in utility bar, not hero
   });
 
   it('very small width feature collapses below three columns in task-hero', async () => {
