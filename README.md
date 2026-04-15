@@ -26,7 +26,7 @@ Open [index.html](./index.html) in VS Code preview, or serve the folder with any
 
 There is a single browser-run regression dashboard at [tests/all-regression-tests.html](./tests/all-regression-tests.html).
 
-Open it through the same static server used for the app. It auto-runs every Mocha/Chai regression spec in one page and is the fastest way to verify the whole suite after a change.
+Open it through the same static server used for the app. It auto-runs every Mocha/Chai regression spec in one page, shows a top-level pass/fail summary banner, and is the fastest way to verify the whole suite after a change.
 
 There is a browser-run regression test for the task composer click-submit bug at [tests/task-composer-regression.html](./tests/task-composer-regression.html).
 

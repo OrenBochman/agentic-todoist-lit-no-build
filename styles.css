@@ -48,5 +48,21 @@ body {
   font-family: 'Atkinson Hyperlegible', sans-serif;
   background: var(--page-background);
   color: var(--text-strong);
-  transition: background 220ms ease, color 220ms ease;
+  transition: background 220ms ease, color 220ms ease; 
+}
+.shell {
+  width: min(980px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 48px 0 72px;
+  box-sizing: border-box;
+}
+.board {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }

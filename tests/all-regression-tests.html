@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Manager Regression Dashboard</title>
     <link rel="stylesheet" href="https://unpkg.com/mocha@10.7.3/mocha.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
-    />
+    <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.5.0/styles/themes/default.css" />
+    <script type="module" src="https://ka-f.webawesome.com/webawesome@3.5.0/webawesome.loader.js"></script>
     <style>
       :root {
         color-scheme: dark;
@@ -57,8 +55,34 @@
         line-height: 1.5;
       }
 
+      #summary {
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(15, 23, 42, 0.44);
+        color: var(--text-strong);
+      }
+
+      #summary[data-status='running'] {
+        border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+      }
+
+      #summary[data-status='passed'] {
+        border-color: rgba(74, 222, 128, 0.36);
+      }
+
+      #summary[data-status='failed'] {
+        border-color: rgba(248, 113, 113, 0.4);
+      }
+
       #mount {
         margin-top: 20px;
+        width: 100vw;
+        min-width: 980px;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
       }
 
       #mocha {
@@ -96,7 +120,9 @@
           composer, app, hero, and transfer behavior from a single dashboard.
         </p>
 
-        <div id="mount" data-wa-preload="wa-button wa-input wa-icon"></div>
+        <div id="summary" data-status="running" aria-live="polite">Running regression suite...</div>
+
+        <div id="mount"></div>
         <div id="mocha"></div>
       </section>
     </main>
@@ -105,8 +131,18 @@
     <script src="https://unpkg.com/chai@4.5.0/chai.js"></script>
     <script type="module">
       import { runBrowserTests } from './helpers/browser-test-harness.js';
+      const summary = document.getElementById('summary');
+
       await import('./specs/all-regression.spec.js');
-      await runBrowserTests();
+      const failures = await runBrowserTests();
+
+      if (failures === 0) {
+        summary.dataset.status = 'passed';
+        summary.textContent = 'Regression suite passed. All browser tests are green.';
+      } else {
+        summary.dataset.status = 'failed';
+        summary.textContent = `Regression suite failed with ${failures} ${failures === 1 ? 'test' : 'tests'} failing.`;
+      }
     </script>
   </body>
 </html>

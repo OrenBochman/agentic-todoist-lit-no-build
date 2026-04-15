@@ -1,10 +1,14 @@
+// Fixture helper: force a window resize and reflow for layout-sensitive tests
+export const forceLayoutReflow = async () => {
+  window.dispatchEvent(new Event('resize'));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+};
 import '../../script.js';
 import { waitForRender } from '../helpers/browser-test-harness.js';
-import { ensureWebAwesomeLoader } from '../helpers/webawesome-test-setup.js';
+import { discoverWebAwesome } from '../helpers/webawesome-test-setup.js';
 
 const STORAGE_KEY = 'task-manager-items';
 const THEME_STORAGE_KEY = 'task-manager-theme';
-const APP_PRELOAD = 'wa-button wa-input wa-icon';
 
 export const clearTaskManagerStorage = () => {
   window.localStorage.removeItem(STORAGE_KEY);
@@ -13,7 +17,7 @@ export const clearTaskManagerStorage = () => {
 
 // Fixture: mount a fresh task-manager-app with composer, board, transfer controls, and snackbar ready.
 export const mountTaskManagerApp = async ({ tasks = [] } = {}) => {
-  ensureWebAwesomeLoader();
+  console.log('[diagnostic] mountTaskManagerApp: start');
   clearTaskManagerStorage();
 
   const mount = document.getElementById('mount');
@@ -25,10 +29,12 @@ export const mountTaskManagerApp = async ({ tasks = [] } = {}) => {
   mount.replaceChildren();
 
   const app = document.createElement('task-manager-app');
-  app.setAttribute('data-wa-preload', APP_PRELOAD);
+  // Set data-wa-preload on the custom element before discovery
+  app.setAttribute('data-wa-preload', 'wa-button wa-icon wa-input');
   mount.append(app);
 
   await customElements.whenDefined('task-manager-app');
+  await discoverWebAwesome(app, ['wa-button', 'wa-icon', 'wa-input']);
   await customElements.whenDefined('task-composer');
   await customElements.whenDefined('task-board');
   await customElements.whenDefined('task-transfer-controls');
@@ -50,14 +56,22 @@ export const mountTaskManagerApp = async ({ tasks = [] } = {}) => {
   const transfer = appShadow.querySelector('task-transfer-controls');
   const transferShadow = transfer?.shadowRoot;
 
+  // Diagnostic logs for DOM queries
+  const input = composerShadow?.querySelector('wa-input');
+  const button = composerShadow?.querySelector('wa-button');
+  const board = appShadow.querySelector('task-board');
+  console.log('[diagnostic] wa-input in composerShadow:', !!input);
+  console.log('[diagnostic] wa-button in composerShadow:', !!button);
+  console.log('[diagnostic] task-board in appShadow:', !!board);
+
   return {
     app,
     appShadow,
     composer,
     composerShadow,
-    input: composerShadow?.querySelector('wa-input'),
-    button: composerShadow?.querySelector('wa-button'),
-    board: appShadow.querySelector('task-board'),
+    input,
+    button,
+    board,
     transfer,
     transferShadow,
     snackbar: appShadow.querySelector('task-snackbar'),

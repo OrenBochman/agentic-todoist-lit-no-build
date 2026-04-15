@@ -6,10 +6,24 @@ import {
 } from '../fixtures/task-manager-app.fixture.js';
 
 describe('Task Manager Add And Edit Regression', () => {
-  let fixture;
 
-  beforeEach(async () => {
-    fixture = await mountTaskManagerApp();
+  let fixture;
+  // Default seeded task for tests that require a task-item
+  const SEEDED_TASKS = [
+    { id: 'seed-task', text: 'Seed task', completed: false, createdAt: new Date().toISOString() },
+  ];
+
+  beforeEach(async function() {
+    // For tests that require a task-item, seed with a default task
+    if ([
+      'toggle interaction marks the first task completed in task-manager-app and task-item',
+      'long-press edit flow saves host wa-input text in task-item within task-manager-app',
+      'long-press edit uses native input fidelity and persists the live inner value in task-item',
+    ].includes(this.currentTest.title)) {
+      fixture = await mountTaskManagerApp({ tasks: SEEDED_TASKS });
+    } else {
+      fixture = await mountTaskManagerApp();
+    }
   });
 
   afterEach(() => {
@@ -65,7 +79,10 @@ describe('Task Manager Add And Edit Regression', () => {
   it('toggle interaction marks the first task completed in task-manager-app and task-item', async () => {
     const firstItem = fixture.board.shadowRoot.querySelector('task-item');
     const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
-
+    if (!toggle) {
+      console.error('[diagnostic] toggle not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
+    }
+    await waitForRender();
     expect(toggle).to.exist;
     expect(fixture.app.tasks[0]?.completed).to.equal(false);
 
@@ -74,7 +91,9 @@ describe('Task Manager Add And Edit Regression', () => {
 
     const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
     const meta = updatedFirstItem?.shadowRoot?.querySelector('.task-meta')?.textContent?.trim() ?? '';
-
+    if (!updatedFirstItem) {
+      console.error('[diagnostic] updatedFirstItem not found. board shadow:', fixture.board.shadowRoot.innerHTML);
+    }
     // Assert: toggling completion updates the root app state, flows into task-item props, and updates the visible status copy.
     expect(fixture.app.tasks[0]?.completed).to.equal(true);
     expect(updatedFirstItem?.task?.completed).to.equal(true);
@@ -84,7 +103,10 @@ describe('Task Manager Add And Edit Regression', () => {
   it('long-press edit flow saves host wa-input text in task-item within task-manager-app', async () => {
     const firstItem = fixture.board.shadowRoot.querySelector('task-item');
     const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-
+    if (!taskMain) {
+      console.error('[diagnostic] taskMain not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
+    }
+    await waitForRender();
     expect(taskMain).to.exist;
 
     taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
@@ -92,7 +114,13 @@ describe('Task Manager Add And Edit Regression', () => {
 
     const editInput = firstItem.shadowRoot.querySelector('wa-input');
     const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
-
+    if (!editInput) {
+      console.error('[diagnostic] editInput not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
+    }
+    if (!saveButton) {
+      console.error('[diagnostic] saveButton not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
+    }
+    await waitForRender();
     expect(editInput).to.exist;
     expect(saveButton).to.exist;
 
@@ -105,7 +133,9 @@ describe('Task Manager Add And Edit Regression', () => {
 
     const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
     const updatedText = updatedFirstItem?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
-
+    if (!updatedFirstItem) {
+      console.error('[diagnostic] updatedFirstItem not found. board shadow:', fixture.board.shadowRoot.innerHTML);
+    }
     // Assert: saving edit mode persists the new host-level wa-input value to app state and the rendered task row.
     expect(fixture.app.tasks[0]?.text).to.equal('edited task text');
     expect(updatedText).to.equal('edited task text');
@@ -114,7 +144,10 @@ describe('Task Manager Add And Edit Regression', () => {
   it('long-press edit uses native input fidelity and persists the live inner value in task-item', async () => {
     const firstItem = fixture.board.shadowRoot.querySelector('task-item');
     const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-
+    if (!taskMain) {
+      console.error('[diagnostic] taskMain not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
+    }
+    await waitForRender();
     expect(taskMain).to.exist;
 
     taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
@@ -123,7 +156,16 @@ describe('Task Manager Add And Edit Regression', () => {
     const editInput = firstItem.shadowRoot.querySelector('wa-input');
     const internalEditInput = editInput?.shadowRoot?.querySelector('input');
     const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
-
+    if (!editInput) {
+      console.error('[diagnostic] editInput not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
+    }
+    if (!internalEditInput) {
+      console.error('[diagnostic] internalEditInput not found. editInput shadow:', editInput?.shadowRoot?.innerHTML);
+    }
+    if (!saveButton) {
+      console.error('[diagnostic] saveButton not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
+    }
+    await waitForRender();
     expect(internalEditInput).to.exist;
     expect(saveButton).to.exist;
 
@@ -142,7 +184,6 @@ describe('Task Manager Add And Edit Regression', () => {
     await waitForRender();
 
     const updatedText = fixture.board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
-
     // Assert: the native inner edit input remains the source of truth for save and the board renders the persisted value.
     expect(fixture.app.tasks[0]?.text).to.equal('edited through native input');
     expect(updatedText).to.equal('edited through native input');

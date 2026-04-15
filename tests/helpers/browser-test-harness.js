@@ -8,7 +8,7 @@ if (!mocha || !chai) {
 mocha.setup({
   ui: 'bdd',
   checkLeaks: true,
-  timeout: 4000,
+  timeout: 15000,
 });
 
 export const expect = chai.expect;

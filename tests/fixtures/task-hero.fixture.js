@@ -1,6 +1,5 @@
 import '../../components/task-hero.js';
 import { waitForRender } from '../helpers/browser-test-harness.js';
-import { discoverWebAwesome } from '../helpers/webawesome-test-setup.js';
 
 const DEFAULT_HERO_PROPS = {
   totalTasks: 12,
@@ -21,13 +20,10 @@ export const mountTaskHero = async (props = {}) => {
   mount.replaceChildren();
 
   const hero = document.createElement('task-hero');
-  hero.setAttribute('data-wa-preload', 'wa-icon');
   Object.assign(hero, DEFAULT_HERO_PROPS, props);
   mount.append(hero);
 
   await customElements.whenDefined('task-hero');
-  await discoverWebAwesome(mount);
-  await customElements.whenDefined('wa-icon');
   await waitForRender();
 
   return {

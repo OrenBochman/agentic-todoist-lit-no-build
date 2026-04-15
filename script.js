@@ -40,12 +40,14 @@ class TaskManagerApp extends LitElement {
     :host {
       display: block;
       min-height: 100vh;
+      background: khaki;
     }
 
     .shell {
       width: min(980px, calc(100vw - 32px));
       margin: 0 auto;
       padding: 48px 0 72px;
+      outline: 2px solid hotpink;
     }
 
     .card {

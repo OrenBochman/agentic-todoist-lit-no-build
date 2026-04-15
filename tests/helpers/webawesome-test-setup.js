@@ -1,25 +1,23 @@
+// Uses the official Web Awesome hosted CDN.
+// The loader is bootstrapped via <script type="module" src="..."> in each test
+// HTML page, which auto-detects its base path from the script src attribute.
+// This module imports discover from the same URL to share the loader instance.
 import {
   discover,
-  setBasePath,
-  startLoader,
-} from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
+} from 'https://ka-f.webawesome.com/webawesome@3.5.0/webawesome.loader.js';
 
-let loaderStarted = false;
+const DEFAULT_TAGS = ['wa-button', 'wa-icon', 'wa-input'];
 
-export const ensureWebAwesomeLoader = () => {
-  if (loaderStarted) {
-    return;
-  }
+export const whenAllDefined = (tagNames) =>
+  Promise.all(tagNames.map(async (tagName) => {
+    await customElements.whenDefined(tagName);
+    // Diagnostic log for registration
+    console.log(`[diagnostic] custom element defined: ${tagName}`);
+  }));
 
-  setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
-  startLoader();
-  loaderStarted = true;
-};
-
-export const discoverWebAwesome = async (root) => {
-  ensureWebAwesomeLoader();
-
-  if (root) {
-    await discover(root);
-  }
+// Tell the loader to discover wa-* tags inside `host`, then wait for them to register.
+export const discoverWebAwesome = async (host, requiredTags = DEFAULT_TAGS) => {
+  host.setAttribute('data-wa-preload', requiredTags.join(' '));
+  await discover(host);
+  await whenAllDefined(requiredTags);
 };

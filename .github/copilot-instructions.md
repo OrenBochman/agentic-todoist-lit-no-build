@@ -31,7 +31,7 @@ Work on each feature one at a time, to facilitate focused code review and easier
 ## Architecture
 
 - Keep each custom element in its own file.
-- Prefer colocating component styles inside the Lit component with `static styles` unless there is a specific reason not to.
+- Prefer placing component styles inside the Lit component with `static styles` unless there is a specific reason not to.
 - The root app coordinates shared state, persistence, theming, and WebMCP tool registration.
 - Child components should own their local UI concerns and communicate upward with custom events.
 

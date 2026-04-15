@@ -16,20 +16,20 @@ class TaskTransferControls extends LitElement {
       justify-items: end;
     }
 
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      width: 100%;
-    }
+      .buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0;
+        width: 100%;
+      }
 
-    .buttons > :first-child {
-      grid-column: 1;
-    }
-
-    .buttons > :last-child {
-      grid-column: 3;
-    }
+      wa-button {
+        margin: 0;
+      }
+      .buttons > span {
+        margin: 0;
+        padding: 0;
+      }
 
     wa-button {
       width: 100%;
@@ -66,14 +66,24 @@ class TaskTransferControls extends LitElement {
       }
     }
 
+    @container (max-width: 380px) {
+      .buttons {
+        grid-template-columns: 1fr 1fr;
+      }
+      .buttons > :first-child {
+        grid-column: 1;
+      }
+      .buttons > :last-child {
+        grid-column: 2;
+      }
+    }
     @container (max-width: 300px) {
       .buttons {
         grid-template-columns: 1fr;
       }
-
       .buttons > :first-child,
       .buttons > :last-child {
-        grid-column: auto;
+        grid-column: 1;
       }
     }
 
@@ -97,10 +107,10 @@ class TaskTransferControls extends LitElement {
     return html`
       <div class="transfer">
         <div class="buttons">
-          <wa-button type="button" @click=${this.openImportPicker}>Import</wa-button>
-          <wa-button type="button" variant="brand" @click=${this.emitExport}>Export</wa-button>
+          <wa-button type="button" @click=${this.openImportPicker} style="grid-column: 1;">Import</wa-button>
+          <span style="grid-column: 2;"></span>
+          <wa-button type="button" variant="brand" @click=${this.emitExport} style="grid-column: 3;">Export</wa-button>
         </div>
-        <p class="hint">Import keeps your current tasks and adds only tasks that are not already present.</p>
         <input
           id="file-input"
           type="file"

@@ -1,16 +1,10 @@
-import {
-  discover,
-  setBasePath,
-  startLoader,
-} from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
 import '../../components/task-composer.js';
 import { waitForRender } from '../helpers/browser-test-harness.js';
-
-setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
-startLoader();
+import { discoverWebAwesome } from '../helpers/webawesome-test-setup.js';
 
 // Fixture: mount a fresh task-composer with its Web Awesome input and button ready for each test.
 export const mountTaskComposer = async () => {
+  console.log('[diagnostic] mountTaskComposer: start');
   const mount = document.getElementById('mount');
 
   if (!mount) {
@@ -20,21 +14,28 @@ export const mountTaskComposer = async () => {
   mount.replaceChildren();
 
   const composer = document.createElement('task-composer');
+  // Set data-wa-preload on the custom element before discovery
+  composer.setAttribute('data-wa-preload', 'wa-button wa-input');
   mount.append(composer);
 
   await customElements.whenDefined('task-composer');
-  await discover(mount);
+  await discoverWebAwesome(composer, ['wa-button', 'wa-input']);
   await customElements.whenDefined('wa-input');
   await customElements.whenDefined('wa-button');
   await waitForRender();
 
   const shadow = composer.shadowRoot;
+  // Diagnostic logs for DOM queries
+  const input = shadow.querySelector('wa-input');
+  const button = shadow.querySelector('wa-button');
+  console.log('[diagnostic] wa-input in shadow:', !!input);
+  console.log('[diagnostic] wa-button in shadow:', !!button);
 
   return {
     composer,
     shadow,
-    input: shadow.querySelector('wa-input'),
-    button: shadow.querySelector('wa-button'),
+    input,
+    button,
     form: shadow.querySelector('.composer-form'),
   };
 };

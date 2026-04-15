@@ -6,6 +6,13 @@ describe('Task Composer Regression', () => {
 
   beforeEach(async () => {
     fixture = await mountTaskComposer();
+    // Diagnostic: fail fast if input or button missing
+    if (!fixture.input || !fixture.button) {
+      // Log the shadow DOM for debugging
+      // eslint-disable-next-line no-console
+      console.error('[diagnostic] composer shadow:', fixture.shadow.innerHTML);
+      throw new Error('wa-input or wa-button not found in composer shadow DOM');
+    }
   });
 
   it('check that add click submits typed text in task-composer', async () => {
