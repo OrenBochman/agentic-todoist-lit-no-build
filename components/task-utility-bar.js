@@ -37,6 +37,30 @@ export class TaskUtilityBar extends LitElement {
       font-size: 1.08em;
       padding: 0.7em 1.3em;
       min-height: 40px;
+      background: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    wa-button[theme-icon] {
+      padding: 0.3em !important;
+      min-width: 0 !important;
+      background: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    wa-button[theme-icon] wa-icon {
+      background: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+    wa-button[theme-icon]::part(button),
+    wa-button[theme-icon]::part(base),
+    wa-button[theme-icon] button,
+    wa-button[theme-icon] {
+      background: none !important;
+      box-shadow: none !important;
+      border: none !important;
+      outline: none !important;
     }
     .hamburger {
       display: none;
@@ -111,12 +135,12 @@ export class TaskUtilityBar extends LitElement {
 
     return html`
       <div class="utility-bar">
-        <wa-button @click=${this._onToggleTheme} aria-label="Toggle dark mode" style="background: none; box-shadow: none; padding: 0.3em; min-width: 0;">
-          <wa-icon name="${this.theme === 'dark' ? 'sun' : 'moon'}" style="color: #fbbf24; font-size: 1.3em;"></wa-icon>
-        </wa-button>
-        <wa-button @click=${this._onWebMcpMenu} aria-label="Open WebMCP Tools" style="margin-left: 0.5em;">
+        <wa-button @click=${this._onWebMcpMenu} aria-label="Open WebMCP Tools" style="background: none; box-shadow: none; padding: 0.7em 1.3em; min-width: 0;">
           WebMCP Tools
           <span class="${dotClass}" title="WebMCP status"></span>
+        </wa-button>
+        <wa-button theme-icon @click=${this._onToggleTheme} aria-label="Toggle dark mode">
+          <wa-icon name="${this.theme === 'dark' ? 'sun' : 'moon'}" style="color: #fbbf24; font-size: 1.3em; background: none !important; box-shadow: none !important; border-radius: 0 !important;"></wa-icon>
         </wa-button>
         <span id="webmcp-anchor"></span>
       </div>
@@ -124,13 +148,13 @@ export class TaskUtilityBar extends LitElement {
         &#9776;
       </button>
       <div class="menu${this._menuOpen ? ' open' : ''}">
-        <button class="menu-item" @click=${this._onToggleTheme} style="display: flex; align-items: center; gap: 0.5em;">
-          <wa-icon name="${this.theme === 'dark' ? 'sun' : 'moon'}" style="color: #fbbf24; font-size: 1.3em;"></wa-icon>
-        </button>
         <div class="menu-item" @click=${this._onWebMcpMenu}>
           WebMCP Tools
           <span class="${dotClass}" title="WebMCP status"></span>
         </div>
+        <button class="menu-item" @click=${this._onToggleTheme} style="display: flex; align-items: center; gap: 0.5em;">
+          <wa-icon name="${this.theme === 'dark' ? 'sun' : 'moon'}" style="color: #fbbf24; font-size: 1.3em;"></wa-icon>
+        </button>
       </div>
     `;
   }
