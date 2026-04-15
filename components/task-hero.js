@@ -18,9 +18,11 @@ class TaskHero extends LitElement {
   static styles = css`
     :host {
       display: block;
-      /* DEBUG: Add visible outline and background for troubleshooting */
-      outline: 3px dashed red;
-      background: rgba(255,255,0,0.15);
+    }
+    .card {
+      min-height: 120px;
+      background: #ffe4e6 !important; /* Diagnostic: light rose background */
+      outline: 2px dashed #e11d48;
     }
     :host([theme='dark']) .card,
     :host([theme='dark']) .stat,

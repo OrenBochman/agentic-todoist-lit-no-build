@@ -76,7 +76,6 @@ class TaskBoard extends LitElement {
       <div class="board-header">
         <div>
           <h2 class="panel-title">Current tasks</h2>
-          <p class="panel-copy">Filter the list to focus on pending or completed work.</p>
         </div>
         <task-filter-bar .filter=${this.filter} @filter-change=${this.emitFilterChange}></task-filter-bar>
       </div>

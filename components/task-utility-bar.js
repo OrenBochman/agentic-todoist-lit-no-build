@@ -14,21 +14,23 @@ export class TaskUtilityBar extends LitElement {
     :host {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       gap: 1rem;
       font-family: inherit;
-      min-height: 56px;
+      min-height: 40px;
+      z-index: 10;
     }
     .utility-bar {
       display: flex;
       align-items: center;
       gap: 1.2rem;
-      min-height: 48px;
-      padding: 0 18px;
-      font-size: 1.13rem;
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 1.08rem;
       font-weight: 600;
-      background: var(--panel-background, #fff);
-      border-radius: 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      background: none;
+      border-radius: 0;
+      box-shadow: none;
     }
     wa-button {
       font-size: 1.08em;
@@ -88,8 +90,11 @@ export class TaskUtilityBar extends LitElement {
   render() {
     return html`
       <div class="utility-bar">
-        <wa-button @click=${this._onToggleTheme} aria-label="Toggle dark mode">
-          ${this.theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        <wa-button @click=${this._onToggleTheme} aria-label="Toggle dark mode" style="background: none; box-shadow: none; padding: 0.3em; min-width: 0;">
+          <wa-icon name="${this.theme === 'dark' ? 'sun' : 'moon'}" style="color: #fbbf24; font-size: 1.3em;"></wa-icon>
+        </wa-button>
+        <wa-button @click=${this._onWebMcpMenu} aria-label="Open WebMCP Tools" style="margin-left: 0.5em;">
+          WebMCP Tools
         </wa-button>
         <span id="webmcp-anchor"></span>
       </div>
@@ -97,8 +102,8 @@ export class TaskUtilityBar extends LitElement {
         &#9776;
       </button>
       <div class="menu${this._menuOpen ? ' open' : ''}">
-        <button class="menu-item" @click=${this._onToggleTheme}>
-          ${this.theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        <button class="menu-item" @click=${this._onToggleTheme} style="display: flex; align-items: center; gap: 0.5em;">
+          <wa-icon name="${this.theme === 'dark' ? 'sun' : 'moon'}" style="color: #fbbf24; font-size: 1.3em;"></wa-icon>
         </button>
         <div class="menu-item" @click=${this._onWebMcpMenu}>WebMCP Tools</div>
       </div>

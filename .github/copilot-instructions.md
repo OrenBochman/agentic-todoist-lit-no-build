@@ -80,6 +80,10 @@ Work on each feature one at a time, to facilitate focused code review and easier
 
 ## Testing
 
+1. your mission is to squish the bug and accelerate the development of new features by reducing regressions.
+  - Engage the bugs don't let them escape using workrounds. 
+  - `flex !important;` is not your friend.
+  - make the SUT visible in a fixture using a red dashed outline so your copilot can quickly help the diagnostic and steer the effort to the issue.
 1. your goal in testing is to get all test to pass. Use the integrated browser tool to automate testing in the browser and closing the loop via its console with minimal friction from the human co-pilot - your most valuable resource (e.g. don't ask to rerun tests when you can automate that yourself).
 1. write test with useful errors that can be interpreted and acted on by yourself and your human co-pilot to diagnose and fix the failure.
 1. A rule of thumb: Fix one issue at a time, but make note of new issues that are discovered.
