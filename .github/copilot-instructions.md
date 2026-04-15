@@ -28,9 +28,6 @@ Work on each feature one at a time, to facilitate focused code review and easier
 - [ ] Adjust css to make the Counters able to shrink to minimal size, replace `ALL tasks` to `All` and  `Completed` to `Done`.
 - [ ] Responsive design that maintains usability and visual integrity across a range of device sizes, from mobile to desktop, ensuring that task toggles and controls are easily accessible and not visually squished.
 
-
-
-
 ## Architecture
 
 - Keep each custom element in its own file.
@@ -81,6 +78,18 @@ Work on each feature one at a time, to facilitate focused code review and easier
   e.g. removing autocomplete at the app level to sidestep problems with `wa-input` styles when auo-fill is used.
 - Once an issue is fixed add a regression test that verifies the fix and prevents future breakage.
 
-# skills
+## Testing
+
+1. Use Mocha and Chai from `https://unpkg.com`
+2. automate the regression tests as unit tests that can be run in the browser and report pass/fail results.
+3. to split the fixture from the test
+4. to be short and sweet - less complex then the code being tested.
+5. allow me to add more comprehensive unit test as we proceed.
+6. Create a TDD plan - an ordered list of test that can be used to TDD all the features in the spec sequentially from scratch!
+7. Test need a brief descriptive name that indicates the issue being tested and the expected behavior and the context (i.e. bug or feature name + expected behavior and the unit under test) also clarify the fidelity level using native v.s. wa-input where relevant.
+8. each fixture is described in a short comment indicating intent (what web component and state is setup)
+9. also the assertion block is also explained briefly to clarify what behavior is being checked at each step.
+
+## Skills
 
 use the `webawesome` skill to properly integrate the WebMCP widget and tools, ensuring they work seamlessly with the task manager app and provide a good user experience when accessed from chat.

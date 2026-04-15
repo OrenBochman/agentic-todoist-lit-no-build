@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Hero Regression Test</title>
+    <link rel="stylesheet" href="https://unpkg.com/mocha@10.7.3/mocha.css" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
@@ -62,35 +63,29 @@
         margin-top: 20px;
       }
 
-      .results {
-        display: grid;
-        gap: 12px;
+      #mocha {
         margin-top: 24px;
+        color: var(--text-strong);
       }
 
-      .result {
-        border-radius: 16px;
-        padding: 14px 16px;
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        background: rgba(15, 23, 42, 0.44);
+      #mocha .suite h1,
+      #mocha .suite h2,
+      #mocha .test {
+        color: var(--text-strong);
       }
 
-      .result[data-status='passed'] {
-        border-color: rgba(74, 222, 128, 0.36);
+      #mocha .test.pass {
+        color: #4ade80;
       }
 
-      .result[data-status='failed'] {
-        border-color: rgba(248, 113, 113, 0.4);
+      #mocha .test.fail {
+        color: #f87171;
       }
 
-      .result strong {
-        display: block;
-        margin-bottom: 4px;
-      }
-
-      .result code {
-        font-family: ui-monospace, monospace;
-        font-size: 0.92rem;
+      #mocha-stats {
+        position: static;
+        margin-top: 16px;
+        color: var(--text-muted);
       }
     </style>
   </head>
@@ -104,149 +99,16 @@
         </p>
 
         <div id="mount"></div>
-        <div id="results" class="results" aria-live="polite"></div>
+        <div id="mocha"></div>
       </section>
     </main>
 
+    <script src="https://unpkg.com/mocha@10.7.3/mocha.js"></script>
+    <script src="https://unpkg.com/chai@4.5.0/chai.js"></script>
     <script type="module">
-      import {
-        discover,
-        setBasePath,
-        startLoader,
-      } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
-      import '../components/task-hero.js';
-
-      setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
-      startLoader();
-
-      const mount = document.getElementById('mount');
-      const results = document.getElementById('results');
-
-      const waitForRender = async () => {
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      };
-
-      const addResult = (name, passed, detail) => {
-        const item = document.createElement('div');
-        item.className = 'result';
-        item.dataset.status = passed ? 'passed' : 'failed';
-        item.innerHTML = `<strong>${passed ? 'PASS' : 'FAIL'}: ${name}</strong><code>${detail}</code>`;
-        results.append(item);
-      };
-
-      const assert = (condition, message) => {
-        if (!condition) {
-          throw new Error(message);
-        }
-      };
-
-      const hero = document.createElement('task-hero');
-      hero.setAttribute('data-wa-preload', 'wa-icon');
-      hero.totalTasks = 12;
-      hero.pendingTasks = 5;
-      hero.completedTasks = 7;
-      hero.theme = 'dark';
-      hero.webMcpStatus = 'ready';
-      mount.append(hero);
-
-      await customElements.whenDefined('task-hero');
-  await discover(mount);
-  await customElements.whenDefined('wa-icon');
-      await waitForRender();
-
-      const shadow = hero.shadowRoot;
-
-      const tests = [
-        {
-          name: 'Hero includes the app icon with the configured Web Awesome glyph',
-          run: async () => {
-            const icon = shadow.querySelector('wa-icon');
-
-            assert(icon, 'hero icon was not rendered');
-            assert(icon.getAttribute('name') === 'list-check', `unexpected hero icon name: ${icon.getAttribute('name')}`);
-            assert(icon.style.color === 'rgb(255, 212, 59)', `unexpected hero icon color: ${icon.style.color}`);
-          },
-        },
-        {
-          name: 'Counter labels use All, Pending, and Done',
-          run: async () => {
-            const labels = [...shadow.querySelectorAll('.stat-label')].map((node) => node.textContent.trim());
-            assert(labels.join('|') === 'All|Pending|Done', `unexpected labels: ${labels.join(', ')}`);
-          },
-        },
-        {
-          name: 'Counter grid keeps three columns at desktop width',
-          run: async () => {
-            mount.style.width = '900px';
-            await waitForRender();
-
-            const stats = shadow.querySelector('.stats');
-            const style = getComputedStyle(stats);
-            const columns = style.gridTemplateColumns.split(' ').filter(Boolean);
-
-            assert(columns.length === 3, `expected 3 stat columns, received ${style.gridTemplateColumns}`);
-          },
-        },
-        {
-          name: 'Counter grid keeps three columns at current narrow card width',
-          run: async () => {
-            mount.style.width = '353px';
-            await waitForRender();
-
-            const stats = shadow.querySelector('.stats');
-            const columns = getComputedStyle(stats).gridTemplateColumns.split(' ').filter(Boolean);
-
-            assert(columns.length === 3, `expected 3 columns at current narrow width, received ${columns.length}`);
-          },
-        },
-        {
-          name: 'Counter cards expand when more width is available',
-          run: async () => {
-            mount.style.width = '353px';
-            await waitForRender();
-
-            const narrowWidth = shadow.querySelector('.stat').getBoundingClientRect().width;
-
-            mount.style.width = '900px';
-            await waitForRender();
-
-            const wideWidth = shadow.querySelector('.stat').getBoundingClientRect().width;
-
-            assert(wideWidth > narrowWidth, `expected stats to expand, got narrow=${narrowWidth} wide=${wideWidth}`);
-          },
-        },
-        {
-          name: 'Counter grid does not overflow the card at current narrow width',
-          run: async () => {
-            mount.style.width = '353px';
-            await waitForRender();
-
-            const stats = shadow.querySelector('.stats');
-            assert(stats.scrollWidth <= stats.clientWidth + 1, `stats overflowed: scroll=${stats.scrollWidth} client=${stats.clientWidth}`);
-          },
-        },
-        {
-          name: 'Counter grid reduces columns only at very small widths',
-          run: async () => {
-            mount.style.width = '280px';
-            await waitForRender();
-
-            const stats = shadow.querySelector('.stats');
-            const columns = getComputedStyle(stats).gridTemplateColumns.split(' ').filter(Boolean);
-
-            assert(columns.length < 3, `expected fewer than 3 columns at very small width, received ${columns.length}`);
-          },
-        },
-      ];
-
-      for (const test of tests) {
-        try {
-          await test.run();
-          addResult(test.name, true, 'ok');
-        } catch (error) {
-          addResult(test.name, false, error instanceof Error ? error.message : String(error));
-        }
-      }
+      import { runBrowserTests } from './helpers/browser-test-harness.js';
+      await import('./specs/task-hero.spec.js');
+      await runBrowserTests();
     </script>
   </body>
 </html>

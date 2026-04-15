@@ -24,21 +24,25 @@ Open [index.html](./index.html) in VS Code preview, or serve the folder with any
 
 ## Regression Tests
 
+There is a single browser-run regression dashboard at [tests/all-regression-tests.html](./tests/all-regression-tests.html).
+
+Open it through the same static server used for the app. It auto-runs every Mocha/Chai regression spec in one page and is the fastest way to verify the whole suite after a change.
+
 There is a browser-run regression test for the task composer click-submit bug at [tests/task-composer-regression.html](./tests/task-composer-regression.html).
 
-Open it through the same static server used for the app. It checks that clicking the `+` button uses the live `wa-input` value and that empty submit still shows validation.
+Open it through the same static server used for the app. It now auto-runs a browser Mocha/Chai suite, with the fixture split into separate helper modules. It checks that clicking the `+` button uses the live `wa-input` value and that empty submit still shows validation.
 
 There is also an app-level regression test at [tests/task-manager-add-task-regression.html](./tests/task-manager-add-task-regression.html).
 
-Open it through the same static server used for the app. It checks that clicking the `+` button adds a task to the root app state, renders that task in the board, and that a long press can open the inline edit form and save updated task text.
+Open it through the same static server used for the app. It now auto-runs a browser Mocha/Chai suite with a shared app fixture. It checks add, toggle, and long-press edit flows at both `wa-input` and native-input fidelity where relevant.
 
 There is also a hero regression test at [tests/task-hero-regression.html](./tests/task-hero-regression.html).
 
-Open it through the same static server used for the app. It checks the counter labels and verifies the hero stats stay in three shrinking columns at a narrow width.
+Open it through the same static server used for the app. It now auto-runs a browser Mocha/Chai suite with a standalone hero fixture. It checks the icon, labels, and the responsive counter layout behavior.
 
 There is also a transfer regression test at [tests/task-transfer-regression.html](./tests/task-transfer-regression.html).
 
-Open it through the same static server used for the app. It checks that export creates a JSON backup payload and that import preserves existing tasks, adds only missing ones, and reports invalid files.
+Open it through the same static server used for the app. It now auto-runs a browser Mocha/Chai suite with the shared app fixture. It checks transfer layout, JSON export, merge-only import, duplicate skipping, and invalid-file feedback.
 
 ## WebMCP
 

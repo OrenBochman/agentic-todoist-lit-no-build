@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Transfer Regression Test</title>
+    <link rel="stylesheet" href="https://unpkg.com/mocha@10.7.3/mocha.css" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
@@ -60,35 +61,29 @@
         margin-top: 20px;
       }
 
-      .results {
-        display: grid;
-        gap: 12px;
+      #mocha {
         margin-top: 24px;
+        color: var(--text-strong);
       }
 
-      .result {
-        border-radius: 16px;
-        padding: 14px 16px;
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        background: rgba(15, 23, 42, 0.44);
+      #mocha .suite h1,
+      #mocha .suite h2,
+      #mocha .test {
+        color: var(--text-strong);
       }
 
-      .result[data-status='passed'] {
-        border-color: rgba(74, 222, 128, 0.36);
+      #mocha .test.pass {
+        color: #4ade80;
       }
 
-      .result[data-status='failed'] {
-        border-color: rgba(248, 113, 113, 0.4);
+      #mocha .test.fail {
+        color: #f87171;
       }
 
-      .result strong {
-        display: block;
-        margin-bottom: 4px;
-      }
-
-      .result code {
-        font-family: ui-monospace, monospace;
-        font-size: 0.92rem;
+      #mocha-stats {
+        position: static;
+        margin-top: 16px;
+        color: var(--text-muted);
       }
     </style>
   </head>
@@ -102,307 +97,16 @@
         </p>
 
         <div id="mount"></div>
-        <div id="results" class="results" aria-live="polite"></div>
+        <div id="mocha"></div>
       </section>
     </main>
 
+    <script src="https://unpkg.com/mocha@10.7.3/mocha.js"></script>
+    <script src="https://unpkg.com/chai@4.5.0/chai.js"></script>
     <script type="module">
-      import { setBasePath, startLoader } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
-      import '../script.js';
-
-      const STORAGE_KEY = 'task-manager-items';
-      const THEME_STORAGE_KEY = 'task-manager-theme';
-
-      setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
-      startLoader();
-
-      const mount = document.getElementById('mount');
-      const results = document.getElementById('results');
-
-      const waitForRender = async () => {
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      };
-
-      const addResult = (name, passed, detail) => {
-        const item = document.createElement('div');
-        item.className = 'result';
-        item.dataset.status = passed ? 'passed' : 'failed';
-        item.innerHTML = `<strong>${passed ? 'PASS' : 'FAIL'}: ${name}</strong><code>${detail}</code>`;
-        results.append(item);
-      };
-
-      const assert = (condition, message) => {
-        if (!condition) {
-          throw new Error(message);
-        }
-      };
-
-      const setFileList = (input, file) => {
-        Object.defineProperty(input, 'files', {
-          configurable: true,
-          value: [file],
-        });
-      };
-
-      window.localStorage.removeItem(STORAGE_KEY);
-      window.localStorage.removeItem(THEME_STORAGE_KEY);
-
-      const app = document.createElement('task-manager-app');
-      app.setAttribute('data-wa-preload', 'wa-button wa-input wa-icon');
-      mount.append(app);
-
-      await customElements.whenDefined('task-manager-app');
-      await customElements.whenDefined('wa-button');
-      await customElements.whenDefined('wa-icon');
-      await waitForRender();
-
-      app.tasks = [
-        {
-          id: 'seed-task',
-          text: 'Seed task',
-          completed: false,
-          createdAt: '2026-04-14T00:00:00.000Z',
-        },
-      ];
-      app.saveTasks();
-      await waitForRender();
-
-      const appShadow = app.shadowRoot;
-      const board = appShadow.querySelector('task-board');
-      const transfer = appShadow.querySelector('task-transfer-controls');
-      const snackbar = appShadow.querySelector('task-snackbar');
-      const transferShadow = transfer.shadowRoot;
-      const [, exportButton] = transferShadow.querySelectorAll('wa-button');
-      const fileInput = transferShadow.querySelector('#file-input');
-
-      const tests = [
-        {
-          name: 'Transfer controls render below the task list in their own card',
-          run: async () => {
-            const boardElement = appShadow.querySelector('task-board');
-            const transferCard = transfer.closest('.panel')?.parentElement;
-            const buttonLabels = [...transferShadow.querySelectorAll('wa-button')].map((button) => button.textContent?.trim());
-
-            assert(boardElement, 'task board was not rendered');
-            assert(transferCard?.classList.contains('transfer-card'), 'transfer controls were not rendered in their own card');
-            assert(boardElement.nextElementSibling === transferCard, 'transfer controls were not placed below the task list');
-            assert(snackbar, 'transfer snackbar was not rendered at the app level');
-            assert(buttonLabels[0] === 'Import', 'import button label was not shortened to Import');
-            assert(buttonLabels[1] === 'Export', 'export button label was not shortened to Export');
-          },
-        },
-        {
-          name: 'Transfer buttons anchor left and right with an empty middle third until the hero breakpoint',
-          run: async () => {
-            mount.style.width = '900px';
-            await waitForRender();
-
-            const wideButtons = transferShadow.querySelector('.buttons');
-            const [importButton, exportWideButton] = transferShadow.querySelectorAll('wa-button');
-            const wideColumns = getComputedStyle(wideButtons).gridTemplateColumns.split(' ').filter(Boolean);
-            const importRect = importButton.getBoundingClientRect();
-            const exportRect = exportWideButton.getBoundingClientRect();
-            const rowRect = wideButtons.getBoundingClientRect();
-            const expectedThird = (rowRect.width - 20) / 3;
-            const middleGap = exportRect.left - importRect.right;
-
-            assert(wideColumns.length === 3, 'wide transfer row should use three columns');
-            assert(Math.abs(importRect.width - expectedThird) < 3, 'import button did not size to one third of the row');
-            assert(Math.abs(exportRect.width - expectedThird) < 3, 'export button did not size to one third of the row');
-            assert(Math.abs(importRect.left - rowRect.left) < 3, 'import button did not stick to the left edge');
-            assert(Math.abs(exportRect.right - rowRect.right) < 3, 'export button did not stick to the right edge');
-            assert(Math.abs(middleGap - expectedThird) < 6, 'middle third was not left empty between the buttons');
-
-            mount.style.width = '353px';
-            await waitForRender();
-
-            const narrowColumns = getComputedStyle(transferShadow.querySelector('.buttons')).gridTemplateColumns.split(' ').filter(Boolean);
-            assert(narrowColumns.length === 3, 'transfer buttons should still keep the empty middle third at the hero three-counter width');
-
-            mount.style.width = '280px';
-            await waitForRender();
-
-            const stackedColumns = getComputedStyle(transferShadow.querySelector('.buttons')).gridTemplateColumns.split(' ').filter(Boolean);
-            assert(stackedColumns.length === 1, 'transfer buttons should stack at the same breakpoint where the hero counters first collapse');
-          },
-        },
-        {
-          name: 'Export creates a portable JSON payload',
-          run: async () => {
-            let capturedDownload = '';
-            let capturedJson = '';
-            let resolveBlobText = () => {};
-            const blobTextReady = new Promise((resolve) => {
-              resolveBlobText = resolve;
-            });
-            const originalCreateObjectUrl = window.URL.createObjectURL;
-            const originalRevokeObjectUrl = window.URL.revokeObjectURL;
-            const originalClick = HTMLAnchorElement.prototype.click;
-
-            window.URL.createObjectURL = (blob) => {
-              blob.text().then((text) => {
-                capturedJson = text;
-                resolveBlobText();
-              });
-              return 'blob:test-export';
-            };
-            window.URL.revokeObjectURL = () => {};
-            HTMLAnchorElement.prototype.click = function click() {
-              capturedDownload = this.download;
-            };
-
-            exportButton.click();
-            await waitForRender();
-            await blobTextReady;
-
-            window.URL.createObjectURL = originalCreateObjectUrl;
-            window.URL.revokeObjectURL = originalRevokeObjectUrl;
-            HTMLAnchorElement.prototype.click = originalClick;
-
-            const parsed = JSON.parse(capturedJson);
-
-            assert(capturedDownload.endsWith('.json'), 'export filename did not end with .json');
-            assert(parsed.version === 1, 'export payload version was not set');
-            assert(Array.isArray(parsed.tasks), 'export payload did not include a tasks array');
-            assert(parsed.tasks[0]?.text === 'Seed task', 'export payload did not include the current task');
-            assert(app.transferStatusTone === 'success', 'export status tone was not success');
-            assert(snackbar.open === true, 'export success message did not open the snackbar');
-            assert(snackbar.message.includes('Exported 1 task to JSON.'), 'export snackbar message was not rendered');
-          },
-        },
-        {
-          name: 'Import merges only missing tasks from JSON',
-          run: async () => {
-            const importFile = new File([
-              JSON.stringify({
-                version: 1,
-                tasks: [
-                  {
-                    id: 'seed-task',
-                    text: 'Seed task',
-                    completed: true,
-                    createdAt: '2026-04-14T01:00:00.000Z',
-                  },
-                  {
-                    id: 'imported-task',
-                    text: 'Imported task',
-                    completed: true,
-                    createdAt: '2026-04-14T01:00:00.000Z',
-                  },
-                ],
-              }),
-            ], 'tasks.json', { type: 'application/json' });
-
-            setFileList(fileInput, importFile);
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            await waitForRender();
-
-            assert(app.tasks.length === 2, 'import did not add only the missing task');
-            assert(app.tasks[0]?.text === 'Imported task', 'new imported task was not added at the top');
-            assert(app.tasks[0]?.completed === true, 'new imported completed state was not applied');
-            assert(app.tasks[1]?.text === 'Seed task', 'existing task should have been preserved');
-            assert(app.tasks[1]?.completed === false, 'existing task should not have been overwritten');
-            assert(app.filter === 'all', 'import did not reset the filter to all');
-            const renderedItems = [...board.shadowRoot.querySelectorAll('task-item')].map((item) => item.task?.text);
-            assert(renderedItems.includes('Imported task'), 'board did not render the new imported task');
-            assert(renderedItems.includes('Seed task'), 'board no longer rendered the existing task');
-            assert(app.transferStatusMessage.includes('Imported 1 new task from tasks.json.'), 'success import message was not shown');
-            assert(snackbar.open === true, 'import success message did not open the snackbar');
-          },
-        },
-        {
-          name: 'Import skips files that contain only existing tasks',
-          run: async () => {
-            const beforeSnapshot = JSON.stringify(app.tasks);
-            const importFile = new File([
-              JSON.stringify({
-                tasks: [
-                  {
-                    id: 'seed-task',
-                    text: 'Seed task',
-                    completed: false,
-                    createdAt: '2026-04-14T00:00:00.000Z',
-                  },
-                  {
-                    id: 'imported-task',
-                    text: 'Imported task',
-                    completed: true,
-                    createdAt: '2026-04-14T01:00:00.000Z',
-                  },
-                ],
-              }),
-            ], 'existing-only.json', { type: 'application/json' });
-
-            setFileList(fileInput, importFile);
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            await waitForRender();
-
-            assert(JSON.stringify(app.tasks) === beforeSnapshot, 'existing-only import should not change the task list');
-            assert(app.transferStatusMessage === 'No new tasks were imported from existing-only.json.', 'existing-only import message was not shown');
-            assert(snackbar.message === 'No new tasks were imported from existing-only.json.', 'existing-only snackbar message was not rendered');
-          },
-        },
-        {
-          name: 'Import does not duplicate repeated new tasks in one file',
-          run: async () => {
-            const importFile = new File([
-              JSON.stringify({
-                tasks: [
-                  {
-                    id: 'repeat-a',
-                    text: 'Repeated import task',
-                    completed: false,
-                    createdAt: '2026-04-14T02:00:00.000Z',
-                  },
-                  {
-                    id: 'repeat-a',
-                    text: 'Repeated import task',
-                    completed: false,
-                    createdAt: '2026-04-14T02:00:00.000Z',
-                  },
-                ],
-              }),
-            ], 'repeated.json', { type: 'application/json' });
-
-            setFileList(fileInput, importFile);
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            await waitForRender();
-
-            const repeatedTasks = app.tasks.filter((task) => task.text === 'Repeated import task');
-            assert(repeatedTasks.length === 1, 'repeated imported task should only be added once');
-            assert(app.transferStatusMessage === 'Imported 1 new task from repeated.json.', 'repeated import success message was not shown');
-            assert(snackbar.open === true, 'repeated import did not show the snackbar');
-          },
-        },
-        {
-          name: 'Invalid JSON shows an import error without changing tasks',
-          run: async () => {
-            const beforeSnapshot = JSON.stringify(app.tasks);
-            const invalidFile = new File(['{"tasks": ['] , 'broken.json', { type: 'application/json' });
-
-            setFileList(fileInput, invalidFile);
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            await waitForRender();
-
-            assert(JSON.stringify(app.tasks) === beforeSnapshot, 'invalid import mutated the task list');
-            assert(app.transferStatusTone === 'error', 'invalid import did not set error tone');
-            assert(snackbar.open === true, 'invalid import did not open the snackbar');
-            assert(snackbar.shadowRoot.querySelector('.message')?.textContent?.trim().length, 'invalid import snackbar message was not rendered');
-          },
-        },
-      ];
-
-      for (const test of tests) {
-        try {
-          await test.run();
-          addResult(test.name, true, 'ok');
-        } catch (error) {
-          addResult(test.name, false, error instanceof Error ? error.message : String(error));
-        }
-      }
-
-      window.localStorage.removeItem(STORAGE_KEY);
-      window.localStorage.removeItem(THEME_STORAGE_KEY);
+      import { runBrowserTests } from './helpers/browser-test-harness.js';
+      await import('./specs/task-transfer.spec.js');
+      await runBrowserTests();
     </script>
   </body>
 </html>

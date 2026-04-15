@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Manager Add Task Regression Test</title>
+    <link rel="stylesheet" href="https://unpkg.com/mocha@10.7.3/mocha.css" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.5.0/dist/styles/webawesome.css"
@@ -60,35 +61,29 @@
         margin-top: 20px;
       }
 
-      .results {
-        display: grid;
-        gap: 12px;
+      #mocha {
         margin-top: 24px;
+        color: var(--text-strong);
       }
 
-      .result {
-        border-radius: 16px;
-        padding: 14px 16px;
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        background: rgba(15, 23, 42, 0.44);
+      #mocha .suite h1,
+      #mocha .suite h2,
+      #mocha .test {
+        color: var(--text-strong);
       }
 
-      .result[data-status='passed'] {
-        border-color: rgba(74, 222, 128, 0.36);
+      #mocha .test.pass {
+        color: #4ade80;
       }
 
-      .result[data-status='failed'] {
-        border-color: rgba(248, 113, 113, 0.4);
+      #mocha .test.fail {
+        color: #f87171;
       }
 
-      .result strong {
-        display: block;
-        margin-bottom: 4px;
-      }
-
-      .result code {
-        font-family: ui-monospace, monospace;
-        font-size: 0.92rem;
+      #mocha-stats {
+        position: static;
+        margin-top: 16px;
+        color: var(--text-muted);
       }
     </style>
   </head>
@@ -102,213 +97,16 @@
         </p>
 
         <div id="mount"></div>
-        <div id="results" class="results" aria-live="polite"></div>
+        <div id="mocha"></div>
       </section>
     </main>
 
+    <script src="https://unpkg.com/mocha@10.7.3/mocha.js"></script>
+    <script src="https://unpkg.com/chai@4.5.0/chai.js"></script>
     <script type="module">
-      import { setBasePath, startLoader } from 'https://esm.sh/@awesome.me/webawesome@3.5.0/dist/webawesome.loader.js';
-      import '../script.js';
-
-      const STORAGE_KEY = 'task-manager-items';
-      const THEME_STORAGE_KEY = 'task-manager-theme';
-
-      setBasePath('https://esm.sh/@awesome.me/webawesome@3.5.0/dist/');
-      startLoader();
-
-      const mount = document.getElementById('mount');
-      const results = document.getElementById('results');
-
-      const waitForRender = async () => {
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      };
-
-      const addResult = (name, passed, detail) => {
-        const item = document.createElement('div');
-        item.className = 'result';
-        item.dataset.status = passed ? 'passed' : 'failed';
-        item.innerHTML = `<strong>${passed ? 'PASS' : 'FAIL'}: ${name}</strong><code>${detail}</code>`;
-        results.append(item);
-      };
-
-      const assert = (condition, message) => {
-        if (!condition) {
-          throw new Error(message);
-        }
-      };
-
-      window.localStorage.removeItem(STORAGE_KEY);
-      window.localStorage.removeItem(THEME_STORAGE_KEY);
-
-      const app = document.createElement('task-manager-app');
-      app.setAttribute('data-wa-preload', 'wa-button wa-input wa-icon');
-      mount.append(app);
-
-      await customElements.whenDefined('task-manager-app');
-      await customElements.whenDefined('wa-input');
-      await customElements.whenDefined('wa-button');
-      await customElements.whenDefined('wa-icon');
-      await waitForRender();
-
-      const waitForLongPress = async () => {
-        await new Promise((resolve) => window.setTimeout(resolve, 500));
-        await waitForRender();
-      };
-
-      const appShadow = app.shadowRoot;
-      const composer = appShadow.querySelector('task-composer');
-      const composerShadow = composer.shadowRoot;
-      const input = composerShadow.querySelector('wa-input');
-      const button = composerShadow.querySelector('wa-button');
-      const board = appShadow.querySelector('task-board');
-
-      const tests = [
-        {
-          name: 'Clicking plus adds a task to the root app',
-          run: async () => {
-            const beforeCount = app.tasks.length;
-
-            input.value = 'test 123';
-            input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
-            await waitForRender();
-
-            button.click();
-            await waitForRender();
-
-            const boardItems = [...board.shadowRoot.querySelectorAll('task-item')];
-            const firstTaskText = boardItems[0]?.task?.text ?? '';
-
-            assert(app.tasks.length === beforeCount + 1, 'root app task count did not increase');
-            assert(app.tasks[0]?.text === 'test 123', 'new task was not inserted at the top of app state');
-            assert(firstTaskText === 'test 123', 'new task was not rendered in the task board');
-            assert(input.value === '', 'composer input did not clear after successful add');
-          },
-        },
-        {
-          name: 'Typing in the native control then clicking plus adds a task',
-          run: async () => {
-            const beforeCount = app.tasks.length;
-            const internalInput = input.shadowRoot?.querySelector('input');
-
-            assert(internalInput, 'native input was not rendered');
-
-            internalInput.value = 'native add task';
-            internalInput.dispatchEvent(new InputEvent('input', {
-              bubbles: true,
-              composed: true,
-              data: 'k',
-              inputType: 'insertText',
-            }));
-            await waitForRender();
-
-            button.click();
-            await waitForRender();
-
-            assert(app.tasks.length === beforeCount + 1, 'task count did not increase after native input typing');
-            assert(app.tasks[0]?.text === 'native add task', 'root app did not use the live native input value');
-            assert(board.shadowRoot.querySelector('task-item')?.task?.text === 'native add task', 'board did not render the native typed task');
-          },
-        },
-        {
-          name: 'Clicking the task toggle marks the task completed',
-          run: async () => {
-            const firstItem = board.shadowRoot.querySelector('task-item');
-            const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
-
-            assert(toggle, 'task toggle was not rendered');
-            assert(app.tasks[0]?.completed === false, 'expected the task to start pending');
-
-            toggle.click();
-            await waitForRender();
-
-            const updatedFirstItem = board.shadowRoot.querySelector('task-item');
-            const meta = updatedFirstItem?.shadowRoot?.querySelector('.task-meta')?.textContent?.trim() ?? '';
-
-            assert(app.tasks[0]?.completed === true, 'clicking the task toggle did not mark the task completed');
-            assert(updatedFirstItem?.task?.completed === true, 'task-item did not receive completed state');
-            assert(meta === 'Completed', 'completed task status was not rendered');
-          },
-        },
-        {
-          name: 'Long press opens edit form and saving updates the task text',
-          run: async () => {
-            const firstItem = board.shadowRoot.querySelector('task-item');
-            const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-
-            assert(taskMain, 'editable task surface was not rendered');
-
-            taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-            await waitForLongPress();
-
-            const editInput = firstItem.shadowRoot.querySelector('wa-input');
-            const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
-
-            assert(editInput, 'long press did not open the edit form');
-            assert(saveButton, 'save button was not rendered in edit mode');
-
-            editInput.value = 'edited task text';
-            editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
-            await waitForRender();
-
-            saveButton.click();
-            await waitForRender();
-
-            const updatedFirstItem = board.shadowRoot.querySelector('task-item');
-            const updatedText = updatedFirstItem?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
-
-            assert(app.tasks[0]?.text === 'edited task text', 'root app did not persist the edited task text');
-            assert(updatedText === 'edited task text', 'edited task text was not rendered');
-          },
-        },
-        {
-          name: 'Typing in the native edit control then clicking save persists the live value',
-          run: async () => {
-            const firstItem = board.shadowRoot.querySelector('task-item');
-            const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-
-            assert(taskMain, 'editable task surface was not rendered for native edit test');
-
-            taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-            await waitForLongPress();
-
-            const editInput = firstItem.shadowRoot.querySelector('wa-input');
-            const internalEditInput = editInput?.shadowRoot?.querySelector('input');
-            const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
-
-            assert(internalEditInput, 'native edit input was not rendered');
-            assert(saveButton, 'save button was not rendered for native edit test');
-
-            internalEditInput.value = 'edited through native input';
-            internalEditInput.dispatchEvent(new InputEvent('input', {
-              bubbles: true,
-              composed: true,
-              data: 't',
-              inputType: 'insertText',
-            }));
-            await waitForRender();
-
-            saveButton.click();
-            await waitForRender();
-
-            const updatedText = board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
-
-            assert(app.tasks[0]?.text === 'edited through native input', 'edit save did not use the live native input value');
-            assert(updatedText === 'edited through native input', 'native edit text was not rendered after save');
-          },
-        },
-      ];
-
-      for (const test of tests) {
-        try {
-          await test.run();
-          addResult(test.name, true, 'ok');
-        } catch (error) {
-          addResult(test.name, false, error instanceof Error ? error.message : String(error));
-        }
-      }
-
-      window.localStorage.removeItem(STORAGE_KEY);
-      window.localStorage.removeItem(THEME_STORAGE_KEY);
+      import { runBrowserTests } from './helpers/browser-test-harness.js';
+      await import('./specs/task-manager-add-task.spec.js');
+      await runBrowserTests();
     </script>
   </body>
 </html>

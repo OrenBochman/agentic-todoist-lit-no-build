@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Task Composer Regression Test</title>
+    <title>Task Manager Regression Dashboard</title>
     <link rel="stylesheet" href="https://unpkg.com/mocha@10.7.3/mocha.css" />
     <link
       rel="stylesheet"
@@ -35,7 +35,7 @@
       }
 
       main {
-        width: min(900px, 100%);
+        width: min(1100px, 100%);
         margin: 0 auto;
       }
 
@@ -90,13 +90,13 @@
   <body>
     <main>
       <section class="card">
-        <h1>Task Composer Regression Test</h1>
+        <h1>Task Manager Regression Dashboard</h1>
         <p>
-          This page tests the click-on-<code>+</code> regression where the visible Web Awesome input had
-          text, but submit still raised the “Enter a task before adding it.” validation message.
+          This page runs the full browser regression suite in one Mocha session so you can verify
+          composer, app, hero, and transfer behavior from a single dashboard.
         </p>
 
-        <div id="mount" data-wa-preload="wa-button wa-input"></div>
+        <div id="mount" data-wa-preload="wa-button wa-input wa-icon"></div>
         <div id="mocha"></div>
       </section>
     </main>
@@ -105,7 +105,7 @@
     <script src="https://unpkg.com/chai@4.5.0/chai.js"></script>
     <script type="module">
       import { runBrowserTests } from './helpers/browser-test-harness.js';
-      await import('./specs/task-composer.spec.js');
+      await import('./specs/all-regression.spec.js');
       await runBrowserTests();
     </script>
   </body>
