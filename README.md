@@ -12,6 +12,7 @@ This workspace contains a task manager web app built with Lit in plain JavaScrip
 - Import tasks from JSON backups
 - Export tasks as JSON backups
 - App icon in the hero using Web Awesome
+- Edit tasks by long-pressing a task row
 - WebMCP widget with task tools for browsing, adding, completing, and deleting tasks from chat
 
 ## Run
@@ -29,7 +30,7 @@ Open it through the same static server used for the app. It checks that clicking
 
 There is also an app-level regression test at [tests/task-manager-add-task-regression.html](./tests/task-manager-add-task-regression.html).
 
-Open it through the same static server used for the app. It checks that clicking the `+` button adds a task to the root app state and renders that task in the board.
+Open it through the same static server used for the app. It checks that clicking the `+` button adds a task to the root app state, renders that task in the board, and that a long press can open the inline edit form and save updated task text.
 
 There is also a hero regression test at [tests/task-hero-regression.html](./tests/task-hero-regression.html).
 
@@ -65,3 +66,25 @@ To use them from chat, connect an MCP client to the blue widget. The WebMCP site
 ## Copilot customization
 
 Workspace instructions are in `.github/copilot-instructions.md` and the custom review agent is in `.github/agents/Reviewer.agent.md`.
+
+## Some todos:
+
+1. [ ] an editor.
+1. [ ] support richer project prompt like I had the first time round 
+1. [ ] add some extra skill and remove some rcps.
+1. [ ] expand the speck to include the flowing features:
+1. [ ] add tests for current regression to allow an agent to develop from scratch with refactoring.
+1. [ ] add class diagrams via mermaid.
+2. [ ] add my own insights about lit and webawesome. possible blog post.
+3. [ ] deploy as a page on my blog.
+4. [ ] add ability to sign in 
+4. [ ] and sync task via a backend, firebase/supabase/google docs...
+5. [ ] add projects
+6. [ ] task parser.
+7. [ ] add importance levels + 
+add due dates and reminders.
+8. [ ] add task categories and filtering by category.
+9. [ ] share tasks with other users.
+10. [ ] add a calendar view.
+11. [ ] add a kanban board view - for projects
+

@@ -85,7 +85,12 @@ class TaskBoard extends LitElement {
         ${visibleTasks.length
           ? visibleTasks.map(
               (task) => html`
-                <task-item .task=${task} @task-toggle=${this.emitToggle} @task-delete=${this.emitDelete}></task-item>
+                <task-item
+                  .task=${task}
+                  @task-toggle=${this.emitToggle}
+                  @task-delete=${this.emitDelete}
+                  @task-edit=${this.emitEdit}
+                ></task-item>
               `,
             )
           : html`<div class="empty">No tasks match this filter yet.</div>`}
@@ -151,6 +156,23 @@ class TaskBoard extends LitElement {
         bubbles: true,
         composed: true,
         detail: { taskId },
+      }),
+    );
+  }
+
+  /**
+   * Emits an edit request for a specific task id.
+   */
+  emitEdit(event) {
+    event.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent('task-edit', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          taskId: event.detail.taskId,
+          text: event.detail.text,
+        },
       }),
     );
   }

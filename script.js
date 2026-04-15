@@ -135,6 +135,7 @@ class TaskManagerApp extends LitElement {
             .filter=${this.filter}
             .tasks=${/** @type {any} */ (this.tasks)}
             @filter-change=${this.handleFilterChange}
+            @task-edit=${this.handleTaskEdit}
             @task-toggle=${this.handleTaskToggle}
             @task-delete=${this.handleTaskDelete}
           ></task-board>
@@ -269,6 +270,24 @@ class TaskManagerApp extends LitElement {
   handleTaskDelete(event) {
     const taskId = event.detail.taskId;
     this.tasks = this.tasks.filter((task) => task.id !== taskId);
+    this.saveTasks();
+    this.clearTransferStatus();
+  }
+
+  /**
+   * Updates the text of an existing task.
+   */
+  handleTaskEdit(event) {
+    const taskId = event.detail.taskId;
+    const nextText = String(event.detail.text || '').trim();
+
+    if (!nextText) {
+      return;
+    }
+
+    this.tasks = this.tasks.map((task) =>
+      task.id === taskId ? { ...task, text: nextText } : task,
+    );
     this.saveTasks();
     this.clearTransferStatus();
   }

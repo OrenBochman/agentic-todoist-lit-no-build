@@ -150,6 +150,11 @@
       await customElements.whenDefined('wa-icon');
       await waitForRender();
 
+      const waitForLongPress = async () => {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        await waitForRender();
+      };
+
       const appShadow = app.shadowRoot;
       const composer = appShadow.querySelector('task-composer');
       const composerShadow = composer.shadowRoot;
@@ -222,6 +227,73 @@
             assert(app.tasks[0]?.completed === true, 'clicking the task toggle did not mark the task completed');
             assert(updatedFirstItem?.task?.completed === true, 'task-item did not receive completed state');
             assert(meta === 'Completed', 'completed task status was not rendered');
+          },
+        },
+        {
+          name: 'Long press opens edit form and saving updates the task text',
+          run: async () => {
+            const firstItem = board.shadowRoot.querySelector('task-item');
+            const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+
+            assert(taskMain, 'editable task surface was not rendered');
+
+            taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+            await waitForLongPress();
+
+            const editInput = firstItem.shadowRoot.querySelector('wa-input');
+            const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+
+            assert(editInput, 'long press did not open the edit form');
+            assert(saveButton, 'save button was not rendered in edit mode');
+
+            editInput.value = 'edited task text';
+            editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
+            await waitForRender();
+
+            saveButton.click();
+            await waitForRender();
+
+            const updatedFirstItem = board.shadowRoot.querySelector('task-item');
+            const updatedText = updatedFirstItem?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
+
+            assert(app.tasks[0]?.text === 'edited task text', 'root app did not persist the edited task text');
+            assert(updatedText === 'edited task text', 'edited task text was not rendered');
+          },
+        },
+        {
+          name: 'Typing in the native edit control then clicking save persists the live value',
+          run: async () => {
+            const firstItem = board.shadowRoot.querySelector('task-item');
+            const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+
+            assert(taskMain, 'editable task surface was not rendered for native edit test');
+
+            taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+            await waitForLongPress();
+
+            const editInput = firstItem.shadowRoot.querySelector('wa-input');
+            const internalEditInput = editInput?.shadowRoot?.querySelector('input');
+            const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+
+            assert(internalEditInput, 'native edit input was not rendered');
+            assert(saveButton, 'save button was not rendered for native edit test');
+
+            internalEditInput.value = 'edited through native input';
+            internalEditInput.dispatchEvent(new InputEvent('input', {
+              bubbles: true,
+              composed: true,
+              data: 't',
+              inputType: 'insertText',
+            }));
+            await waitForRender();
+
+            saveButton.click();
+            await waitForRender();
+
+            const updatedText = board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
+
+            assert(app.tasks[0]?.text === 'edited through native input', 'edit save did not use the live native input value');
+            assert(updatedText === 'edited through native input', 'native edit text was not rendered after save');
           },
         },
       ];
