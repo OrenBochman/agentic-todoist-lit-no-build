@@ -1,11 +1,32 @@
-import { expect } from '../helpers/browser-test-harness.js';
+import { expect, waitForRender } from '../helpers/browser-test-harness.js';
 import { mountTaskHero, setHeroFixtureWidth } from '../fixtures/task-hero.fixture.js';
 
 describe('Task Hero Regression', () => {
+
   let fixture;
 
   beforeEach(async () => {
     fixture = await mountTaskHero();
+  });
+
+  it('toggles dark mode and updates theme property and button label', async () => {
+    // Start with default (dark) theme
+    expect(fixture.hero.theme).to.equal('dark');
+    const button = fixture.shadow.querySelector('.button-ghost');
+    expect(button).to.exist;
+    expect(button.textContent).to.contain('Light mode');
+
+    // Click to toggle to light mode
+    button.click();
+    await waitForRender();
+    expect(fixture.hero.theme).to.equal('light');
+    expect(button.textContent).to.contain('Dark mode');
+
+    // Click again to toggle back to dark mode
+    button.click();
+    await waitForRender();
+    expect(fixture.hero.theme).to.equal('dark');
+    expect(button.textContent).to.contain('Light mode');
   });
 
   it('hero icon feature renders list-check with the configured Web Awesome color in task-hero', () => {

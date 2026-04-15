@@ -80,13 +80,18 @@ Work on each feature one at a time, to facilitate focused code review and easier
 
 ## Testing
 
+1. your goal in testing is to get all test to pass. Use the integrated browser tool to automate testing in the browser and closing the loop via its console with minimal friction from the human co-pilot - your most valuable resource (e.g. don't ask to rerun tests when you can automate that yourself).
+1. write test with useful errors that can be interpreted and acted on by yourself and your human co-pilot to diagnose and fix the failure.
+1. A rule of thumb: Fix one issue at a time, but make note of new issues that are discovered.
+1. When a  bug fix creates new issues, consider whether the fix created the issue or just revealed it. In the first case revert the fix and try a different approach. In the second case, add the new issue to the list of issues to be fixed and move on to the next one. If multiple issues are interacting you may need to pick a different order to fix them.
+1. Do not assume the issue is in the main code - it is highly likely to be in the test code itself. 
 1. Use Mocha and Chai from `https://unpkg.com`
 2. automate the regression tests as unit tests that can be run in the browser and report pass/fail results.
 3. to split the fixture from the test
 4. to be short and sweet - less complex then the code being tested.
 5. allow me to add more comprehensive unit test as we proceed.
 6. Create a TDD plan - an ordered list of test that can be used to TDD all the features in the spec sequentially from scratch!
-7. Test need a brief descriptive name that indicates the issue being tested and the expected behavior and the context (i.e. bug or feature name + expected behavior and the unit under test) also clarify the fidelity level using native v.s. wa-input where relevant.
+7. Test need a brief descriptive name that indicates the issue being tested and the expected behavior and the context (i.e. bug or feature name + expected behavior and the unit under test) also clarify the fidelity level using native v.s. `wa-input` where relevant.
 8. each fixture is described in a short comment indicating intent (what web component and state is setup)
 9. also the assertion block is also explained briefly to clarify what behavior is being checked at each step.
 

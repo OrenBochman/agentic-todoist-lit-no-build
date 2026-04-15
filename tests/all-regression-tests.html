@@ -133,6 +133,19 @@
       import { runBrowserTests } from './helpers/browser-test-harness.js';
       const summary = document.getElementById('summary');
 
+      // Add global error logging for test failures
+      if (window.mocha) {
+        mocha.run = (function(origRun) {
+          return function(...args) {
+            const runner = origRun.apply(this, args);
+            runner.on('fail', function(test, err) {
+              console.error('Test failed:', test.title, err);
+            });
+            return runner;
+          };
+        })(mocha.run);
+      }
+
       await import('./specs/all-regression.spec.js');
       const failures = await runBrowserTests();
 

@@ -4,6 +4,11 @@ import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/co
  * Hero overview for task counts, WebMCP status, and theme controls.
  */
 class TaskHero extends LitElement {
+    updated(changedProps) {
+      if (changedProps.has('theme')) {
+        this.setAttribute('theme', this.theme);
+      }
+    }
   static properties = {
     completedTasks: { type: Number, attribute: 'completed-tasks' },
     pendingTasks: { type: Number, attribute: 'pending-tasks' },
@@ -15,6 +20,19 @@ class TaskHero extends LitElement {
   static styles = css`
     :host {
       display: block;
+    }
+    :host([theme='dark']) .card,
+    :host([theme='dark']) .stat,
+    :host([theme='dark']) .status-pill {
+      /* Example: dark mode overrides, real app should use CSS vars */
+      background: #23283a;
+      color: #f8fafc;
+    }
+    :host([theme='light']) .card,
+    :host([theme='light']) .stat,
+    :host([theme='light']) .status-pill {
+      background: var(--panel-background);
+      color: var(--text-strong);
     }
 
     .card {

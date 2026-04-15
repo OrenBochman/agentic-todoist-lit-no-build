@@ -42,6 +42,13 @@ class TaskManagerApp extends LitElement {
       min-height: 100vh;
       background: khaki;
     }
+    :host([data-theme='dark']) {
+      /* Example: override background for dark mode */
+      background: #181c24;
+    }
+    :host([data-theme='light']) {
+      background: khaki;
+    }
 
     .shell {
       width: min(980px, calc(100vw - 32px));
@@ -204,7 +211,7 @@ class TaskManagerApp extends LitElement {
   }
 
   applyTheme() {
-    document.documentElement.dataset.theme = this.theme;
+    this.setAttribute('data-theme', this.theme);
   }
 
   toggleTheme = () => {
