@@ -124,13 +124,19 @@ class TaskManagerApp extends LitElement {
     return html`
       <main class="shell">
         <div class="app-header-row">
-          <task-utility-bar
-            style="flex: 0 0 auto; align-self: flex-start;"
-            .theme=${this.theme}
-            .webMcpStatus=${this.webMcpStatus}
-            @theme-toggle=${this.toggleTheme}
-            @webmcp-menu=${this.handleWebMcpMenu}
-          ></task-utility-bar>
+          <div style="display: flex; align-items: center; gap: 1.2rem; width: 100%;">
+            <span class="eyebrow" style="display: flex; align-items: center; gap: 0.5em; color: var(--accent); font-weight: 700; font-size: 1.08rem;">
+              <wa-icon name="list-check" style="color: rgb(255, 212, 59);"></wa-icon>
+              <span style="color: var(--accent);">ToDo&gt;</span>
+            </span>
+            <task-utility-bar
+              style="flex: 0 0 auto; align-self: flex-start;"
+              .theme=${this.theme}
+              .webMcpStatus=${this.webMcpStatus}
+              @theme-toggle=${this.toggleTheme}
+              @webmcp-menu=${this.handleWebMcpMenu}
+            ></task-utility-bar>
+          </div>
           <task-hero
             style="flex: 1 1 0%; min-width: 0;"
             total-tasks=${totalTasks}

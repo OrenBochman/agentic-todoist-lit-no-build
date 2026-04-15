@@ -313,14 +313,9 @@ class TaskHero extends LitElement {
       <article class="card">
         <div class="panel">
           <div class="hero-header">
-            <p class="eyebrow"><wa-icon name="list-check" style="color: rgb(255, 212, 59);"></wa-icon>ToDo&gt;</p>
             <div class="hero-actions"></div>
           </div>
           <h1>Agentic Task Flow</h1>
-          <p class="hero-copy">
-            Capture work quickly, mark progress as you move, and keep the view focused with simple
-            status filters.
-          </p>
           <div class="stats" aria-label="Task statistics">
             <div class="stat">
               <span class="stat-label">All</span>
