@@ -21,8 +21,35 @@ class TaskHero extends LitElement {
     }
     .card {
       min-height: 120px;
-      background: #ffe4e6 !important; /* Diagnostic: light rose background */
+      /* Metallic chrome gradient effect */
+      background: linear-gradient(115deg,
+        #e3e3e3 0%,
+        #f7f7f7 12%,
+        #bfc0c2 22%,
+        #f5f5f5 32%,
+        #a7a8aa 48%,
+        #e3e3e3 60%,
+        #f7f7f7 70%,
+        #bfc0c2 80%,
+        #f5f5f5 100%
+      );
       outline: 2px dashed #e11d48;
+      box-shadow:
+        0 2px 12px 0 rgba(60,60,60,0.10),
+        0 1.5px 0.5px 0 rgba(255,255,255,0.18) inset,
+        0 0.5px 2px 0 rgba(180,180,180,0.10) inset;
+      border: 1.5px solid #e0e0e0;
+      /* Optional: subtle reflection highlight */
+      position: relative;
+      overflow: hidden;
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: 0; height: 38%;
+      background: linear-gradient(120deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.08) 100%);
+      pointer-events: none;
+      z-index: 1;
     }
     :host([theme='dark']) .card,
     :host([theme='dark']) .stat,

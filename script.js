@@ -127,6 +127,7 @@ class TaskManagerApp extends LitElement {
           <task-utility-bar
             style="flex: 0 0 auto; align-self: flex-start;"
             .theme=${this.theme}
+            .webMcpStatus=${this.webMcpStatus}
             @theme-toggle=${this.toggleTheme}
             @webmcp-menu=${this.handleWebMcpMenu}
           ></task-utility-bar>

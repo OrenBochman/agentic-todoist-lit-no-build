@@ -103,7 +103,6 @@ class TaskSnackbar extends LitElement {
         aria-hidden=${this.open ? 'false' : 'true'}
       >
         <div class="message">${this.message}</div>
-        <button class="dismiss" type="button" aria-label="Dismiss message" @click=${this.emitDismiss}>Close</button>
       </div>
     `;
   }

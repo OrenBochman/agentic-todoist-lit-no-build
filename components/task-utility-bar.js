@@ -8,6 +8,7 @@ import { LitElement, html, css } from 'https://unpkg.com/lit@2.8.0/index.js?modu
 export class TaskUtilityBar extends LitElement {
   static properties = {
     theme: { type: String, reflect: true },
+    webMcpStatus: { type: String, reflect: true },
   };
 
   static styles = css`
@@ -79,6 +80,20 @@ export class TaskUtilityBar extends LitElement {
     .menu-item:hover {
       background: var(--wa-hover, #f0f0f0);
     }
+    .webmcp-status-dot {
+      display: inline-block;
+      width: 0.7em;
+      height: 0.7em;
+      border-radius: 50%;
+      margin-left: 0.5em;
+      vertical-align: middle;
+      box-shadow: 0 0 0 1.5px #fff, 0 1px 4px rgba(0,0,0,0.08);
+      background: var(--webmcp-dot, #bbb);
+    }
+    .webmcp-dot-error { background: #e53935; }
+    .webmcp-dot-ready { background: #43a047; }
+    .webmcp-dot-connected { background: #1976d2; }
+    }
   `;
 
   constructor() {
@@ -88,6 +103,12 @@ export class TaskUtilityBar extends LitElement {
   }
 
   render() {
+    // Determine dot class by status
+    let dotClass = 'webmcp-status-dot';
+    if (this.webMcpStatus === 'error') dotClass += ' webmcp-dot-error';
+    else if (this.webMcpStatus === 'ready') dotClass += ' webmcp-dot-ready';
+    else if (this.webMcpStatus === 'connected') dotClass += ' webmcp-dot-connected';
+
     return html`
       <div class="utility-bar">
         <wa-button @click=${this._onToggleTheme} aria-label="Toggle dark mode" style="background: none; box-shadow: none; padding: 0.3em; min-width: 0;">
@@ -95,6 +116,7 @@ export class TaskUtilityBar extends LitElement {
         </wa-button>
         <wa-button @click=${this._onWebMcpMenu} aria-label="Open WebMCP Tools" style="margin-left: 0.5em;">
           WebMCP Tools
+          <span class="${dotClass}" title="WebMCP status"></span>
         </wa-button>
         <span id="webmcp-anchor"></span>
       </div>
@@ -105,7 +127,10 @@ export class TaskUtilityBar extends LitElement {
         <button class="menu-item" @click=${this._onToggleTheme} style="display: flex; align-items: center; gap: 0.5em;">
           <wa-icon name="${this.theme === 'dark' ? 'sun' : 'moon'}" style="color: #fbbf24; font-size: 1.3em;"></wa-icon>
         </button>
-        <div class="menu-item" @click=${this._onWebMcpMenu}>WebMCP Tools</div>
+        <div class="menu-item" @click=${this._onWebMcpMenu}>
+          WebMCP Tools
+          <span class="${dotClass}" title="WebMCP status"></span>
+        </div>
       </div>
     `;
   }
