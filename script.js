@@ -41,14 +41,15 @@ class TaskManagerApp extends LitElement {
     :host {
       display: block;
       min-height: 100vh;
-      background: khaki;
+      /* background: khaki; */
     }
     :host([data-theme='dark']) {
       /* Example: override background for dark mode */
       background: #181c24;
     }
     :host([data-theme='light']) {
-      background: khaki;
+      
+      /* background: khaki; */
     }
 
     .shell {
