@@ -14,6 +14,139 @@ import {
 
 describe('Task Manager Add And Edit Regression', () => {
 
+  it('should not add a task with only newline or tab characters (unit: edge case)', async () => {
+    const beforeCount = fixture.app.tasks.length;
+    fixture.input.value = '\n\t';
+    fixture.button.click();
+    await waitForRender();
+    expect(fixture.app.tasks.length, 'No task should be added for newline/tab-only input.').to.equal(beforeCount);
+  });
+
+  it('should trim leading/trailing whitespace from task input (unit: edge case)', async () => {
+    fixture.input.value = '   trimmed task   ';
+    fixture.button.click();
+    await waitForRender();
+    expect(fixture.app.tasks[0]?.text, 'Task text should be trimmed.').to.equal('trimmed task');
+  });
+
+  it('should add a task with a very large Unicode string (unit: edge case)', async () => {
+    const unicodeText = '🚀'.repeat(100) + 'שלום' + 'مرحبا' + '漢字' + '👩‍💻';
+    fixture.input.value = unicodeText;
+    fixture.button.click();
+    await waitForRender();
+    expect(fixture.app.tasks[0]?.text, 'Large Unicode string should be added and visible.').to.equal(unicodeText);
+  });
+
+  it('should not allow duplicate IDs in state (unit: edge case)', async () => {
+    // Simulate direct state injection with duplicate IDs
+    const dupeId = 'dupe-id';
+    fixture.app.tasks = [
+      { id: dupeId, text: 'first', completed: false, createdAt: new Date().toISOString() },
+      { id: dupeId, text: 'second', completed: false, createdAt: new Date().toISOString() },
+    ];
+    fixture.app.saveTasks();
+    await waitForRender();
+    // Try to delete by ID, should only remove one
+    fixture.app.handleTaskDelete({ detail: { taskId: dupeId } });
+    await waitForRender();
+    const remaining = fixture.app.tasks.filter(t => t.id === dupeId);
+    expect(remaining.length, 'Should not allow duplicate IDs after delete.').to.be.lessThan(2);
+  });
+
+  it('should update filtered and full list correctly when deleting in filtered view (unit: edge case)', async () => {
+    // Add two tasks, one completed
+    fixture.input.value = 'pending task';
+    fixture.button.click();
+    await waitForRender();
+    fixture.input.value = 'done task';
+    fixture.button.click();
+    await waitForRender();
+    // Mark second as completed
+    let lastItem = fixture.board.shadowRoot.querySelectorAll('task-item')[1];
+    let lastToggle = lastItem?.shadowRoot?.querySelector('.toggle');
+    lastToggle.click();
+    await waitForRender();
+    // Filter to completed
+    fixture.app.filter = 'completed';
+    await waitForRender();
+    // Delete completed task
+    let completedItem = fixture.board.shadowRoot.querySelector('task-item');
+    let deleteBtn = completedItem?.shadowRoot?.querySelector('.button');
+    deleteBtn.click();
+    await waitForRender();
+    // Should only have pending left
+    expect(fixture.app.tasks.length, 'Only pending task should remain after deleting in filtered view.').to.equal(1);
+    expect(fixture.app.tasks[0]?.text, 'Pending task should remain.').to.equal('pending task');
+  });
+
+  it('should allow toggle then immediate delete without error (unit: edge case)', async () => {
+    fixture.input.value = 'toggle-delete';
+    fixture.button.click();
+    await waitForRender();
+    let item = fixture.board.shadowRoot.querySelector('task-item');
+    let toggle = item?.shadowRoot?.querySelector('.toggle');
+    toggle.click();
+    await waitForRender();
+    let deleteBtn = item?.shadowRoot?.querySelector('.button');
+    deleteBtn.click();
+    await waitForRender();
+    expect(fixture.app.tasks.length, 'Task should be deleted after toggle and delete.').to.equal(0);
+  });
+
+  it('should not allow editing a task to empty or whitespace (unit: edge case)', async () => {
+    fixture.input.value = 'edit-me';
+    fixture.button.click();
+    await waitForRender();
+    let item = fixture.board.shadowRoot.querySelector('task-item');
+    let taskMain = item?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+    taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+    await waitForLongPress();
+    let editInput = item.shadowRoot.querySelector('wa-input');
+    let saveBtn = [...item.shadowRoot.querySelectorAll('wa-button')].find((c) => c.textContent?.trim() === 'Save');
+    editInput.value = '   ';
+    editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
+    await waitForRender();
+    saveBtn.click();
+    await waitForRender();
+    expect(item.shadowRoot.querySelector('.edit-error')?.textContent, 'Should show validation error for empty edit.').to.match(/enter a task/i);
+  });
+
+  it('should allow rapid toggle of the same task without state inconsistency (unit: edge case)', async () => {
+    fixture.input.value = 'rapid-toggle';
+    fixture.button.click();
+    await waitForRender();
+    let item = fixture.board.shadowRoot.querySelector('task-item');
+    let toggle = item?.shadowRoot?.querySelector('.toggle');
+    for (let i = 0; i < 10; i++) {
+      toggle.click();
+      await waitForRender();
+    }
+    // Should end up in the opposite state if even, same if odd
+    expect(fixture.app.tasks[0]?.completed, 'Task completed state should be consistent after rapid toggles.').to.equal(false);
+  });
+
+  it('should not throw or break when deleting a non-existent task (unit: edge case)', async () => {
+    // Add a task, then try to delete a fake ID
+    fixture.input.value = 'real task';
+    fixture.button.click();
+    await waitForRender();
+    expect(() => fixture.app.handleTaskDelete({ detail: { taskId: 'not-a-real-id' } }), 'Deleting non-existent task should not throw.').not.to.throw();
+    expect(fixture.app.tasks.length, 'Real task should still exist after fake delete.').to.equal(1);
+  });
+
+  it('should persist tasks to localStorage and restore after reload (unit: edge case)', async () => {
+    fixture.input.value = 'persisted task';
+    fixture.button.click();
+    await waitForRender();
+    // Simulate reload
+    const newApp = document.createElement('task-manager-app');
+    document.getElementById('mount').replaceChildren(newApp);
+    await customElements.whenDefined('task-manager-app');
+    await waitForRender();
+    expect(newApp.tasks.length, 'Persisted task should be restored after reload.').to.equal(1);
+    expect(newApp.tasks[0]?.text, 'Persisted task text should match.').to.equal('persisted task');
+  });
+
   // --- Unit tests for edge cases (not regressions) ---
 
   it('should not add a task with only whitespace (unit: edge case)', async () => {
