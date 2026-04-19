@@ -200,92 +200,86 @@ describe('Task Manager Add And Edit Regression', () => {
     });
   });
 
-  it('long-press edit flow saves host wa-input text in task-item within task-manager-app', async () => {
-    const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-    const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-    if (!taskMain) {
-      console.error('[diagnostic] taskMain not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
-    }
-    await waitForRender();
-    expect(taskMain).to.exist;
+  describe('long-press edit', () => {
+    const SEEDED_TASKS = [
+      { id: 'seed-task', text: 'Seed task', completed: false, createdAt: new Date().toISOString() },
+    ];
+    beforeEach(async () => {
+      fixture = await mountTaskManagerApp({ tasks: SEEDED_TASKS });
+    });
 
-    taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-    await waitForLongPress();
+    it('host wa-input is present and editable', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+      await waitForRender();
+      expect(taskMain, 'Editable task-main should exist for long-press.').to.exist;
+    });
 
-    const editInput = firstItem.shadowRoot.querySelector('wa-input');
-    const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
-    if (!editInput) {
-      console.error('[diagnostic] editInput not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
-    }
-    if (!saveButton) {
-      console.error('[diagnostic] saveButton not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
-    }
-    await waitForRender();
-    expect(editInput).to.exist;
-    expect(saveButton).to.exist;
+    it('edit mode can be entered and wa-input is present', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+      await waitForRender();
+      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+      await waitForLongPress();
+      const editInput = firstItem.shadowRoot.querySelector('wa-input');
+      expect(editInput, 'wa-input should be present in edit mode.').to.exist;
+    });
 
-    editInput.value = 'edited task text';
-    editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
-    await waitForRender();
+    it('edit mode: save button is present', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+      await waitForRender();
+      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+      await waitForLongPress();
+      const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+      expect(saveButton, 'Save button should be present in edit mode.').to.exist;
+    });
 
-    saveButton.click();
-    await waitForRender();
+    it('edit mode: saving host wa-input value updates app state and board', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+      await waitForRender();
+      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+      await waitForLongPress();
+      const editInput = firstItem.shadowRoot.querySelector('wa-input');
+      const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+      editInput.value = 'edited task text';
+      editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
+      await waitForRender();
+      saveButton.click();
+      await waitForRender();
+      const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const updatedText = updatedFirstItem?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
+      expect(fixture.app.tasks[0]?.text, 'App state should update after save.').to.equal('edited task text');
+      expect(updatedText, 'Board should render updated text after save.').to.equal('edited task text');
+    });
 
-    const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
-    const updatedText = updatedFirstItem?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
-    if (!updatedFirstItem) {
-      console.error('[diagnostic] updatedFirstItem not found. board shadow:', fixture.board.shadowRoot.innerHTML);
-    }
-    // Assert: saving edit mode persists the new host-level wa-input value to app state and the rendered task row.
-    expect(fixture.app.tasks[0]?.text).to.equal('edited task text');
-    expect(updatedText).to.equal('edited task text');
-  });
-
-  it('long-press edit uses native input fidelity and persists the live inner value in task-item', async () => {
-    const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-    const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-    if (!taskMain) {
-      console.error('[diagnostic] taskMain not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
-    }
-    await waitForRender();
-    expect(taskMain).to.exist;
-
-    taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-    await waitForLongPress();
-
-    const editInput = firstItem.shadowRoot.querySelector('wa-input');
-    const internalEditInput = editInput?.shadowRoot?.querySelector('input');
-    const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
-    if (!editInput) {
-      console.error('[diagnostic] editInput not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
-    }
-    if (!internalEditInput) {
-      console.error('[diagnostic] internalEditInput not found. editInput shadow:', editInput?.shadowRoot?.innerHTML);
-    }
-    if (!saveButton) {
-      console.error('[diagnostic] saveButton not found. firstItem shadow:', firstItem.shadowRoot.innerHTML);
-    }
-    await waitForRender();
-    expect(internalEditInput).to.exist;
-    expect(saveButton).to.exist;
-
-    internalEditInput.value = 'edited through native input';
-    internalEditInput.dispatchEvent(
-      new InputEvent('input', {
-        bubbles: true,
-        composed: true,
-        data: 't',
-        inputType: 'insertText',
-      }),
-    );
-    await waitForRender();
-
-    saveButton.click();
-    await waitForRender();
-
-    const updatedText = fixture.board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
-    // Assert: the native inner edit input remains the source of truth for save and the board renders the persisted value.
-    expect(fixture.app.tasks[0]?.text).to.equal('edited through native input');
-    expect(updatedText).to.equal('edited through native input');
+    it('edit mode: saving native input value updates app state and board', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+      await waitForRender();
+      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+      await waitForLongPress();
+      const editInput = firstItem.shadowRoot.querySelector('wa-input');
+      const internalEditInput = editInput?.shadowRoot?.querySelector('input');
+      const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+      expect(internalEditInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
+      expect(saveButton, 'Save button should be present in edit mode.').to.exist;
+      internalEditInput.value = 'edited through native input';
+      internalEditInput.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          composed: true,
+          data: 't',
+          inputType: 'insertText',
+        }),
+      );
+      await waitForRender();
+      saveButton.click();
+      await waitForRender();
+      const updatedText = fixture.board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
+      expect(fixture.app.tasks[0]?.text, 'App state should update after saving native input.').to.equal('edited through native input');
+      expect(updatedText, 'Board should render updated text after saving native input.').to.equal('edited through native input');
+    });
   });
 });
