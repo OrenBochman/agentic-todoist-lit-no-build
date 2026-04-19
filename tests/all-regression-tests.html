@@ -107,7 +107,37 @@
       #mocha-stats {
         position: static;
         margin-top: 16px;
-        color: var(--text-muted);
+        font-size: 1.15rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        color: #1a2233;
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 6px 16px 6px 10px;
+        display: inline-flex;
+        gap: 1.5em;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      }
+      :root[data-theme='dark'] #mocha-stats {
+        color: #f8fafc;
+        background: #232b3a;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+      }
+      #mocha-stats .passes {
+        color: #22c55e;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      }
+      #mocha-stats .failures {
+        color: #ef4444;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      }
+      #mocha-stats .duration {
+        color: #0ea5e9;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
       }
     </style>
   </head>

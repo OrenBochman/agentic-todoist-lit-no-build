@@ -1,3 +1,10 @@
+
+// Task Manager Add/Edit: Regression and Unit Tests
+//
+// This file contains both regression tests (to catch feature breakage) and unit tests for edge cases (to ensure robust handling of unusual or boundary input).
+//
+// Edge case tests are marked in comments and are not regressions—they are unit tests that validate the app's behavior under rare or extreme conditions.
+
 import { expect, waitForRender } from '../helpers/browser-test-harness.js';
 import {
   clearTaskManagerStorage,
@@ -6,6 +13,97 @@ import {
 } from '../fixtures/task-manager-app.fixture.js';
 
 describe('Task Manager Add And Edit Regression', () => {
+
+  // --- Unit tests for edge cases (not regressions) ---
+
+  it('should not add a task with only whitespace (unit: edge case)', async () => {
+    const beforeCount = fixture.app.tasks.length;
+    fixture.input.value = '   ';
+    fixture.button.click();
+    await waitForRender();
+    expect(fixture.app.tasks.length, 'No task should be added for whitespace-only input.').to.equal(beforeCount);
+  });
+
+  it('should add a very long task name (256+ chars) and display it (unit: edge case)', async () => {
+    const longText = 'A'.repeat(260);
+    fixture.input.value = longText;
+    fixture.button.click();
+    await waitForRender();
+    expect(fixture.app.tasks[0]?.text, 'Very long task name should be added and visible.').to.equal(longText);
+    const boardItems = [...fixture.board.shadowRoot.querySelectorAll('task-item')];
+    expect(boardItems[0]?.task?.text, 'Board should render very long task name.').to.equal(longText);
+  });
+
+  it('should add a task with special characters and emoji (unit: edge case)', async () => {
+    const specialText = 'Task!@#$%^&*()_+🚀✨';
+    fixture.input.value = specialText;
+    fixture.button.click();
+    await waitForRender();
+    expect(fixture.app.tasks[0]?.text, 'Special character/emoji task should be added and visible.').to.equal(specialText);
+    const boardItems = [...fixture.board.shadowRoot.querySelectorAll('task-item')];
+    expect(boardItems[0]?.task?.text, 'Board should render special character/emoji task.').to.equal(specialText);
+  });
+
+  it('should allow duplicate task names and treat them independently (unit: edge case)', async () => {
+    fixture.input.value = 'duplicate';
+    fixture.button.click();
+    await waitForRender();
+    fixture.input.value = 'duplicate';
+    fixture.button.click();
+    await waitForRender();
+    const allTasks = fixture.app.tasks.filter(t => t.text === 'duplicate');
+    expect(allTasks.length, 'Should allow two tasks with the same name.').to.equal(2);
+  });
+
+  it('should handle rapid add and delete of tasks without error (unit: edge case)', async () => {
+    // Edge case: stress test for rapid add/delete
+    for (let i = 0; i < 5; i++) {
+      fixture.input.value = `rapid${i}`;
+      fixture.button.click();
+      await waitForRender();
+    }
+    for (let i = 0; i < 5; i++) {
+      const firstDelete = fixture.board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.delete');
+      if (firstDelete) {
+        firstDelete.click();
+        await waitForRender();
+      }
+    }
+    expect(fixture.app.tasks.length, 'All rapidly added tasks should be deleted.').to.equal(0);
+  });
+
+  it('should toggle completed on first and last tasks', async () => {
+    // Add three tasks
+    for (let i = 0; i < 3; i++) {
+      fixture.input.value = `edge${i}`;
+      fixture.button.click();
+      await waitForRender();
+    }
+    // Toggle first
+    let firstItem = fixture.board.shadowRoot.querySelectorAll('task-item')[0];
+    let firstToggle = firstItem?.shadowRoot?.querySelector('.toggle');
+    firstToggle.click();
+    await waitForRender();
+    expect(fixture.app.tasks[0]?.completed, 'First task should be marked completed.').to.equal(true);
+    // Toggle last
+    let lastItem = fixture.board.shadowRoot.querySelectorAll('task-item')[2];
+    let lastToggle = lastItem?.shadowRoot?.querySelector('.toggle');
+    lastToggle.click();
+    await waitForRender();
+    expect(fixture.app.tasks[2]?.completed, 'Last task should be marked completed.').to.equal(true);
+  });
+
+  it('should handle localStorage failure gracefully when adding a task', async () => {
+    // Simulate quota exceeded
+    const originalSetItem = window.localStorage.setItem;
+    window.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+    fixture.input.value = 'fail persist';
+    fixture.button.click();
+    await waitForRender();
+    // App should not crash, and task should still appear in UI (but not persist)
+    expect(fixture.app.tasks[0]?.text, 'Task should still appear in UI after localStorage failure.').to.equal('fail persist');
+    window.localStorage.setItem = originalSetItem;
+  });
 
   let fixture;
   // Default seeded task for tests that require a task-item

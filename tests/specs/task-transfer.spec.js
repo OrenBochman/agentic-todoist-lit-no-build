@@ -16,6 +16,53 @@ const SEEDED_TASKS = [
 ];
 
 describe('Task Transfer Regression', () => {
+
+    it('should handle import of malformed JSON gracefully', async () => {
+      const fileInput = fixture.transferShadow.querySelector('#file-input');
+      const invalidFile = new File(['{"tasks": ['], 'broken.json', { type: 'application/json' });
+      setFileList(fileInput, invalidFile);
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+      await waitForRender();
+      expect(fixture.app.transferStatusTone, 'Transfer status tone should be error after invalid JSON.').to.equal('error');
+      expect(fixture.snackbar.open, 'Snackbar should be open after invalid JSON.').to.equal(true);
+      expect(fixture.snackbar.shadowRoot.querySelector('.message')?.textContent?.trim().length, 'Snackbar message should be non-empty after invalid JSON.').to.be.greaterThan(0);
+    });
+
+    it('should export and import with no tasks without error', async () => {
+      // Remove all tasks
+      fixture.app.tasks = [];
+      fixture.app.saveTasks();
+      await waitForRender();
+      // Export
+      const [, exportButton] = fixture.transferShadow.querySelectorAll('wa-button');
+      let capturedJson = '';
+      let resolveBlobText = () => {};
+      const blobTextReady = new Promise((resolve) => { resolveBlobText = resolve; });
+      const originalCreateObjectUrl = window.URL.createObjectURL;
+      const originalRevokeObjectUrl = window.URL.revokeObjectURL;
+      const originalClick = HTMLAnchorElement.prototype.click;
+      window.URL.createObjectURL = (blob) => {
+        blob.text().then((text) => { capturedJson = text; resolveBlobText(); });
+        return 'blob:test-export';
+      };
+      window.URL.revokeObjectURL = () => {};
+      HTMLAnchorElement.prototype.click = function click() {};
+      exportButton.click();
+      await waitForRender();
+      await blobTextReady;
+      window.URL.createObjectURL = originalCreateObjectUrl;
+      window.URL.revokeObjectUrl = originalRevokeObjectUrl;
+      HTMLAnchorElement.prototype.click = originalClick;
+      const parsed = JSON.parse(capturedJson);
+      expect(parsed.tasks.length, 'Exported JSON should have zero tasks.').to.equal(0);
+      // Import the same file
+      const fileInput = fixture.transferShadow.querySelector('#file-input');
+      const importFile = new File([capturedJson], 'empty.json', { type: 'application/json' });
+      setFileList(fileInput, importFile);
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+      await waitForRender();
+      expect(fixture.app.tasks.length, 'No tasks should be present after importing empty export.').to.equal(0);
+    });
   let fixture;
 
   beforeEach(async () => {
