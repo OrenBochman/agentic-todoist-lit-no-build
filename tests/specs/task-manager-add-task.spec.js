@@ -145,28 +145,59 @@ describe('Task Manager Add And Edit Regression', () => {
     ).to.equal('native add task');
   });
 
-  it('toggle interaction marks the first task completed in task-manager-app and task-item', async () => {
-    const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-    const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
-    if (!toggle) {
-      console.error('[diagnostic] toggle not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
-    }
-    await waitForRender();
-    expect(toggle).to.exist;
-    expect(fixture.app.tasks[0]?.completed).to.equal(false);
 
-    toggle.click();
-    await waitForRender();
+  describe('toggle interaction', () => {
+    const SEEDED_TASKS = [
+      { id: 'seed-task', text: 'Seed task', completed: false, createdAt: new Date().toISOString() },
+    ];
+    beforeEach(async () => {
+      fixture = await mountTaskManagerApp({ tasks: SEEDED_TASKS });
+    });
 
-    const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
-    const meta = updatedFirstItem?.shadowRoot?.querySelector('.task-meta')?.textContent?.trim() ?? '';
-    if (!updatedFirstItem) {
-      console.error('[diagnostic] updatedFirstItem not found. board shadow:', fixture.board.shadowRoot.innerHTML);
-    }
-    // Assert: toggling completion updates the root app state, flows into task-item props, and updates the visible status copy.
-    expect(fixture.app.tasks[0]?.completed).to.equal(true);
-    expect(updatedFirstItem?.task?.completed).to.equal(true);
-    expect(meta).to.equal('Completed');
+    it('toggle control exists and is initially unchecked', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
+      if (!toggle) {
+        console.error('[diagnostic] toggle not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
+      }
+      await waitForRender();
+      expect(toggle, 'Toggle control should exist in first task-item.').to.exist;
+      expect(
+        fixture.app.tasks[0]?.completed,
+        'First task should be incomplete before toggle.'
+      ).to.equal(false);
+    });
+
+    it('clicking toggle updates app state and task-item', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
+      await waitForRender();
+      toggle.click();
+      await waitForRender();
+      const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
+      expect(
+        fixture.app.tasks[0]?.completed,
+        'App state should reflect completed after toggle.'
+      ).to.equal(true);
+      expect(
+        updatedFirstItem?.task?.completed,
+        'Task-item property should reflect completed after toggle.'
+      ).to.equal(true);
+    });
+
+    it('completed status is visible in task meta after toggle', async () => {
+      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
+      await waitForRender();
+      toggle.click();
+      await waitForRender();
+      const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const meta = updatedFirstItem?.shadowRoot?.querySelector('.task-meta')?.textContent?.trim() ?? '';
+      expect(
+        meta,
+        'Task meta should display "Completed" after toggle.'
+      ).to.equal('Completed');
+    });
   });
 
   it('long-press edit flow saves host wa-input text in task-item within task-manager-app', async () => {
