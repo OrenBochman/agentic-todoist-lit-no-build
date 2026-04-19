@@ -11,7 +11,6 @@
 
 Work on each feature one at a time, to facilitate focused code review and easier regression testing and clearer git commits.
 
-
 - [x] Add tasks
 - [x] Mark tasks as completed
 - [x] Delete tasks
@@ -99,6 +98,16 @@ Work on each feature one at a time, to facilitate focused code review and easier
 8. each fixture is described in a short comment indicating intent (what web component and state is setup)
 9. also the assertion block is also explained briefly to clarify what behavior is being checked at each step.
 
+## Memory
+
+1. use `memory/api-breaking-changes.md` to keep track of incorrect use of library calls or other API changes that were uncovered during coding so you can preempt them next time.
+2. use `memory/blackboard.md` to keep track of intermediate  records, plan and coordinate complex multi-step efforts involving multiple agents, cross cutting concerns, edits that require reversion or complex git  operations, or any other information that is relevant to the project but doesn't fit in the code or the spec.
+3. use `memory/counterfactual-note.md` to keep track of failed patch attempts and their consequences across a sequence of edit and reversions.
+
 ## Skills
 
 use the `webawesome` skill to properly integrate the WebMCP widget and tools, ensuring they work seamlessly with the task manager app and provide a good user experience when accessed from chat.
+
+use the `unit-testing-pattern-catalog` skill to write effective unit tests for the task manager app, covering all features and edge cases, and ensuring that the tests are maintainable and provide clear feedback on failures.
+
+use the `bugfix-hypothesis-branches` skill to isolate bug fixes and features into feature branches, systematically diagnose and fix any bugs that arise during development, maintaining a clear record of hypotheses, attempts, and outcomes to facilitate efficient debugging and knowledge retention.

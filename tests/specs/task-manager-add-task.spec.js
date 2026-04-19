@@ -30,24 +30,48 @@ describe('Task Manager Add And Edit Regression', () => {
     clearTaskManagerStorage();
   });
 
-  it('add flow uses wa-input host value and renders the new task in task-manager-app', async () => {
-    const beforeCount = fixture.app.tasks.length;
 
+  it('add flow: clicking add increases task count', async () => {
+    const beforeCount = fixture.app.tasks.length;
     fixture.input.value = 'test 123';
     fixture.input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
     await waitForRender();
-
     fixture.button.click();
     await waitForRender();
+    expect(
+      fixture.app.tasks.length,
+      'Task count should increase by 1 after add click.'
+    ).to.equal(beforeCount + 1);
+  });
 
+  it('add flow: new task appears at top of app state and board', async () => {
+    fixture.input.value = 'test 123';
+    fixture.input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
+    await waitForRender();
+    fixture.button.click();
+    await waitForRender();
+    expect(
+      fixture.app.tasks[0]?.text,
+      'First task in app state should match entered text.'
+    ).to.equal('test 123');
     const boardItems = [...fixture.board.shadowRoot.querySelectorAll('task-item')];
     const firstTaskText = boardItems[0]?.task?.text ?? '';
+    expect(
+      firstTaskText,
+      'First rendered task in board should match entered text.'
+    ).to.equal('test 123');
+  });
 
-    // Assert: clicking add inserts a new task at the top of app state, renders it in the board, and clears the composer.
-    expect(fixture.app.tasks.length).to.equal(beforeCount + 1);
-    expect(fixture.app.tasks[0]?.text).to.equal('test 123');
-    expect(firstTaskText).to.equal('test 123');
-    expect(fixture.input.value).to.equal('');
+  it('add flow: composer input resets after add', async () => {
+    fixture.input.value = 'test 123';
+    fixture.input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
+    await waitForRender();
+    fixture.button.click();
+    await waitForRender();
+    expect(
+      fixture.input.value,
+      'Composer input should be cleared after adding a task.'
+    ).to.equal('');
   });
 
   it('add flow uses native typing fidelity and renders the live inner input value in task-manager-app', async () => {
