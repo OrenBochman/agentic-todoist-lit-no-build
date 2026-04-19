@@ -74,12 +74,11 @@ describe('Task Manager Add And Edit Regression', () => {
     ).to.equal('');
   });
 
-  it('add flow uses native typing fidelity and renders the live inner input value in task-manager-app', async () => {
+
+  it('native input add: clicking add increases task count', async () => {
     const beforeCount = fixture.app.tasks.length;
     const internalInput = fixture.input.shadowRoot?.querySelector('input');
-
-    expect(internalInput).to.exist;
-
+    expect(internalInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
     internalInput.value = 'native add task';
     internalInput.dispatchEvent(
       new InputEvent('input', {
@@ -90,14 +89,60 @@ describe('Task Manager Add And Edit Regression', () => {
       }),
     );
     await waitForRender();
-
     fixture.button.click();
     await waitForRender();
+    expect(
+      fixture.app.tasks.length,
+      'Task count should increase by 1 after native input add.'
+    ).to.equal(beforeCount + 1);
+  });
 
-    // Assert: the real native typing surface feeds the app state and the board with the same submitted task text.
-    expect(fixture.app.tasks.length).to.equal(beforeCount + 1);
-    expect(fixture.app.tasks[0]?.text).to.equal('native add task');
-    expect(fixture.board.shadowRoot.querySelector('task-item')?.task?.text).to.equal('native add task');
+  it('native input add: new task appears at top of app state and board', async () => {
+    const internalInput = fixture.input.shadowRoot?.querySelector('input');
+    expect(internalInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
+    internalInput.value = 'native add task';
+    internalInput.dispatchEvent(
+      new InputEvent('input', {
+        bubbles: true,
+        composed: true,
+        data: 'k',
+        inputType: 'insertText',
+      }),
+    );
+    await waitForRender();
+    fixture.button.click();
+    await waitForRender();
+    expect(
+      fixture.app.tasks[0]?.text,
+      'First task in app state should match native input value.'
+    ).to.equal('native add task');
+    const firstTaskText = fixture.board.shadowRoot.querySelector('task-item')?.task?.text;
+    expect(
+      firstTaskText,
+      'First rendered task in board should match native input value.'
+    ).to.equal('native add task');
+  });
+
+  it('native input add: board renders the live native input value', async () => {
+    const internalInput = fixture.input.shadowRoot?.querySelector('input');
+    expect(internalInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
+    internalInput.value = 'native add task';
+    internalInput.dispatchEvent(
+      new InputEvent('input', {
+        bubbles: true,
+        composed: true,
+        data: 'k',
+        inputType: 'insertText',
+      }),
+    );
+    await waitForRender();
+    fixture.button.click();
+    await waitForRender();
+    const firstTaskText = fixture.board.shadowRoot.querySelector('task-item')?.task?.text;
+    expect(
+      firstTaskText,
+      'Board should render the live native input value after add.'
+    ).to.equal('native add task');
   });
 
   it('toggle interaction marks the first task completed in task-manager-app and task-item', async () => {
