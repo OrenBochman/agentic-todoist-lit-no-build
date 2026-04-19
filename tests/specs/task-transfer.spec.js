@@ -26,62 +26,65 @@ describe('Task Transfer Regression', () => {
     clearTaskManagerStorage();
   });
 
-  it('transfer card feature renders below the board with Import and Export controls in task-manager-app', () => {
+  it('transfer card renders after board', () => {
     const boardElement = fixture.appShadow.querySelector('task-board');
     const transferCard = fixture.transfer.closest('.panel')?.parentElement;
-    const buttonLabels = [...fixture.transferShadow.querySelectorAll('wa-button')].map((button) => button.textContent?.trim());
-
-    // Assert: the transfer controls render in their own card after the board, and the app-level snackbar exists for feedback.
-    expect(boardElement).to.exist;
-    expect(transferCard?.classList.contains('transfer-card')).to.equal(true);
-    expect(boardElement.nextElementSibling).to.equal(transferCard);
-    expect(fixture.snackbar).to.exist;
-    expect(buttonLabels).to.deep.equal(['Import', 'Export']);
+    expect(boardElement, 'Board element should exist.').to.exist;
+    expect(transferCard?.classList.contains('transfer-card'), 'Transfer card should have transfer-card class.').to.equal(true);
+    expect(boardElement.nextElementSibling, 'Transfer card should be after board.').to.equal(transferCard);
   });
 
-  it('transfer layout feature keeps left third, empty middle third, and right third until the collapse breakpoint in task-transfer-controls', async () => {
-    // Set wide width and check buttons are side by side and not overlapping
+  it('transfer card has Import and Export buttons', () => {
+    const buttonLabels = [...fixture.transferShadow.querySelectorAll('wa-button')].map((button) => button.textContent?.trim());
+    expect(buttonLabels, 'Transfer card should have Import and Export buttons.').to.deep.equal(['Import', 'Export']);
+  });
+
+  it('transfer card renders app-level snackbar', () => {
+    expect(fixture.snackbar, 'App-level snackbar should exist for feedback.').to.exist;
+  });
+
+  it('transfer layout: wide width keeps buttons side by side', async () => {
     fixture.appShadow.querySelector('.shell').style.width = '900px';
     await waitForRender();
     await forceLayoutReflow();
-
     const [importButton, exportButton] = fixture.transferShadow.querySelectorAll('wa-button');
     const importRect = importButton.getBoundingClientRect();
     const exportRect = exportButton.getBoundingClientRect();
+    expect(importButton.offsetParent, 'Import button should be visible.').to.not.equal(null);
+    expect(exportButton.offsetParent, 'Export button should be visible.').to.not.equal(null);
+    expect(Math.abs(importRect.top - exportRect.top), 'Buttons should be on the same row.').to.be.lessThan(10);
+    expect(importRect.right, 'Import and Export buttons should not overlap horizontally.').to.be.lessThan(exportRect.left);
+  });
 
-    // Assert: Import and Export buttons are visible and horizontally aligned (not stacked)
-    expect(importButton.offsetParent).to.not.equal(null);
-    expect(exportButton.offsetParent).to.not.equal(null);
-    // They should be on the same row (y overlap)
-    expect(Math.abs(importRect.top - exportRect.top)).to.be.lessThan(10);
-    // They should not overlap horizontally
-    expect(importRect.right).to.be.lessThan(exportRect.left);
-
-    // Set to just above collapse breakpoint and check still side by side
+  it('transfer layout: just above collapse breakpoint keeps buttons side by side', async () => {
     fixture.appShadow.querySelector('.shell').style.width = '353px';
     await waitForRender();
     await forceLayoutReflow();
+    const [importButton, exportButton] = fixture.transferShadow.querySelectorAll('wa-button');
     const importRectNarrow = importButton.getBoundingClientRect();
     const exportRectNarrow = exportButton.getBoundingClientRect();
-    expect(Math.abs(importRectNarrow.top - exportRectNarrow.top)).to.be.lessThan(10);
-    expect(importRectNarrow.right).to.be.lessThan(exportRectNarrow.left);
+    expect(Math.abs(importRectNarrow.top - exportRectNarrow.top), 'Buttons should be on the same row at 353px.').to.be.lessThan(10);
+    expect(importRectNarrow.right, 'Import and Export buttons should not overlap at 353px.').to.be.lessThan(exportRectNarrow.left);
+  });
 
-    // Set to below collapse breakpoint and always check side-by-side layout (app never stacks)
+  it('transfer layout: below collapse breakpoint keeps buttons side by side', async () => {
     fixture.appShadow.querySelector('.shell').style.width = '280px';
     await waitForRender();
     await forceLayoutReflow();
+    const [importButton, exportButton] = fixture.transferShadow.querySelectorAll('wa-button');
     const importRectSmall = importButton.getBoundingClientRect();
     const exportRectSmall = exportButton.getBoundingClientRect();
-    // Assert: buttons are always side by side, never stacked
-    expect(Math.abs(importRectSmall.top - exportRectSmall.top)).to.be.lessThan(10);
-    expect(importRectSmall.right).to.be.lessThan(exportRectSmall.left);
-    // Also check the transfer controls are visually below the board
-    const boardElement = fixture.appShadow.querySelector('task-board');
-    const transferCard = fixture.transfer.closest('.panel')?.parentElement;
-    expect(boardElement.nextElementSibling).to.equal(transferCard);
+    expect(Math.abs(importRectSmall.top - exportRectSmall.top), 'Buttons should be on the same row at 280px.').to.be.lessThan(10);
+    expect(importRectSmall.right, 'Import and Export buttons should not overlap at 280px.').to.be.lessThan(exportRectSmall.left);
   });
 
-  it('export feature creates a portable JSON payload and opens success feedback in task-manager-app', async () => {
+  it('transfer controls are visually below the board', () => {
+    const boardElement = fixture.appShadow.querySelector('task-board');
+    const transferCard = fixture.transfer.closest('.panel')?.parentElement;
+    expect(boardElement.nextElementSibling, 'Transfer card should be after board.').to.equal(transferCard);
+  });
+
+  it('export feature creates a portable JSON payload', async () => {
     const [, exportButton] = fixture.transferShadow.querySelectorAll('wa-button');
     let capturedDownload = '';
     let capturedJson = '';
@@ -114,18 +117,45 @@ describe('Task Transfer Regression', () => {
     HTMLAnchorElement.prototype.click = originalClick;
 
     const parsed = JSON.parse(capturedJson);
-
-    // Assert: export writes versioned JSON, includes the current tasks, and opens success feedback through the snackbar.
-    expect(capturedDownload.endsWith('.json')).to.equal(true);
-    expect(parsed.version).to.equal(1);
-    expect(Array.isArray(parsed.tasks)).to.equal(true);
-    expect(parsed.tasks[0]?.text).to.equal('Seed task');
-    expect(fixture.app.transferStatusTone).to.equal('success');
-    expect(fixture.snackbar.open).to.equal(true);
-    expect(fixture.snackbar.message).to.contain('Exported 1 task to JSON.');
+    expect(capturedDownload.endsWith('.json'), 'Exported file should have .json extension.').to.equal(true);
+    expect(parsed.version, 'Exported JSON should have version 1.').to.equal(1);
+    expect(Array.isArray(parsed.tasks), 'Exported JSON should have tasks array.').to.equal(true);
+    expect(parsed.tasks[0]?.text, 'Exported JSON should include the current task.').to.equal('Seed task');
   });
 
-  it('import merge feature adds only missing tasks from JSON in task-manager-app', async () => {
+  it('export feature opens success feedback', async () => {
+    const [, exportButton] = fixture.transferShadow.querySelectorAll('wa-button');
+    let resolveBlobText = () => {};
+    const blobTextReady = new Promise((resolve) => {
+      resolveBlobText = resolve;
+    });
+    const originalCreateObjectUrl = window.URL.createObjectURL;
+    const originalRevokeObjectUrl = window.URL.revokeObjectURL;
+    const originalClick = HTMLAnchorElement.prototype.click;
+
+    window.URL.createObjectURL = (blob) => {
+      blob.text().then(() => {
+        resolveBlobText();
+      });
+      return 'blob:test-export';
+    };
+    window.URL.revokeObjectURL = () => {};
+    HTMLAnchorElement.prototype.click = function click() {};
+
+    exportButton.click();
+    await waitForRender();
+    await blobTextReady;
+
+    window.URL.createObjectURL = originalCreateObjectUrl;
+    window.URL.revokeObjectURL = originalRevokeObjectUrl;
+    HTMLAnchorElement.prototype.click = originalClick;
+
+    expect(fixture.app.transferStatusTone, 'Export should set transferStatusTone to success.').to.equal('success');
+    expect(fixture.snackbar.open, 'Snackbar should be open after export.').to.equal(true);
+    expect(fixture.snackbar.message, 'Snackbar message should confirm export.').to.contain('Exported 1 task to JSON.');
+  });
+
+  it('import merge adds only missing tasks from JSON', async () => {
     const fileInput = fixture.transferShadow.querySelector('#file-input');
     const importFile = new File([
       JSON.stringify({
@@ -152,21 +182,19 @@ describe('Task Transfer Regression', () => {
     await waitForRender();
 
     const renderedItems = [...fixture.board.shadowRoot.querySelectorAll('task-item')].map((item) => item.task?.text);
-
-    // Assert: import preserves the existing task, adds only the new task, resets filter state, and surfaces success feedback.
-    expect(fixture.app.tasks.length).to.equal(2);
-    expect(fixture.app.tasks[0]?.text).to.equal('Imported task');
-    expect(fixture.app.tasks[0]?.completed).to.equal(true);
-    expect(fixture.app.tasks[1]?.text).to.equal('Seed task');
-    expect(fixture.app.tasks[1]?.completed).to.equal(false);
-    expect(fixture.app.filter).to.equal('all');
-    expect(renderedItems).to.include('Imported task');
-    expect(renderedItems).to.include('Seed task');
-    expect(fixture.app.transferStatusMessage).to.contain('Imported 1 new task from tasks.json.');
-    expect(fixture.snackbar.open).to.equal(true);
+    expect(fixture.app.tasks.length, 'App should have two tasks after import.').to.equal(2);
+    expect(fixture.app.tasks[0]?.text, 'Imported task should be first.').to.equal('Imported task');
+    expect(fixture.app.tasks[0]?.completed, 'Imported task should be completed.').to.equal(true);
+    expect(fixture.app.tasks[1]?.text, 'Seed task should be second.').to.equal('Seed task');
+    expect(fixture.app.tasks[1]?.completed, 'Seed task should remain not completed.').to.equal(false);
+    expect(fixture.app.filter, 'Filter should reset to all after import.').to.equal('all');
+    expect(renderedItems, 'Rendered items should include imported and seed tasks.').to.include('Imported task');
+    expect(renderedItems, 'Rendered items should include imported and seed tasks.').to.include('Seed task');
+    expect(fixture.app.transferStatusMessage, 'Transfer status message should confirm import.').to.contain('Imported 1 new task from tasks.json.');
+    expect(fixture.snackbar.open, 'Snackbar should be open after import.').to.equal(true);
   });
 
-  it('existing-only import feature skips duplicates and reports no-op feedback in task-manager-app', async () => {
+  it('existing-only import skips duplicates and reports no-op feedback', async () => {
     const fileInput = fixture.transferShadow.querySelector('#file-input');
     const beforeSnapshot = JSON.stringify(fixture.app.tasks);
     const importFile = new File([
@@ -186,13 +214,12 @@ describe('Task Transfer Regression', () => {
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
     await waitForRender();
 
-    // Assert: an import containing only existing tasks leaves state untouched and reports that nothing new was added.
-    expect(JSON.stringify(fixture.app.tasks)).to.equal(beforeSnapshot);
-    expect(fixture.app.transferStatusMessage).to.equal('No new tasks were imported from existing-only.json.');
-    expect(fixture.snackbar.message).to.equal('No new tasks were imported from existing-only.json.');
+    expect(JSON.stringify(fixture.app.tasks), 'App state should be unchanged after duplicate import.').to.equal(beforeSnapshot);
+    expect(fixture.app.transferStatusMessage, 'Transfer status message should report no new tasks.').to.equal('No new tasks were imported from existing-only.json.');
+    expect(fixture.snackbar.message, 'Snackbar message should report no new tasks.').to.equal('No new tasks were imported from existing-only.json.');
   });
 
-  it('duplicate rows and invalid JSON feature avoid mutation and surface correct feedback in task-manager-app', async () => {
+  it('duplicate rows in import file are only added once and report success', async () => {
     const fileInput = fixture.transferShadow.querySelector('#file-input');
     const repeatedFile = new File([
       JSON.stringify({
@@ -218,11 +245,29 @@ describe('Task Transfer Regression', () => {
     await waitForRender();
 
     const repeatedTasks = fixture.app.tasks.filter((task) => task.text === 'Repeated import task');
+    expect(repeatedTasks.length, 'Duplicate entries should only be added once.').to.equal(1);
+    expect(fixture.app.transferStatusMessage, 'Transfer status message should confirm import.').to.equal('Imported 1 new task from repeated.json.');
+    expect(fixture.snackbar.open, 'Snackbar should be open after duplicate import.').to.equal(true);
+  });
 
-    // Assert: duplicate entries within a single import file are only added once and still report a successful import.
-    expect(repeatedTasks.length).to.equal(1);
-    expect(fixture.app.transferStatusMessage).to.equal('Imported 1 new task from repeated.json.');
-    expect(fixture.snackbar.open).to.equal(true);
+  it('invalid JSON import avoids mutation and surfaces error feedback', async () => {
+    const fileInput = fixture.transferShadow.querySelector('#file-input');
+    const repeatedFile = new File([
+      JSON.stringify({
+        tasks: [
+          {
+            id: 'repeat-a',
+            text: 'Repeated import task',
+            completed: false,
+            createdAt: '2026-04-14T02:00:00.000Z',
+          },
+        ],
+      }),
+    ], 'repeated.json', { type: 'application/json' });
+
+    setFileList(fileInput, repeatedFile);
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await waitForRender();
 
     const beforeSnapshot = JSON.stringify(fixture.app.tasks);
     const invalidFile = new File(['{"tasks": ['], 'broken.json', { type: 'application/json' });
@@ -231,10 +276,9 @@ describe('Task Transfer Regression', () => {
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
     await waitForRender();
 
-    // Assert: invalid JSON does not mutate tasks, flips feedback into error tone, and renders a snackbar message.
-    expect(JSON.stringify(fixture.app.tasks)).to.equal(beforeSnapshot);
-    expect(fixture.app.transferStatusTone).to.equal('error');
-    expect(fixture.snackbar.open).to.equal(true);
-    expect(fixture.snackbar.shadowRoot.querySelector('.message')?.textContent?.trim().length).to.be.greaterThan(0);
+    expect(JSON.stringify(fixture.app.tasks), 'App state should not change after invalid JSON import.').to.equal(beforeSnapshot);
+    expect(fixture.app.transferStatusTone, 'Transfer status tone should be error after invalid JSON.').to.equal('error');
+    expect(fixture.snackbar.open, 'Snackbar should be open after invalid JSON.').to.equal(true);
+    expect(fixture.snackbar.shadowRoot.querySelector('.message')?.textContent?.trim().length, 'Snackbar message should be non-empty after invalid JSON.').to.be.greaterThan(0);
   });
 });
