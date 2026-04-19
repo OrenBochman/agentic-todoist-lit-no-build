@@ -15,10 +15,8 @@
       href="https://ka-f.webawesome.com/webawesome@3.5.0/styles/themes/default.css"
     />
     <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="https://ka-f.webawesome.com/webawesome@3.5.0/webawesome.loader.js"></script>
     <script type="module">
-      import { setBasePath, startLoader } from 'https://ka-f.webawesome.com/webawesome@3.5.0/webawesome.loader.js';
-      setBasePath('https://ka-f.webawesome.com/webawesome@3.5.0/');
-      startLoader();
       import './script.js';
     </script>
     <script>
@@ -30,7 +28,7 @@
       onerror="window.__webmcpStatus='failed'"
     ></script>
   </head>
-  <body>
-    <task-manager-app data-wa-preload="wa-button wa-input wa-icon"></task-manager-app>
+  <body data-wa-preload="wa-button wa-input wa-icon">
+    <task-manager-app></task-manager-app>
   </body>
   </html>
