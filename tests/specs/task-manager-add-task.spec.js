@@ -57,18 +57,32 @@ describe('Task Manager Add And Edit Regression', () => {
 
   it('should handle rapid add and delete of tasks without error (unit: edge case)', async () => {
     // Edge case: stress test for rapid add/delete
+    expect(fixture.app.tasks.length, 'Fixture should start with zero tasks.').to.equal(0);
     for (let i = 0; i < 5; i++) {
       fixture.input.value = `rapid${i}`;
       fixture.button.click();
       await waitForRender();
     }
+    expect(fixture.app.tasks.length, 'Fixture should have 5 tasks after rapid add.').to.equal(5);
+
     for (let i = 0; i < 5; i++) {
-      const firstDelete = fixture.board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.delete');
+      const items = fixture.board.shadowRoot.querySelectorAll('task-item');
+      const firstDelete = items[0]?.shadowRoot?.querySelector('.button');
+      console.log(`[diagnostic] Before delete ${i + 1}: items=${items.length}, tasks=${fixture.app.tasks.length}`);
       if (firstDelete) {
         firstDelete.click();
         await waitForRender();
+        const newItems = fixture.board.shadowRoot.querySelectorAll('task-item');
+        console.log(`[diagnostic] After delete ${i + 1}: items=${newItems.length}, tasks=${fixture.app.tasks.length}`);
+        expect(
+          newItems.length,
+          `After delete ${i + 1}, task-item count should decrease by 1.`
+        ).to.equal(items.length - 1);
+      } else {
+        console.log(`[diagnostic] Delete button not found on iteration ${i + 1}`);
       }
     }
+
     expect(fixture.app.tasks.length, 'All rapidly added tasks should be deleted.').to.equal(0);
   });
 
