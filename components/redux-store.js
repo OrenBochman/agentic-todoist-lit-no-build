@@ -48,3 +48,9 @@ export const {
 export const store = configureStore({
   reducer: tasksSlice.reducer,
 });
+
+export const resetStoreState = () => {
+  store.dispatch(setTasks([]));
+  store.dispatch(setFilter('all'));
+  store.dispatch(setTheme('light'));
+};

@@ -13,6 +13,7 @@ export class LitReduxElement extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    this._reduxState = store.getState();
     this._reduxUnsubscribe = store.subscribe(() => {
       this._reduxState = store.getState();
       this.requestUpdate();
@@ -33,5 +34,6 @@ export class LitReduxElement extends LitElement {
 
   dispatch(action) {
     store.dispatch(action);
+    this._reduxState = store.getState();
   }
 }

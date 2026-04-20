@@ -1,3 +1,8 @@
+import '../../script.js';
+import { resetStoreState } from '../../components/redux-store.js';
+import { waitForRender } from '../helpers/browser-test-harness.js';
+import { discoverWebAwesome } from '../helpers/webawesome-test-setup.js';
+
 // Redux-compatible state helpers for test setup (xUnit pattern)
 export const setTasks = async (app, tasks) => {
   app.tasks = tasks;
@@ -16,9 +21,6 @@ export const forceLayoutReflow = async () => {
   window.dispatchEvent(new Event('resize'));
   await new Promise((resolve) => setTimeout(resolve, 20));
 };
-import '../../script.js';
-import { waitForRender } from '../helpers/browser-test-harness.js';
-import { discoverWebAwesome } from '../helpers/webawesome-test-setup.js';
 
 const STORAGE_KEY = 'task-manager-items';
 const THEME_STORAGE_KEY = 'task-manager-theme';
@@ -26,6 +28,7 @@ const THEME_STORAGE_KEY = 'task-manager-theme';
 export const clearTaskManagerStorage = () => {
   window.localStorage.removeItem(STORAGE_KEY);
   window.localStorage.removeItem(THEME_STORAGE_KEY);
+  resetStoreState();
 };
 
 // Fixture: mount a fresh task-manager-app with composer, board, transfer controls, and snackbar ready.
