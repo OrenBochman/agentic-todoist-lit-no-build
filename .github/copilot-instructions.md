@@ -1,7 +1,7 @@
 # Known Issues (Kanban & Parser)
 
 - Section shortcuts (e.g. `/in`, `/sec`) are removed from the text but not added to the task state, so tasks are not grouped in kanban columns.
-- Toggled (completed/in-progress) button state is lost on refresh; state is not persisted.
+
 
 # Project coding guidelines
 

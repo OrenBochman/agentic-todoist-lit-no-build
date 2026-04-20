@@ -174,6 +174,22 @@ describe('Task Manager Edge Cases', () => {
     expect(newApp.tasks[0]?.text, 'Persisted task text should match.').to.equal('persisted task');
   });
 
+  it('should persist kanban view after reload (unit: edge case)', async () => {
+    const fixture = getFixture();
+    const kanbanToggle = fixture.appShadow.querySelector('wa-button');
+    expect(kanbanToggle, 'Kanban toggle button should exist.').to.exist;
+    kanbanToggle.click();
+    await waitForRender();
+
+    const newApp = document.createElement('task-manager-app');
+    document.getElementById('mount').replaceChildren(newApp);
+    await customElements.whenDefined('task-manager-app');
+    await waitForRender();
+
+    expect(newApp.showKanban, 'Kanban view should be restored after reload.').to.equal(true);
+    expect(newApp.shadowRoot.querySelector('kanban-board'), 'Kanban board should render after reload.').to.exist;
+  });
+
   it('should not add a task with only whitespace (unit: edge case)', async () => {
     const fixture = getFixture();
     const beforeCount = fixture.app.tasks.length;

@@ -24,10 +24,12 @@ export const forceLayoutReflow = async () => {
 
 const STORAGE_KEY = 'task-manager-items';
 const THEME_STORAGE_KEY = 'task-manager-theme';
+const VIEW_STORAGE_KEY = 'task-manager-view';
 
 export const clearTaskManagerStorage = () => {
   window.localStorage.removeItem(STORAGE_KEY);
   window.localStorage.removeItem(THEME_STORAGE_KEY);
+  window.localStorage.removeItem(VIEW_STORAGE_KEY);
   resetStoreState();
 };
 

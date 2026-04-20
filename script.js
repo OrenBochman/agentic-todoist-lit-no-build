@@ -11,6 +11,7 @@ import './components/task-utility-bar.js';
 
 const STORAGE_KEY = 'task-manager-items';
 const THEME_STORAGE_KEY = 'task-manager-theme';
+const VIEW_STORAGE_KEY = 'task-manager-view';
 const WEBMCP_TOOLS_KEY = '__taskManagerWebMcpToolsRegistered';
 const EXPORT_VERSION = 1;
 
@@ -130,7 +131,7 @@ class TaskManagerApp extends LitReduxElement {
     this.transferStatusTone = 'neutral';
     this.webMcpStatus = window.__webmcpStatus || 'loading';
     this._transferStatusTimeout = null;
-    this.showKanban = false;
+    this.showKanban = this.loadView() === 'kanban';
     // Load persisted state into Redux store on first load
     if (store.getState().tasks.length === 0) {
       const tasks = this.loadTasks();
@@ -183,7 +184,7 @@ class TaskManagerApp extends LitReduxElement {
             </div>
           </article>
 
-          <wa-button @click=${() => { this.showKanban = !this.showKanban; }} style="margin-bottom: 12px;">${this.showKanban ? 'Show List View' : 'Show Kanban View'}</wa-button>
+          <wa-button @click=${this.toggleTaskView} style="margin-bottom: 12px;">${this.showKanban ? 'Show List View' : 'Show Kanban View'}</wa-button>
 
           ${this.showKanban
             ? html`<kanban-board
@@ -246,6 +247,14 @@ class TaskManagerApp extends LitReduxElement {
     }
   }
 
+  loadView() {
+    try {
+      return window.localStorage.getItem(VIEW_STORAGE_KEY) === 'kanban' ? 'kanban' : 'list';
+    } catch {
+      return 'list';
+    }
+  }
+
   saveTasks() {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(this.reduxState.tasks));
@@ -262,6 +271,14 @@ class TaskManagerApp extends LitReduxElement {
     }
   }
 
+  saveView() {
+    try {
+      window.localStorage.setItem(VIEW_STORAGE_KEY, this.showKanban ? 'kanban' : 'list');
+    } catch {
+      return;
+    }
+  }
+
   applyTheme() {
     this.setAttribute('data-theme', this.reduxState.theme);
   }
@@ -271,6 +288,11 @@ class TaskManagerApp extends LitReduxElement {
     this.dispatch(setTheme(theme));
     this.applyTheme();
     this.saveTheme();
+  };
+
+  toggleTaskView = () => {
+    this.showKanban = !this.showKanban;
+    this.saveView();
   };
 
   handleWebMcpMenu = () => {
