@@ -71,10 +71,10 @@ Avoid this skill when:
 
 ## Assets (Template Files)
 
-- The files under `assets/` are **templates**. When starting a new bugfix or regression workflow, **copy these files to the `/memory/` folder** in your project root and update them there.
-   - Use `/memory/blackboard.md` for your evolving blackboard state.
-   - Use `/memory/counterfactual-note.md` for your counterfactual notes for a specific bugfix effort and clear it for the next one.
-   - Use `/memory/api-breaking-changes.md` to keep track of any API changes or misunderstandings that were uncovered during the coding process, so you can avoid them in the future.
+- The files under `assets/` are **templates**. When starting a new bugfix or regression workflow, **copy these files to the `memory/` folder** in your project root and update them there.
+   - Use `memory/blackboard.md` for your evolving blackboard state.
+   - Use `memory/counterfactual-note.md` for your counterfactual notes for a specific bugfix effort and clear it for the next one.
+   - Use `memory/api-breaking-changes.md` to keep track of any API changes or misunderstandings that were uncovered during the coding process, so you can avoid them in the future.
 
 **Do not edit the templates in `assets/` directly.**
 
@@ -193,8 +193,8 @@ When a patch fails:
 
 - revert the patch effects
 - keep the branch history or a summarized note of what happened
-- update `assets/blackboard.md`
-- append to `assets/counterfactual-note.md`
+- update `memory/blackboard.md`
+- append to `memory/counterfactual-note.md`
 
 The counterfactual note should preserve:
 
@@ -256,7 +256,7 @@ Recommended sections:
 
 ## Counterfactual-note discipline
 
-Use `assets/counterfactual-note.md` as durable memory from reverted paths.
+Use `memory/counterfactual-note.md` as durable memory from reverted paths.
 
 Each entry should include:
 

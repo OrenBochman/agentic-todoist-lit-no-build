@@ -37,6 +37,28 @@ Your mission is to **squish bugs and accelerate feature development by reducing 
 - Treat chained tests, hidden setup, accidental shared state, and noisy failure output as smells.
 
 
+
+## UI Testing Workflow: Manual Verification Before Automation
+
+Before adding or updating automated UI tests:
+
+- Open the app and manually test the scenario in the real UI.
+- Use browser automation (VS Code browser, Playwright MCP, etc.) to replicate the user flow and observe actual behavior.
+- Only proceed to write or update automated UI tests after confirming the real app behavior matches the intended outcome.
+- If a test fails but the manual UI works, review the test for unrealistic assumptions or fixture issues before assuming a code bug.
+- Add diagnostic logging to tests when discrepancies are found to aid debugging.
+
+This ensures automated tests reflect real user experience and reduces false positives/negatives.
+
+### Steps
+
+1. Open the app in a browser.
+2. Manually perform the scenario to verify expected behavior.
+3. Use browser automation or Playwright MCP to script the scenario and observe state changes.
+4. Update or write the automated test to match the real UI flow.
+5. If the test fails but the UI is correct, debug the test setup and add diagnostics.
+6. Only treat as a code bug if both manual and automated tests fail.
+
 ## Tighten feedback loops
 
 1. When testing, agents must minimize latency between **code, execution, error, diagnosis, and fix**.

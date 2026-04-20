@@ -58,22 +58,35 @@ describe('Task Manager Add And Edit Regression', () => {
     fixture.input.value = 'pending task';
     fixture.button.click();
     await waitForRender();
-    fixture.input.value = 'done task';
+    fixture.input.value = 'completed';
     fixture.button.click();
     await waitForRender();
-    // Mark second as completed
-    let lastItem = fixture.board.shadowRoot.querySelectorAll('task-item')[1];
-    let lastToggle = lastItem?.shadowRoot?.querySelector('.toggle');
-    lastToggle.click();
+
+    // Mark 'completed' as done
+    let items = fixture.board.shadowRoot.querySelectorAll('task-item');
+    let completedItem = Array.from(items).find(item => item.shadowRoot.querySelector('.task-main').textContent.includes('completed'));
+    let completedToggle = completedItem?.shadowRoot?.querySelector('.toggle');
+    completedToggle.click();
     await waitForRender();
+
     // Filter to completed
     fixture.app.filter = 'completed';
     await waitForRender();
+
+    // Diagnostic: log tasks before delete
+    // eslint-disable-next-line no-console
+    console.log('Tasks before delete:', fixture.app.tasks.map(t => ({text: t.text, completed: t.completed})));
+
     // Delete completed task
-    let completedItem = fixture.board.shadowRoot.querySelector('task-item');
-    let deleteBtn = completedItem?.shadowRoot?.querySelector('.button');
+    let filteredCompletedItem = fixture.board.shadowRoot.querySelector('task-item');
+    let deleteBtn = filteredCompletedItem?.shadowRoot?.querySelector('.button');
     deleteBtn.click();
     await waitForRender();
+
+    // Diagnostic: log tasks after delete
+    // eslint-disable-next-line no-console
+    console.log('Tasks after delete:', fixture.app.tasks.map(t => ({text: t.text, completed: t.completed})));
+
     // Should only have pending left
     expect(fixture.app.tasks.length, 'Only pending task should remain after deleting in filtered view.').to.equal(1);
     expect(fixture.app.tasks[0]?.text, 'Pending task should remain.').to.equal('pending task');

@@ -297,8 +297,6 @@ class TaskManagerApp extends LitElement {
   handleTaskDelete(event) {
     const taskId = event.detail.taskId;
     this.tasks = this.tasks.filter((task) => task.id !== taskId);
-    // H1 patch: re-apply filter to force UI update after delete
-    this.filter = this.filter; // triggers Lit reactivity
     this.saveTasks();
     this.clearTransferStatus();
   }
