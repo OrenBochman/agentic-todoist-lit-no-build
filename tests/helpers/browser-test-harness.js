@@ -15,7 +15,8 @@ mocha.setup({
 export const expect = chai.expect;
 
 export const waitForRender = async () => {
-  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await Promise.resolve();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
 };
 
 export const runBrowserTests = async () =>

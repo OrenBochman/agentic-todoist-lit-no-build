@@ -1,5 +1,6 @@
 await import('./task-composer.spec.js');
 await import('./task-filter-bar.spec.js');
+await import('./lit-redux-element.spec.js');
 await import('./task-manager-add-task.spec.js');
 await import('./task-hero.spec.js');
 await import('./task-snackbar.spec.js');

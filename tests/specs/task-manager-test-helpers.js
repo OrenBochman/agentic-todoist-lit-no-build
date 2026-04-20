@@ -2,7 +2,6 @@ import { expect, waitForRender } from '../helpers/browser-test-harness.js';
 import {
   clearTaskManagerStorage,
   mountTaskManagerApp,
-  waitForLongPress,
   setTasks,
   setFilter,
 } from '../fixtures/task-manager-app.fixture.js';
@@ -85,8 +84,19 @@ export const addTaskWithNativeInput = async (text, data = 'k') => {
 export const openEditMode = async (item) => {
   const taskMain = getEditableTaskMain(item);
   expect(taskMain, 'Editable task-main should exist for long-press.').to.exist;
-  taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-  await waitForLongPress();
+
+  const originalSetTimeout = window.setTimeout;
+  window.setTimeout = (callback, _delay, ...args) => {
+    callback(...args);
+    return 1;
+  };
+
+  try {
+    taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+    await waitForRender();
+  } finally {
+    window.setTimeout = originalSetTimeout;
+  }
 };
 
 export {

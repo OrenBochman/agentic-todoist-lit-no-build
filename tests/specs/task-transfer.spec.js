@@ -35,6 +35,14 @@ const dispatchImport = async (file) => {
   setFileList(fileInput, file);
   fileInput.dispatchEvent(new Event('change', { bubbles: true }));
   await waitForRender();
+  await Promise.resolve();
+  if (fixture.app?.updateComplete) {
+    await fixture.app.updateComplete;
+  }
+  if (fixture.snackbar?.updateComplete) {
+    await fixture.snackbar.updateComplete;
+  }
+  await waitForRender();
 };
 
 const setShellWidth = async (width) => {

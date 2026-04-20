@@ -57,8 +57,8 @@
 
       #summary {
         margin-top: 18px;
-        padding: 14px 16px;
-        border-radius: 16px;
+        padding: 18px;
+        border-radius: 18px;
         border: 1px solid rgba(148, 163, 184, 0.18);
         background: rgba(15, 23, 42, 0.44);
         color: var(--text-strong);
@@ -76,6 +76,203 @@
         border-color: rgba(248, 113, 113, 0.4);
       }
 
+      .summary-layout {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .summary-ring {
+        --progress: 0deg;
+        width: 92px;
+        height: 92px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at center, rgba(9, 17, 29, 0.98) 58%, transparent 59%),
+          conic-gradient(
+            color-mix(in srgb, var(--accent) 88%, white) 0deg,
+            color-mix(in srgb, var(--accent) 88%, white) var(--progress),
+            rgba(148, 163, 184, 0.14) var(--progress),
+            rgba(148, 163, 184, 0.14) 360deg
+          );
+        display: grid;
+        place-items: center;
+        border: 1px solid color-mix(in srgb, var(--text-strong) 12%, transparent);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      }
+
+      .summary-ring-value {
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .summary-copy {
+        min-width: 0;
+      }
+
+      .summary-heading {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .summary-body {
+        margin-top: 6px;
+        color: var(--text-muted);
+      }
+
+      .summary-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .summary-chip {
+        border: 1px solid color-mix(in srgb, var(--text-strong) 12%, transparent);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 0.9rem;
+        color: var(--text-strong);
+        background: rgba(15, 23, 42, 0.52);
+      }
+
+      .summary-chip.fail {
+        color: #fca5a5;
+        border-color: rgba(248, 113, 113, 0.28);
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .metric-card {
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid var(--panel-border);
+        background: rgba(15, 23, 42, 0.44);
+      }
+
+      .metric-label {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+      }
+
+      .metric-value {
+        margin-top: 8px;
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .metric-value.pass {
+        color: #4ade80;
+      }
+
+      .metric-value.fail {
+        color: #f87171;
+      }
+
+      .metric-value.duration {
+        color: #38bdf8;
+      }
+
+      .metric-subcopy {
+        margin-top: 8px;
+        font-size: 0.92rem;
+        color: var(--text-muted);
+      }
+
+      .dashboard-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid var(--panel-border);
+        background: rgba(15, 23, 42, 0.44);
+      }
+
+      .toolbar-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .filter-button {
+        border: 1px solid color-mix(in srgb, var(--text-strong) 12%, transparent);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font: inherit;
+        color: var(--text-strong);
+        background: rgba(15, 23, 42, 0.52);
+        cursor: pointer;
+      }
+
+      .filter-button[data-active='true'] {
+        border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+        background: color-mix(in srgb, var(--accent) 18%, rgba(15, 23, 42, 0.52));
+      }
+
+      #test-search {
+        min-width: min(320px, 100%);
+        border: 1px solid color-mix(in srgb, var(--text-strong) 12%, transparent);
+        border-radius: 999px;
+        padding: 10px 14px;
+        font: inherit;
+        color: var(--text-strong);
+        background: rgba(15, 23, 42, 0.52);
+      }
+
+      #test-search::placeholder {
+        color: var(--text-muted);
+      }
+
+      .failure-panel {
+        display: none;
+        margin-top: 18px;
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(248, 113, 113, 0.24);
+        background: rgba(63, 14, 20, 0.34);
+      }
+
+      .failure-panel[data-visible='true'] {
+        display: block;
+      }
+
+      .failure-title {
+        margin: 0 0 10px;
+        font-size: 1rem;
+      }
+
+      .failure-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .failure-list a {
+        color: #fca5a5;
+        text-decoration: none;
+      }
+
+      .failure-list a:hover {
+        text-decoration: underline;
+      }
+
       #mount {
         margin-top: 20px;
         width: 100vw;
@@ -83,6 +280,10 @@
         margin-left: auto;
         margin-right: auto;
         display: block;
+      }
+
+      #mount[data-hidden='true'] {
+        display: none;
       }
 
       #mocha {
@@ -104,40 +305,51 @@
         color: #f87171;
       }
 
-      #mocha-stats {
-        position: static;
-        margin-top: 16px;
-        font-size: 1.15rem;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        color: #1a2233;
-        background: #f8fafc;
+      #mocha .test.is-hidden {
+        display: none;
+      }
+
+      #mocha .test.highlighted > h2 {
+        outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+        outline-offset: 6px;
         border-radius: 8px;
-        padding: 6px 16px 6px 10px;
-        display: inline-flex;
-        gap: 1.5em;
-        align-items: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       }
-      :root[data-theme='dark'] #mocha-stats {
-        color: #f8fafc;
-        background: #232b3a;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+
+      #mocha-stats {
+        display: none !important;
       }
-      #mocha-stats .passes {
-        color: #22c55e;
-        font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+
+      @media (max-width: 920px) {
+        .dashboard-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
       }
-      #mocha-stats .failures {
-        color: #ef4444;
-        font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
-      }
-      #mocha-stats .duration {
-        color: #0ea5e9;
-        font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+
+      @media (max-width: 640px) {
+        body {
+          padding: 16px;
+        }
+
+        .summary-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .dashboard-toolbar {
+          align-items: stretch;
+        }
+
+        .toolbar-group {
+          width: 100%;
+        }
+
+        #test-search {
+          min-width: 0;
+          width: 100%;
+        }
       }
     </style>
   </head>
@@ -150,10 +362,58 @@
           composer, app, hero, and transfer behavior from a single dashboard.
         </p>
 
-        <div id="summary" data-status="running" aria-live="polite">Running regression suite...</div>
+        <div id="summary" data-status="running" aria-live="polite">
+          <div class="summary-layout">
+            <div class="summary-ring" id="summary-ring">
+              <div class="summary-ring-value" id="summary-percent">0%</div>
+            </div>
+            <div class="summary-copy">
+              <h2 class="summary-heading" id="summary-heading">Running regression suite...</h2>
+              <div class="summary-body" id="summary-body">Collecting results from the browser suite.</div>
+              <div class="summary-meta">
+                <span class="summary-chip" id="summary-tests-chip">0 tests</span>
+                <span class="summary-chip fail" id="summary-failures-chip">0 failures</span>
+                <span class="summary-chip" id="summary-duration-chip">0 ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-grid" aria-label="Regression metrics">
+          <article class="metric-card">
+            <div class="metric-label">Tests</div>
+            <div class="metric-value" id="metric-total">0</div>
+            <div class="metric-subcopy" id="metric-filtered">No results yet</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-label">Failing</div>
+            <div class="metric-value fail" id="metric-failures">0</div>
+            <div class="metric-subcopy" id="metric-top-failure">No failures recorded</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-label">Duration</div>
+            <div class="metric-value duration" id="metric-duration">0 ms</div>
+            <div class="metric-subcopy" id="metric-slowest">No timing data yet</div>
+          </article>
+        </div>
 
-        <div id="mount"></div>
+        <div class="dashboard-toolbar" aria-label="Dashboard controls">
+          <div class="toolbar-group">
+            <button class="filter-button" type="button" data-filter="all" data-active="false">All</button>
+            <button class="filter-button" type="button" data-filter="fail" data-active="true">Failures</button>
+            <button class="filter-button" type="button" data-filter="pass">Passing</button>
+          </div>
+          <div class="toolbar-group">
+            <input id="test-search" type="search" placeholder="Filter tests by title or suite" aria-label="Filter tests by title or suite" />
+          </div>
+        </div>
+
+        <section id="failure-panel" class="failure-panel" aria-live="polite" data-visible="false">
+          <h2 class="failure-title">Failure List</h2>
+          <ol id="failure-list" class="failure-list"></ol>
+        </section>
+
         <div id="mocha"></div>
+        <div id="mount"></div>
       </section>
     </main>
 
@@ -162,14 +422,191 @@
     <script type="module">
       import { runBrowserTests } from './helpers/browser-test-harness.js';
       const summary = document.getElementById('summary');
+      const summaryRing = document.getElementById('summary-ring');
+      const summaryPercent = document.getElementById('summary-percent');
+      const summaryHeading = document.getElementById('summary-heading');
+      const summaryBody = document.getElementById('summary-body');
+      const summaryTestsChip = document.getElementById('summary-tests-chip');
+      const summaryFailuresChip = document.getElementById('summary-failures-chip');
+      const summaryDurationChip = document.getElementById('summary-duration-chip');
+      const metricTotal = document.getElementById('metric-total');
+      const metricFiltered = document.getElementById('metric-filtered');
+      const metricFailures = document.getElementById('metric-failures');
+      const metricDuration = document.getElementById('metric-duration');
+      const metricSlowest = document.getElementById('metric-slowest');
+      const metricTopFailure = document.getElementById('metric-top-failure');
+      const failurePanel = document.getElementById('failure-panel');
+      const failureList = document.getElementById('failure-list');
+      const searchInput = document.getElementById('test-search');
+      const filterButtons = [...document.querySelectorAll('.filter-button')];
+      const runMetrics = {
+        allTests: [],
+        passedTests: [],
+        failedTests: [],
+      };
+      let activeFilter = 'fail';
+
+      const formatDuration = (duration) => {
+        if (!Number.isFinite(duration)) {
+          return '0 ms';
+        }
+        return duration >= 1000 ? `${(duration / 1000).toFixed(2)} s` : `${Math.round(duration)} ms`;
+      };
+
+      const testLabel = (entry) => entry.fullTitle || entry.title || 'Unnamed test';
+
+      const assignTestRowIds = () => {
+        const testRows = [...document.querySelectorAll('#mocha-report > li.test, #mocha-report li.test')];
+        testRows.forEach((row, index) => {
+          row.dataset.testIndex = String(index);
+          if (!row.id) {
+            row.id = `test-row-${index}`;
+          }
+        });
+      };
+
+      const updateMetrics = () => {
+        const total = runMetrics.allTests.length;
+        const failures = runMetrics.failedTests.length;
+        const passes = runMetrics.passedTests.length;
+        const duration = runMetrics.allTests.reduce((sum, test) => sum + (test.duration || 0), 0);
+        const passRate = total ? Math.round((passes / total) * 100) : 0;
+
+        metricTotal.textContent = String(runMetrics.allTests.length);
+        metricFailures.textContent = String(runMetrics.failedTests.length);
+        metricDuration.textContent = formatDuration(duration);
+
+        summaryPercent.textContent = `${passRate}%`;
+        summaryRing.style.setProperty('--progress', `${(passRate / 100) * 360}deg`);
+        summaryTestsChip.textContent = `${total} ${total === 1 ? 'test' : 'tests'}`;
+        summaryFailuresChip.textContent = `${failures} ${failures === 1 ? 'failure' : 'failures'}`;
+        summaryDurationChip.textContent = formatDuration(duration);
+
+        if (!total) {
+          summaryHeading.textContent = 'Running regression suite...';
+          summaryBody.textContent = 'Collecting results from the browser suite.';
+        } else if (!failures) {
+          summaryHeading.textContent = 'Regression suite passed';
+          summaryBody.textContent = 'No failures detected. The dashboard is focused on failure triage, so the test list can stay filtered unless you need to inspect passes.';
+        } else {
+          summaryHeading.textContent = `${failures} ${failures === 1 ? 'failure' : 'failures'} need attention`;
+          summaryBody.textContent = 'The list below is filtered to failing tests by default so the useful information stays on screen.';
+        }
+
+        const slowest = [...runMetrics.allTests]
+          .sort((a, b) => (b.duration || 0) - (a.duration || 0))[0];
+        metricSlowest.textContent = slowest
+          ? `${testLabel(slowest)} • ${formatDuration(slowest.duration || 0)}`
+          : 'No timing data yet';
+
+        metricTopFailure.textContent = runMetrics.failedTests.length
+          ? testLabel(runMetrics.failedTests[0])
+          : 'No failures recorded';
+      };
+
+      const updateFailureList = () => {
+        failureList.replaceChildren();
+
+        if (!runMetrics.failedTests.length) {
+          failurePanel.dataset.visible = 'false';
+          return;
+        }
+
+        runMetrics.failedTests.forEach((entry, index) => {
+          const item = document.createElement('li');
+          const link = document.createElement('a');
+          const row = document.querySelector(`#test-row-${entry.index}`);
+
+          link.href = row ? `#${row.id}` : '#mocha';
+          link.textContent = `${index + 1}. ${testLabel(entry)}`;
+          link.addEventListener('click', () => {
+            document.querySelectorAll('#mocha .test.highlighted').forEach((node) => {
+              node.classList.remove('highlighted');
+            });
+            if (row) {
+              row.classList.add('highlighted');
+            }
+          });
+
+          item.append(link);
+          failureList.append(item);
+        });
+
+        failurePanel.dataset.visible = 'true';
+      };
+
+      const applyDashboardFilters = () => {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const testRows = [...document.querySelectorAll('#mocha li.test')];
+        let visibleCount = 0;
+
+        testRows.forEach((row) => {
+          const isPass = row.classList.contains('pass');
+          const isFail = row.classList.contains('fail');
+          const text = row.textContent.toLowerCase();
+          const matchesFilter = activeFilter === 'all'
+            || (activeFilter === 'pass' && isPass)
+            || (activeFilter === 'fail' && isFail);
+          const matchesSearch = !searchTerm || text.includes(searchTerm);
+          const visible = matchesFilter && matchesSearch;
+
+          row.classList.toggle('is-hidden', !visible);
+          if (visible) {
+            visibleCount += 1;
+          }
+        });
+
+        metricFiltered.textContent = `${visibleCount} visible in current filter`;
+      };
+
+      filterButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          activeFilter = button.dataset.filter;
+          filterButtons.forEach((candidate) => {
+            candidate.dataset.active = String(candidate === button);
+          });
+          applyDashboardFilters();
+        });
+      });
+
+      searchInput.addEventListener('input', () => {
+        applyDashboardFilters();
+      });
 
       // Add global error logging for test failures
       if (window.mocha) {
         mocha.run = (function(origRun) {
           return function(...args) {
             const runner = origRun.apply(this, args);
+            let testIndex = 0;
+
+            runner.on('pass', function(test) {
+              runMetrics.passedTests.push({
+                index: testIndex,
+                title: test.title,
+                fullTitle: test.fullTitle?.(),
+                duration: test.duration || 0,
+              });
+            });
             runner.on('fail', function(test, err) {
+              runMetrics.failedTests.push({
+                index: testIndex,
+                title: test.title,
+                fullTitle: test.fullTitle?.(),
+                duration: test.duration || 0,
+                message: err?.message || '',
+              });
               console.error('Test failed:', test.title, err);
+            });
+            runner.on('test end', function(test) {
+              runMetrics.allTests.push({
+                index: testIndex,
+                title: test.title,
+                fullTitle: test.fullTitle?.(),
+                duration: test.duration || 0,
+                state: test.state || 'unknown',
+              });
+              testIndex += 1;
             });
             return runner;
           };
@@ -179,13 +616,13 @@
       await import('./specs/all-regression.spec.js');
       const failures = await runBrowserTests();
 
-      if (failures === 0) {
-        summary.dataset.status = 'passed';
-        summary.textContent = 'Regression suite passed. All browser tests are green.';
-      } else {
-        summary.dataset.status = 'failed';
-        summary.textContent = `Regression suite failed with ${failures} ${failures === 1 ? 'test' : 'tests'} failing.`;
-      }
+      summary.dataset.status = failures === 0 ? 'passed' : 'failed';
+      document.getElementById('mount').dataset.hidden = 'true';
+
+      assignTestRowIds();
+      updateMetrics();
+      updateFailureList();
+      applyDashboardFilters();
     </script>
   </body>
 </html>

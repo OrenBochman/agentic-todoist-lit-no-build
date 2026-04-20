@@ -19,7 +19,7 @@ export const setTheme = async (app, theme) => {
 // Fixture helper: force a window resize and reflow for layout-sensitive tests
 export const forceLayoutReflow = async () => {
   window.dispatchEvent(new Event('resize'));
-  await new Promise((resolve) => setTimeout(resolve, 20));
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 };
 
 const STORAGE_KEY = 'task-manager-items';
