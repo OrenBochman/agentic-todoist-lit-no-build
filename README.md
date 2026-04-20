@@ -49,6 +49,87 @@ There is also a transfer regression test at [tests/task-transfer-regression.html
 
 Open it through the same static server used for the app. It now auto-runs a browser Mocha/Chai suite with the shared app fixture. It checks transfer layout, JSON export, merge-only import, duplicate skipping, and invalid-file feedback.
 
+
+## Task Parser Web Component
+
+The app includes a browser-safe, no-UI parser web component for Todoist-style task input:
+
+**Component:** `<todoist-parser>` ([components/todoist-parser-element.js](components/todoist-parser-element.js))
+
+**Usage:**
+
+```js
+const parser = document.createElement('todoist-parser');
+const result = parser.parse('Review goals 2026-01-01 14:30 #Work @review p2 every fri');
+// result: {
+//   title: 'Review goals',
+//   due: Date('2026-01-01T14:30:00'),
+//   recurrence: 'WEEKLY:FRI',
+//   project: 'Work',
+//   labels: ['review'],
+//   priority: 2,
+//   section: null
+// }
+```
+
+
+**Contract:**
+- Input: freeform string (task text)
+- Output: object with fields:
+	- `title`: string (remaining text after parsing metadata/dates)
+	- `due`: JS Date or null (parsed due date/time)
+	- `recurrence`: string or null (e.g., 'WEEKLY:FRI')
+	- `project`: string or null (first `#project`)
+	- `section`: string or null (first `/section`)
+	- `labels`: array of strings (all `@labels`)
+	- `priority`: integer 1-4 or null (from `p1`-`p4`)
+
+**Event:**
+- Dispatches a `parsed` event with the result as `detail` when `.parse()` is called.
+
+See [tests/specs/todoist-parser-element.spec.js](tests/specs/todoist-parser-element.spec.js) for full test coverage and examples.
+
+## Todoist Parser Grammar
+
+**Design principle:**
+
+- NO ambiguity resolution
+- NO fuzzy parsing
+- ONLY explicit patterns + ISO fallback
+
+**EBNF Grammar:**
+
+```{mermaid}
+railroad-beta
+
+	task        ::= (meta WS)* core (WS meta)*
+
+	meta        ::= project | label | priority | section
+
+	project     ::= "#" ident
+	label       ::= "@" ident
+	section     ::= "/" ident
+	priority    ::= "p" [1-4]
+
+	core        ::= text? datetime? recurrence?
+
+	datetime    ::= iso_date [time]
+								| keyword_date [time]
+
+	iso_date    ::= YYYY "-" MM "-" DD
+								| YYYYMMDD
+
+	time        ::= HH ":" MM
+
+	keyword_date ::= "today" | "tomorrow"
+
+	recurrence  ::= "every" WS ( "day" | "week" | weekday )
+
+	weekday     ::= "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"
+
+	ident       ::= [a-zA-Z0-9_-]+
+```
+
 ## WebMCP
 
 The page loads the official WebMCP widget from `https://webmcp.dev/src/webmcp.js`.
