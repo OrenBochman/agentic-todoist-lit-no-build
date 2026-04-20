@@ -293,19 +293,28 @@ class TaskManagerApp extends LitReduxElement {
    * Handles upward task creation events from the composer component.
    */
   handleTaskAdd(event) {
-    const taskText = event.detail.text;
+    const taskDetails = event.detail ?? {};
+    const taskText = String(taskDetails.text || '').trim();
+
+    if (!taskText) {
+      return;
+    }
+
     this.dispatch(addTask({
       id: crypto.randomUUID(),
       text: taskText,
-      completed: false,
+      completed: Boolean(taskDetails.completed),
       createdAt: new Date().toISOString(),
-      dueDate: null,
-      project: null,
-      importance: null,
-      dependsOn: [],
-      workloadEstimate: 4,
-      workloadUncertainty: 1,
-      tags: [],
+      dueDate: taskDetails.dueDate ?? null,
+      project: taskDetails.project ?? null,
+      importance: taskDetails.importance ?? null,
+      dependsOn: Array.isArray(taskDetails.dependsOn) ? taskDetails.dependsOn : [],
+      workloadEstimate: typeof taskDetails.workloadEstimate === 'number' ? taskDetails.workloadEstimate : 4,
+      workloadUncertainty: typeof taskDetails.workloadUncertainty === 'number' ? taskDetails.workloadUncertainty : 1,
+      tags: Array.isArray(taskDetails.tags) ? taskDetails.tags : [],
+      inProgress: Boolean(taskDetails.inProgress),
+      sectionShortcut: taskDetails.sectionShortcut ?? null,
+      section: taskDetails.section ?? null,
     }));
     this.saveTasks();
     this.clearTransferStatus();

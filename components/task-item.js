@@ -1,4 +1,5 @@
 import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import { getTaskStatusShortcut } from './task-status.js';
 
 /**
  * @typedef {Object} TaskRecord
@@ -23,6 +24,7 @@ class TaskItem extends LitElement {
     draftText: { state: true },
     editError: { state: true },
     editing: { state: true },
+    showStatusBadge: { type: Boolean, attribute: 'show-status-badge' },
     task: { type: Object },
   };
 
@@ -185,6 +187,7 @@ class TaskItem extends LitElement {
     this.draftText = '';
     this.editError = '';
     this.editing = false;
+    this.showStatusBadge = true;
     this._longPressTimer = null;
     /** @type {TaskRecord | null} */
     this.task = null;
@@ -215,6 +218,10 @@ class TaskItem extends LitElement {
     if (this.task.dueDate) meta.push(`Due: ${this.task.dueDate}`);
     if (this.task.project) meta.push(`Project: ${this.task.project}`);
     if (this.task.importance) meta.push(`Priority: ${this.task.importance}`);
+    const pillText = this.showStatusBadge ? getTaskStatusShortcut(this.task) : null;
+    const pill = pillText
+      ? html`<wa-badge pill style="margin-left:8px;">${pillText}</wa-badge>`
+      : '';
 
     return html`
       <article class="task" data-completed=${String(this.task.completed)}>
@@ -250,7 +257,7 @@ class TaskItem extends LitElement {
                 @pointerleave=${this.clearLongPress}
                 @pointercancel=${this.clearLongPress}
               >
-                <p class="task-text">${this.task.text}</p>
+                <p class="task-text">${this.task.text}${pill}</p>
                 <span class="task-meta">${this.task.completed ? 'Completed' : 'Pending'}</span>
                 ${meta.length
                   ? html`<span class="task-meta">${meta.join(' | ')}</span>`

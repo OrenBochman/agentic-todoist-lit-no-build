@@ -29,4 +29,20 @@ describe('kanban-board', () => {
     expect(columns[1].textContent).toContain('No tasks in progress');
     expect(columns[2].textContent).toContain('No completed tasks');
   });
+
+  it('renders section shortcut badges in the column titles', async () => {
+    const tasks = [
+      { id: '1', text: 'Upcoming', completed: false },
+      { id: '2', text: 'Doing', completed: false, inProgress: true },
+      { id: '3', text: 'Done', completed: true },
+    ];
+    const el = await fixture(html`<kanban-board .tasks=${tasks}></kanban-board>`);
+    const columnBadges = [...el.shadowRoot.querySelectorAll('.column-title wa-badge')];
+    const itemBadges = [...el.shadowRoot.querySelectorAll('task-item')].map((item) =>
+      item.shadowRoot.querySelector('wa-badge')
+    );
+
+    expect(columnBadges.map((badge) => badge.textContent?.trim() ?? '')).toEqual(['/up', '/in', '/done']);
+    expect(itemBadges).toEqual([null, null, null]);
+  });
 });

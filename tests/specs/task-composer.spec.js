@@ -30,6 +30,10 @@ describe('Task Composer Regression', () => {
       workloadEstimate: 4,
       workloadUncertainty: 1,
       tags: [],
+      inProgress: false,
+      completed: false,
+      sectionShortcut: null,
+      section: null,
     });
   });
 
@@ -70,6 +74,10 @@ describe('Task Composer Regression', () => {
       workloadEstimate: 4,
       workloadUncertainty: 1,
       tags: [],
+      inProgress: false,
+      completed: false,
+      sectionShortcut: null,
+      section: null,
     });
   });
 
@@ -111,6 +119,32 @@ describe('Task Composer Regression', () => {
       workloadEstimate: 4,
       workloadUncertainty: 1,
       tags: [],
+      inProgress: false,
+      completed: false,
+      sectionShortcut: null,
+      section: null,
+    });
+  });
+
+  it('maps section shortcuts into task status fields', async () => {
+    const addedTask = waitForTaskAdd(fixture.composer);
+    fixture.input.value = 'ship feature /in';
+    fixture.button.click();
+    await waitForRender();
+
+    expect(await addedTask, 'Composer should preserve raw section text and emit normalized status fields.').to.deep.equal({
+      text: 'ship feature',
+      dueDate: null,
+      project: null,
+      importance: null,
+      dependsOn: [],
+      workloadEstimate: 4,
+      workloadUncertainty: 1,
+      tags: [],
+      inProgress: true,
+      completed: false,
+      sectionShortcut: '/in',
+      section: 'in',
     });
   });
 
