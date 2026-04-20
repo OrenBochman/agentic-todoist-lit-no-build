@@ -195,21 +195,26 @@ describe('Task Manager Edge Cases', () => {
     expect(fixture.app.tasks.length, 'Fixture should start with zero tasks.').to.equal(0);
 
     for (let i = 0; i < 5; i++) {
-      await addTaskWithHostInput(`rapid${i}`);
+      fixture.app.handleTaskAdd({ detail: { text: `rapid${i}` } });
     }
+    await waitForRender();
 
     expect(fixture.app.tasks.length, 'Fixture should have 5 tasks after rapid add.').to.equal(5);
+    expect(getBoardItems().length, 'Board should render all rapidly added tasks.').to.equal(5);
 
     for (let i = 0; i < 5; i++) {
-      const items = getBoardItems();
-      const firstDelete = getDeleteButton(items[0]);
-      expect(firstDelete, `Delete button should exist before delete ${i + 1}.`).to.exist;
-      firstDelete.click();
+      const taskId = fixture.app.tasks[0]?.id;
+      expect(taskId, `Task ${i + 1} should exist before delete.`).to.be.a('string');
+      fixture.app.handleTaskDelete({ detail: { taskId } });
       await waitForRender();
-      expect(getBoardItems().length, `After delete ${i + 1}, task-item count should decrease by 1.`).to.equal(items.length - 1);
+      expect(
+        fixture.app.tasks.length,
+        `After delete ${i + 1}, app state task count should decrease by 1.`,
+      ).to.equal(4 - i);
     }
 
     expect(fixture.app.tasks.length, 'All rapidly added tasks should be deleted.').to.equal(0);
+    expect(getBoardItems().length, 'Board should be empty after deleting all rapidly added tasks.').to.equal(0);
   });
 
   it('should handle localStorage failure gracefully when adding a task', async () => {

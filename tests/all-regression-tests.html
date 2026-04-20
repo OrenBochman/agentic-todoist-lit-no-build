@@ -309,6 +309,10 @@
         display: none;
       }
 
+      #mocha .suite.is-hidden {
+        display: none;
+      }
+
       #mocha .test.highlighted > h2 {
         outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
         outline-offset: 6px;
@@ -554,6 +558,14 @@
           if (visible) {
             visibleCount += 1;
           }
+        });
+
+        const suiteRows = [...document.querySelectorAll('#mocha-report li.suite')].reverse();
+        suiteRows.forEach((suiteRow) => {
+          const visibleChildTests = suiteRow.querySelectorAll(':scope > ul > li.test:not(.is-hidden)');
+          const visibleChildSuites = suiteRow.querySelectorAll(':scope > ul > li.suite:not(.is-hidden)');
+          const hasVisibleContent = visibleChildTests.length > 0 || visibleChildSuites.length > 0;
+          suiteRow.classList.toggle('is-hidden', !hasVisibleContent);
         });
 
         metricFiltered.textContent = `${visibleCount} visible in current filter`;
