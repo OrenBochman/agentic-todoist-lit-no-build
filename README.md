@@ -3,6 +3,7 @@ title: Task Manager
 description: A task manager web app built with Lit and Web Awesome components.
 ---
 
+
 # Task Manager
 
 This workspace contains a task manager web app built with Lit in plain JavaScript and Web Awesome components loaded from a CDN.
@@ -14,11 +15,15 @@ This workspace contains a task manager web app built with Lit in plain JavaScrip
 - Delete tasks
 - Filter tasks by status
 - Persist tasks in localStorage
+- **Redux Toolkit + Lit**: All app state is managed by a Redux Toolkit store (browser-safe, no build step) and connected to Lit components via a custom `LitReduxElement` base class.
+- **Compatibility API**: The root app exposes `.tasks`, `.filter`, and `.theme` properties for legacy tests and tools, but all state changes dispatch Redux actions.
+- **Test/Fixture Patterns**: Test fixtures and helpers use Redux-safe assignment and always flush Lit updates after state changes. See `tests/fixtures/task-manager-app.fixture.js` for details.
 - Import tasks from JSON backups
 - Export tasks as JSON backups
 - App icon in the hero using Web Awesome
 - Edit tasks by long-pressing a task row
 - WebMCP widget with task tools for browsing, adding, completing, and deleting tasks from chat
+
 
 ## Run
 
@@ -26,6 +31,7 @@ To run we need a local development environment that can serve static files.  I u
 This 
 
 Open [index.html](./index.html) in VS Code preview, or serve the folder with any static file server.
+
 
 ## Regression Tests
 
@@ -50,7 +56,26 @@ There is also a transfer regression test at [tests/task-transfer-regression.html
 Open it through the same static server used for the app. It now auto-runs a browser Mocha/Chai suite with the shared app fixture. It checks transfer layout, JSON export, merge-only import, duplicate skipping, and invalid-file feedback.
 
 
-## Task Parser Web Component
+
+## State Management: Redux Toolkit + Lit
+
+- All app state (tasks, filter, theme) is managed by a Redux Toolkit store defined in [components/redux-store.js](components/redux-store.js).
+- The root app and all stateful components extend [components/lit-redux-element.js](components/lit-redux-element.js), which subscribes to the Redux store and triggers Lit updates on state change.
+- The root app exposes compatibility properties (`.tasks`, `.filter`, `.theme`) for legacy tests and tools, but all mutations dispatch Redux actions.
+- Test fixtures and helpers use assignment (not in-place mutation) and always flush Lit updates after state changes. See [tests/fixtures/task-manager-app.fixture.js](tests/fixtures/task-manager-app.fixture.js).
+- All stateful flows are covered by browser-run Mocha/Chai regression tests in [tests/all-regression-tests.html](tests/all-regression-tests.html).
+
+## Feature Branch Workflow
+
+This repo uses a strict feature branch workflow for all non-trivial changes. See `.github/skills/feature-branches/SKILL.md` for the full checklist and merge discipline:
+
+1. Always branch from `main` before coding: `git checkout main && git pull && git checkout -b feature/<name>`
+2. Commit in small increments, run tests frequently
+3. Before merge: rebase/merge `main`, resolve conflicts, re-run all tests
+4. Merge to `main` only when all tests pass and the branch is up to date
+5. Delete the feature branch after merge
+
+See the [Feature Branches skill doc](.github/skills/feature-branches/SKILL.md) for details and rationale.
 
 The app includes a browser-safe, no-UI parser web component for Todoist-style task input:
 
@@ -88,6 +113,7 @@ const result = parser.parse('Review goals 2026-01-01 14:30 #Work @review p2 ever
 - Dispatches a `parsed` event with the result as `detail` when `.parse()` is called.
 
 See [tests/specs/todoist-parser-element.spec.js](tests/specs/todoist-parser-element.spec.js) for full test coverage and examples.
+
 
 ## Todoist Parser Grammar
 
@@ -130,6 +156,7 @@ railroad-beta
 	ident       ::= [a-zA-Z0-9_-]+
 ```
 
+
 ## WebMCP
 
 The page loads the official WebMCP widget from `https://webmcp.dev/src/webmcp.js`.
@@ -153,9 +180,11 @@ To use them from chat, connect an MCP client to the blue widget. The WebMCP site
 }
 ```
 
+
 ## Copilot customization
 
 Workspace instructions are in `.github/copilot-instructions.md` and the custom review agent is in `.github/agents/Reviewer.agent.md`.
+
 
 ## Some todos:
 
