@@ -15,7 +15,7 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 
 - Storage and Data
   - [x] **Schema-Update** task schema for new fields to support due dates, projects, importance, depends on, work-load estimation, work-load uncertainty, and any other fields needed to support the new features.
-  - [ ] **Parser-Update** Add Todoist-style date, project, importance parsing (parser and unit tests) <!-- the parser should handle the bulk of the testing -->
+  - [x] **Parser-Update** Add Todoist-style date, project, importance parsing (parser and unit tests, including todoist-parser-element.spec.js integrated in main regression suite)
   - [ ] **Reducer-Pattern** Use a redux style reducer pattern for state management to ensure predictable state updates and easier debugging, especially as the app grows in complexity.
   - [ ] **Filter-Update** Add more filters for date, project, importance
   - [ ] **Google-Drive-Integration** Support storage to google drive. 
@@ -72,6 +72,11 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 - Register tools explicitly in app code; do not assume the widget auto-discovers task actions.
 - Preserve the current task tool set: `browse_tasks`, `add_task`, `complete_task`, and `delete_task`.
 - When changing task behavior, keep the WebMCP tool behavior aligned with the visible UI behavior.
+
+
+## Testing Custom Elements
+
+- When writing tests for custom elements, always import the component file (e.g. `import '../../components/todoist-parser-element.js'`) at the top of the test spec. This ensures the element is defined before tests run.
 
 ## Code Quality
 
