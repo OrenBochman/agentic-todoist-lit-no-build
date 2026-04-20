@@ -1,3 +1,16 @@
+// Redux-compatible state helpers for test setup (xUnit pattern)
+export const setTasks = async (app, tasks) => {
+  app.tasks = tasks;
+  await waitForRender();
+};
+export const setFilter = async (app, filter) => {
+  app.filter = filter;
+  await waitForRender();
+};
+export const setTheme = async (app, theme) => {
+  app.theme = theme;
+  await waitForRender();
+};
 // Fixture helper: force a window resize and reflow for layout-sensitive tests
 export const forceLayoutReflow = async () => {
   window.dispatchEvent(new Event('resize'));
@@ -48,6 +61,17 @@ export const mountTaskManagerApp = async ({ tasks = [] } = {}) => {
     app.tasks = tasks.map((task) => ({ ...task }));
     app.saveTasks();
     await waitForRender();
+    // Extra flush: ensure Lit has finished all updates
+    if (typeof app.updateComplete === 'function' || app.updateComplete) {
+      await app.updateComplete;
+    } else {
+      await Promise.resolve();
+    }
+    // Also flush board if available
+    const board = app.shadowRoot.querySelector('task-board');
+    if (board && (typeof board.updateComplete === 'function' || board.updateComplete)) {
+      await board.updateComplete;
+    }
   }
 
   const appShadow = app.shadowRoot;

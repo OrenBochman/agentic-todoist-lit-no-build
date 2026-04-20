@@ -1,4 +1,6 @@
-import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import { css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import { LitReduxElement } from './components/lit-redux-element.js';
+import { store, setTasks, addTask, editTask, toggleTask, deleteTask, setFilter, setTheme } from './components/redux-store.js';
 import './components/task-composer.js';
 import './components/task-board.js';
 import './components/task-hero.js';
@@ -27,11 +29,34 @@ function getWebMcpConstructor() {
  * Root application component.
  * Owns persisted task state, theme state, and WebMCP tool registration.
  */
-class TaskManagerApp extends LitElement {
+class TaskManagerApp extends LitReduxElement {
+  // --- Compatibility: expose .tasks, .filter, .theme for tests/tools ---
+  get tasks() {
+    return this.reduxState.tasks;
+  }
+  set tasks(val) {
+    this.dispatch(setTasks(Array.isArray(val) ? val : []));
+    this.saveTasks();
+    this.requestUpdate();
+  }
+
+  get filter() {
+    return this.reduxState.filter;
+  }
+  set filter(val) {
+    this.dispatch(setFilter(val));
+    this.requestUpdate();
+  }
+
+  get theme() {
+    return this.reduxState.theme;
+  }
+  set theme(val) {
+    this.dispatch(setTheme(val));
+    this.saveTheme();
+    this.requestUpdate();
+  }
   static properties = {
-    filter: { state: true },
-    tasks: { state: true },
-    theme: { state: true },
     transferStatusMessage: { state: true },
     transferStatusTone: { state: true },
     webMcpStatus: { state: true },
@@ -47,10 +72,7 @@ class TaskManagerApp extends LitElement {
       /* Example: override background for dark mode */
       background: #181c24;
     }
-    :host([data-theme='light']) {
-      
-      /* background: khaki; */
-    }
+    /* :host([data-theme='light']) { background: khaki; } */
 
     .shell {
       width: min(980px, calc(100vw - 32px));
@@ -101,13 +123,17 @@ class TaskManagerApp extends LitElement {
 
   constructor() {
     super();
-    this.filter = 'all';
-    this.tasks = this.loadTasks();
-    this.theme = this.loadTheme();
+    // Initial state is in Redux store
     this.transferStatusMessage = '';
     this.transferStatusTone = 'neutral';
     this.webMcpStatus = window.__webmcpStatus || 'loading';
     this._transferStatusTimeout = null;
+    // Load persisted state into Redux store on first load
+    if (store.getState().tasks.length === 0) {
+      const tasks = this.loadTasks();
+      this.dispatch(setTasks(tasks));
+    }
+    this.dispatch(setTheme(this.loadTheme()));
   }
 
   connectedCallback() {
@@ -118,12 +144,13 @@ class TaskManagerApp extends LitElement {
   }
 
   render() {
-    const totalTasks = this.tasks.length;
-    const completedTasks = this.tasks.filter((task) => task.completed).length;
+    const { tasks, filter, theme } = this.reduxState;
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((task) => task.completed).length;
     const pendingTasks = totalTasks - completedTasks;
 
     return html`
-      <main class="shell">
+      <main class="shell" data-theme="${theme}">
         <div class="app-header-row">
           <div style="display: flex; align-items: center; gap: 1.2rem; width: 100%;">
             <span class="eyebrow" style="display: flex; align-items: center; gap: 0.5em; color: var(--accent); font-weight: 700; font-size: 1.08rem;">
@@ -132,7 +159,7 @@ class TaskManagerApp extends LitElement {
             </span>
             <task-utility-bar
               style="flex: 0 0 auto; align-self: flex-start;"
-              .theme=${this.theme}
+              .theme=${theme}
               .webMcpStatus=${this.webMcpStatus}
               @theme-toggle=${this.toggleTheme}
               @webmcp-menu=${this.handleWebMcpMenu}
@@ -154,8 +181,8 @@ class TaskManagerApp extends LitElement {
           </article>
 
           <task-board
-            .filter=${this.filter}
-            .tasks=${/** @type {any} */ (this.tasks)}
+            .filter=${filter}
+            .tasks=${tasks}
             @filter-change=${this.handleFilterChange}
             @task-edit=${this.handleTaskEdit}
             @task-toggle=${this.handleTaskToggle}
@@ -209,7 +236,7 @@ class TaskManagerApp extends LitElement {
 
   saveTasks() {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tasks));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(this.reduxState.tasks));
     } catch {
       return;
     }
@@ -217,18 +244,19 @@ class TaskManagerApp extends LitElement {
 
   saveTheme() {
     try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, this.theme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, this.reduxState.theme);
     } catch {
       return;
     }
   }
 
   applyTheme() {
-    this.setAttribute('data-theme', this.theme);
+    this.setAttribute('data-theme', this.reduxState.theme);
   }
 
   toggleTheme = () => {
-    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    const theme = this.reduxState.theme === 'dark' ? 'light' : 'dark';
+    this.dispatch(setTheme(theme));
     this.applyTheme();
     this.saveTheme();
   };
@@ -259,22 +287,19 @@ class TaskManagerApp extends LitElement {
    */
   handleTaskAdd(event) {
     const taskText = event.detail.text;
-    this.tasks = [
-      {
-        id: crypto.randomUUID(),
-        text: taskText,
-        completed: false,
-        createdAt: new Date().toISOString(),
-        dueDate: null,
-        project: null,
-        importance: null,
-        dependsOn: [],
-        workloadEstimate: 4,
-        workloadUncertainty: 1,
-        tags: [],
-      },
-      ...this.tasks,
-    ];
+    this.dispatch(addTask({
+      id: crypto.randomUUID(),
+      text: taskText,
+      completed: false,
+      createdAt: new Date().toISOString(),
+      dueDate: null,
+      project: null,
+      importance: null,
+      dependsOn: [],
+      workloadEstimate: 4,
+      workloadUncertainty: 1,
+      tags: [],
+    }));
     this.saveTasks();
     this.clearTransferStatus();
   }
@@ -283,7 +308,7 @@ class TaskManagerApp extends LitElement {
    * Keeps the active filter in the root so WebMCP and UI stay in sync.
    */
   handleFilterChange(event) {
-    this.filter = event.detail.filter;
+    this.dispatch(setFilter(event.detail.filter));
   }
 
   /**
@@ -291,9 +316,7 @@ class TaskManagerApp extends LitElement {
    */
   handleTaskToggle(event) {
     const taskId = event.detail.taskId;
-    this.tasks = this.tasks.map((task) =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task,
-    );
+    this.dispatch(toggleTask(taskId));
     this.saveTasks();
     this.clearTransferStatus();
   }
@@ -303,7 +326,7 @@ class TaskManagerApp extends LitElement {
    */
   handleTaskDelete(event) {
     const taskId = event.detail.taskId;
-    this.tasks = this.tasks.filter((task) => task.id !== taskId);
+    this.dispatch(deleteTask(taskId));
     this.saveTasks();
     this.clearTransferStatus();
   }
@@ -314,14 +337,8 @@ class TaskManagerApp extends LitElement {
   handleTaskEdit(event) {
     const taskId = event.detail.taskId;
     const nextText = String(event.detail.text || '').trim();
-
-    if (!nextText) {
-      return;
-    }
-
-    this.tasks = this.tasks.map((task) =>
-      task.id === taskId ? { ...task, text: nextText } : task,
-    );
+    if (!nextText) return;
+    this.dispatch(editTask({ id: taskId, text: nextText }));
     this.saveTasks();
     this.clearTransferStatus();
   }

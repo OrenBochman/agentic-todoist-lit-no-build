@@ -10,6 +10,8 @@ import {
   clearTaskManagerStorage,
   mountTaskManagerApp,
   waitForLongPress,
+  setTasks,
+  setFilter,
 } from '../fixtures/task-manager-app.fixture.js';
 
 describe('Task Manager Add And Edit Regression', () => {
@@ -40,7 +42,7 @@ describe('Task Manager Add And Edit Regression', () => {
   it('should not allow duplicate IDs in state (unit: edge case)', async () => {
     // Simulate direct state injection with duplicate IDs
     const dupeId = 'dupe-id';
-    fixture.app.tasks = [
+    await setTasks(fixture.app, [
       {
         id: dupeId,
         text: 'first',
@@ -67,9 +69,7 @@ describe('Task Manager Add And Edit Regression', () => {
         workloadUncertainty: 1,
         tags: [],
       },
-    ];
-    fixture.app.saveTasks();
-    await waitForRender();
+    ]);
     // Try to delete by ID, should only remove one
     fixture.app.handleTaskDelete({ detail: { taskId: dupeId } });
     await waitForRender();
@@ -94,8 +94,7 @@ describe('Task Manager Add And Edit Regression', () => {
     await waitForRender();
 
     // Filter to completed
-    fixture.app.filter = 'completed';
-    await waitForRender();
+    await setFilter(fixture.app, 'completed');
 
     // Diagnostic: log tasks before delete
     // eslint-disable-next-line no-console
@@ -121,10 +120,16 @@ describe('Task Manager Add And Edit Regression', () => {
     fixture.button.click();
     await waitForRender();
     let item = fixture.board.shadowRoot.querySelector('task-item');
+    if (!item) {
+      console.error('[diagnostic] No task-item found before toggle/delete. DOM:', fixture.board.shadowRoot.innerHTML, 'Tasks:', JSON.stringify(fixture.app.tasks));
+      throw new Error('No task-item found before toggle/delete');
+    }
     let toggle = item?.shadowRoot?.querySelector('.toggle');
+    expect(toggle, 'Toggle should exist before clicking.').to.exist;
     toggle.click();
     await waitForRender();
     let deleteBtn = item?.shadowRoot?.querySelector('.button');
+    expect(deleteBtn, 'Delete button should exist before clicking.').to.exist;
     deleteBtn.click();
     await waitForRender();
     expect(fixture.app.tasks.length, 'Task should be deleted after toggle and delete.').to.equal(0);
@@ -135,17 +140,35 @@ describe('Task Manager Add And Edit Regression', () => {
     fixture.button.click();
     await waitForRender();
     let item = fixture.board.shadowRoot.querySelector('task-item');
+    if (!item) {
+      console.error('[diagnostic] No task-item found before edit. DOM:', fixture.board.shadowRoot.innerHTML, 'Tasks:', JSON.stringify(fixture.app.tasks));
+      throw new Error('No task-item found before edit');
+    }
     let taskMain = item?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+    expect(taskMain, 'Editable task-main should exist for long-press.').to.exist;
     taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
     await waitForLongPress();
     let editInput = item.shadowRoot.querySelector('wa-input');
+    if (!editInput) {
+      console.error('[diagnostic] wa-input not found in edit mode. DOM:', item.shadowRoot.innerHTML);
+      throw new Error('wa-input not found in edit mode');
+    }
     let saveBtn = [...item.shadowRoot.querySelectorAll('wa-button')].find((c) => c.textContent?.trim() === 'Save');
+    if (!saveBtn) {
+      console.error('[diagnostic] Save button not found in edit mode. DOM:', item.shadowRoot.innerHTML);
+      throw new Error('Save button not found in edit mode');
+    }
     editInput.value = '   ';
     editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
     await waitForRender();
     saveBtn.click();
     await waitForRender();
-    expect(item.shadowRoot.querySelector('.edit-error')?.textContent, 'Should show validation error for empty edit.').to.match(/enter a task/i);
+    const editError = item.shadowRoot.querySelector('.edit-error');
+    if (!editError) {
+      console.error('[diagnostic] Edit error not found after invalid save. DOM:', item.shadowRoot.innerHTML);
+      throw new Error('Edit error not found after invalid save');
+    }
+    expect(editError.textContent, 'Should show validation error for empty edit.').to.match(/enter a task/i);
   });
 
   it('should allow rapid toggle of the same task without state inconsistency (unit: edge case)', async () => {
@@ -153,7 +176,12 @@ describe('Task Manager Add And Edit Regression', () => {
     fixture.button.click();
     await waitForRender();
     let item = fixture.board.shadowRoot.querySelector('task-item');
+    if (!item) {
+      console.error('[diagnostic] No task-item found before rapid toggles. DOM:', fixture.board.shadowRoot.innerHTML, 'Tasks:', JSON.stringify(fixture.app.tasks));
+      throw new Error('No task-item found before rapid toggles');
+    }
     let toggle = item?.shadowRoot?.querySelector('.toggle');
+    expect(toggle, 'Toggle should exist before rapid toggles.').to.exist;
     for (let i = 0; i < 10; i++) {
       toggle.click();
       await waitForRender();
@@ -167,7 +195,14 @@ describe('Task Manager Add And Edit Regression', () => {
     fixture.input.value = 'real task';
     fixture.button.click();
     await waitForRender();
-    expect(() => fixture.app.handleTaskDelete({ detail: { taskId: 'not-a-real-id' } }), 'Deleting non-existent task should not throw.').not.to.throw();
+    let errorCaught = null;
+    try {
+      fixture.app.handleTaskDelete({ detail: { taskId: 'not-a-real-id' } });
+    } catch (err) {
+      errorCaught = err;
+      console.error('[diagnostic] Error thrown when deleting non-existent task:', err, 'Tasks:', JSON.stringify(fixture.app.tasks));
+    }
+    expect(errorCaught, 'Deleting non-existent task should not throw.').to.be.null;
     expect(fixture.app.tasks.length, 'Real task should still exist after fake delete.').to.equal(1);
   });
 
