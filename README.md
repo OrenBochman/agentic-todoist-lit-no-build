@@ -7,6 +7,18 @@ description: A task manager web app built with Lit and Web Awesome components.
 # Task Manager
 
 This workspace contains a task manager web app built with Lit in plain JavaScript and Web Awesome components loaded from a CDN.
+This project is an extended version of the vs code copilot labs task manager tutorial. I used it to get familiar with agentic codeing, 
+context engineering. I also used it to learn learn about `lit` and `web awesome`, `chai` and `mocha`.
+I create testing skills, implement extensive testing suites with chai and mocha, create a xunit dashboard,
+Created a massive skill for refactoring test code using xUnit patterns, 
+Created skills for using memory and hypothetical reasoning to debug and fix tricky bugs with the use of the isakawa-beta mermaid chartss.
+Created a skill for using feature branches to manage development and testing of new features and bug fixes aided by git memrmaid charts.
+This is not a typical setup for a web app - so the agent had to figure many things out like how to properly configure the libraries from the CDN.
+I think it also put it nearer to out of distribution than a typical project, which is good for testing its ability to adapt and learn. 
+I tried to minimize use of external skills and mcp tools. 
+Another big hurdle was integrating the WebMCP widget and tools. This was also an out of distribution task as the wenMCP is new and still behind a feature flag in chrome. 
+I used chatgpt 4.1 for most of the work but I also have a local versions of gemma4 and quen3.6 that I try out for some tasks.
+
 
 ## Features
 
@@ -23,6 +35,7 @@ This workspace contains a task manager web app built with Lit in plain JavaScrip
 - App icon in the hero using Web Awesome
 - Edit tasks by long-pressing a task row
 - WebMCP widget with task tools for browsing, adding, completing, and deleting tasks from chat
+
 
 
 ## Run
