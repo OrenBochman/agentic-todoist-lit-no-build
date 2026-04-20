@@ -1,338 +1,348 @@
 ---
 name: bugfix-hypothesis-branches
-description: Use blackboard state, Ishikawa hypotheses, git hypothesis branches, and counterfactual notes to debug regressions systematically while preserving lessons from reverted patches.
+description: Use project-local blackboard state, Ishikawa hypotheses, git branches, and counterfactual notes to debug regressions systematically while preserving lessons from reverted patches.
 ---
 
-## Feature Branch Workflow with Reversion and Merging
-
-1. Create a task (feature) branch  
-   `git checkout main` → `git pull` → `git checkout -b bugfix-B`  
-   This branch holds the reproducible bug, evolving blackboard state, and only durable memory + final fix.
-2. Create a hypothesis branch  
-   `git checkout -b bugfix-B-H1`  
-   Then commit: `git commit -m "cf: H1 hypothesis + expectations"` and `git commit -m "exp: patch for H1"`
-3. Evaluate the patch  
-   Run tests / repro → classify as success or failure.
-4. Revert failed patch (keep learning, discard code)  
-   Return: `git checkout bugfix-B`  
-   If needed: `git revert <commit-hash>`  
-   Record learning: `git commit -m "cf: H1 failed - reason + constraints"`  
-   (Code is reverted, knowledge is preserved.)
-5. Repeat for next hypothesis  
-   `git checkout -b bugfix-B-H2`  
-   Then repeat: hypothesis → patch → test → revert or merge.
-6. Merge winning hypothesis  
-   `git checkout bugfix-B` → `git merge bugfix-B-Hk` → `git commit -m "fix: apply successful hypothesis Hk"`
-7. Merge task branch to main  
-   `git checkout main` → `git merge bugfix-B`
-
-## Minimal mental model
-
-- main → stable history  
-- bugfix-B → task + memory  
-- bugfix-B-Hk → isolated experiment  
-
-## Invariants
-
-- never merge failed hypotheses  
-- always preserve counterfactual learning  
-- only merge validated fixes  
-- keep patches small and reversible  
-
+# Bugfix Hypothesis Branches
 
 ## Purpose
 
 Use this skill to debug a bug or regression by treating each candidate explanation as a falsifiable hypothesis.
 
-The workflow keeps three things synchronized:
+Keep four things synchronized:
 
-1. a **blackboard** for current state, hypotheses, and progress
-2. a **counterfactual note** for lessons from failed patches
-3. a **git history** shaped around a bugfix branch and per-hypothesis branches
+1. `memory/blackboard.md`
+2. `memory/counterfactual-note.md`
+3. git branch state
+4. the next ranked hypothesis
 
-This skill is designed for iterative coding agents with limited context windows. Keep notes compact, concrete, and directly useful for the next patch.
+This skill is for coding agents with limited context windows. Keep notes compact, branch names stable, and patches small.
 
-## Use when
+## When to use
 
 Use this skill when:
 
 - a bug has multiple plausible causes
-- several subsystems or entities may contribute
-- the first attempted patch is unlikely to be the last
-- failed patches contain useful information worth preserving
+- several subsystems may contribute
+- failed patches contain useful learning
 - you want a visible audit trail of diagnosis, rollback, and progress
 
 Avoid this skill when:
 
-- the fix is already obvious and one small patch will do
-- the task is pure refactoring with no meaningful uncertainty
-- there is no test, repro, or observable failure condition
+- the fix is already obvious
+- the task is pure refactoring
+- there is no repro, failing test, or observable failure condition
 
+## Mandatory operating rules
 
-## Assets (Template Files)
+1. **Use git as part of the workflow, not as an optional tool.**
+   - Before changing code, check branch state.
+   - Create or switch to the task branch before patching.
+   - Reflect meaningful progress in commits.
 
-- The files under `assets/` are **templates**. When starting a new bugfix or regression workflow, **copy these files to the `memory/` folder** in your project root and update them there.
-   - Use `memory/blackboard.md` for your evolving blackboard state.
-   - Use `memory/counterfactual-note.md` for your counterfactual notes for a specific bugfix effort and clear it for the next one.
-   - Use `memory/api-breaking-changes.md` to keep track of any API changes or misunderstandings that were uncovered during the coding process, so you can avoid them in the future.
+2. **Keep all working memory inside the project.**
+   - All working memory files must live under `<project-root>/memory/`.
+   - Never create or update memory outside the current workspace.
+   - If `memory/` does not exist, create it at the project root.
 
-**Do not edit the templates in `assets/` directly.**
+3. **Use planning files before coding.**
+   - Read `memory/blackboard.md` first.
+   - Read `memory/counterfactual-note.md` second if it exists.
+   - Use those files to choose the next move before editing code.
 
-## Required behavior
+4. **Do not skip the blackboard.**
+   - The blackboard is the source of truth for:
+     - bug title
+     - repro
+     - ranked hypotheses
+     - branch state
+     - next move
 
-### 1. Build the issue model first
+5. **Do not patch first and explain later.**
+   - Update or confirm planning state before code changes.
 
-Open `assets/blackboard.md` and update the Ishikawa chart.
+6. **Delete merged branches once their learning has been preserved.**
+   - After merging a winning hypothesis branch into the task branch, delete the merged hypothesis branch when it is no longer needed.
+   - After merging the task branch into `main`, delete the merged task branch when it is no longer needed.
+   - Do not delete the current checked out branch, unmerged branches, or branches still needed for active investigation.
 
-For the current bug:
+## Path discipline
 
-- name the issue clearly
-- list contributing entities or subsystems
-- attach a short failure-condition hypothesis to each leaf
-- prefer concrete observable hypotheses over vague labels
+Assume all paths are relative to the repository root.
 
-Good:
-- `cache returns stale derived state after route change`
-- `listener not unsubscribed causing duplicate event dispatch`
+Allowed memory paths:
 
-Bad:
-- `state issue`
-- `frontend weirdness`
+- `memory/blackboard.md`
+- `memory/counterfactual-note.md`
+- `memory/api-breaking-changes.md`
 
-### 2. Create and maintain the git progress chart
+Forbidden:
 
-In `blackboard.md`, maintain a `gitGraph` showing:
+- `~/memory/...`
+- `/tmp/...`
+- parent directories outside the workspace
+- hidden scratch files outside the repository
 
-- the stable base
-- the bugfix branch
-- one branch per hypothesis
-- whether each attempt failed, partially succeeded, or won
-- where memory was updated
-- where failed patch effects were reverted
+## Required execution order
 
-The graph is not decoration. It is a compact control panel for the debugging campaign.
+Before any code change:
 
-### 3. Create the bugfix branch
+1. identify the repository root
+2. ensure `memory/` exists inside the repository
+3. read `memory/blackboard.md`
+4. read `memory/counterfactual-note.md` if present
+5. run `git status`
+6. run `git branch --show-current`
+7. create or switch to the task branch if needed
+8. update the blackboard with the current hypothesis and next step
+9. only then edit code
 
-Create a feature branch for the task, for example:
+Do not skip any step above.
 
-- `bugfix-B`
-- `bugfix-login-timeout`
-- `bugfix-race-condition-cache-invalidation`
+## Planning contract
 
-On that branch, establish:
+Before patching, extract from `memory/blackboard.md`:
 
+- current bug title
 - current repro
-- task scope
-- current blackboard state
-- current best-ranked hypotheses
+- current ranked hypothesis
+- current branch
+- last failed attempt
+- next planned action
 
-### 4. Pick the next most likely hypothesis
+If any of these are missing or stale, update the blackboard first.
 
-Choose the next hypothesis by expected value, using:
+## File roles
 
-- strength of evidence
-- locality of likely fix
-- blast radius
-- testability
-- reversibility
+| File | Role | Read before coding |
+|---|---|---|
+| `memory/blackboard.md` | source of truth for issue state and next move | yes |
+| `memory/counterfactual-note.md` | durable lessons from failed attempts | yes, if present |
+| `memory/api-breaking-changes.md` | interface misunderstandings and breaking changes | when relevant |
 
-Prefer hypotheses that are:
+## Git-first checklist
 
-- easy to falsify
-- likely to explain the observed failure
-- cheap to test
-- low-risk to patch
+Before patching:
 
-### 5. Create a hypothesis branch
+- `git status`
+- `git branch --show-current`
+- create or switch to the task branch
+- confirm the next hypothesis in `memory/blackboard.md`
 
-For hypothesis `Hk`, create a branch such as:
+After each attempt:
 
-- `bugfix-B-H1`
-- `bugfix-B-H2`
+- update blackboard
+- update counterfactual note if needed
+- commit notes and patch with a clear prefix
 
-On that branch, make two kinds of changes:
+After each successful merge:
 
-#### A. Counterfactual memory update
+- switch to a safe branch
+- delete merged branches that are no longer needed
+- reflect branch cleanup in `memory/blackboard.md`
 
-Record:
-
-- the hypothesis
-- why it is plausible
-- what observation would confirm it
-- what observation would falsify it
-- what subsystem or entity it touches
-
-#### B. Experimental patch
-
-Apply the smallest patch that meaningfully tests the hypothesis.
-
-Keep the patch narrow. Do not mix unrelated cleanup.
-
-### 6. Evaluate the patch
-
-Run the best available checks:
-
-- repro steps
-- unit tests
-- integration tests
-- snapshots
-- logs
-- traces
-- lint or type checks if relevant
-
-Classify the result as one of:
-
-- `failed`
-- `partial`
-- `success`
-
-### 7. If the patch fails, revert but preserve learning
-
-When a patch fails:
-
-- revert the patch effects
-- keep the branch history or a summarized note of what happened
-- update `memory/blackboard.md`
-- append to `memory/counterfactual-note.md`
-
-The counterfactual note should preserve:
-
-- failing tests
-- error messages
-- trace logs
-- regression symptoms
-- what this failure rules out
-- constraints the next patch must respect
-
-Do not merely say “patch failed”.
-Say exactly how it failed and what that implies.
-
-### 8. Repeat from the next best hypothesis
-
-Loop:
-
-1. choose next hypothesis
-2. create hypothesis branch
-3. record counterfactual setup
-4. patch
-5. test
-6. revert if needed
-7. preserve learning
-8. update charts and notes
-
-### 9. Merge only the winning patch
-
-When a hypothesis succeeds:
-
-- update `blackboard.md` with the winning explanation
-- record why it worked
-- merge the winning hypothesis branch into the bugfix branch
-- rerun full relevant validation
-- merge bugfix branch back to main only when clean
-
-## Blackboard discipline
-
-Keep `blackboard.md` compact and current.
-
-It should answer, at a glance:
-
-- What is broken?
-- What are the leading hypotheses?
-- What was already tried?
-- What failed and why?
-- What is the next move?
-- Which branch contains the winning patch?
-
-Recommended sections:
-
-- Bug title
-- Repro / failure condition
-- Ishikawa chart
-- Ranked hypotheses
-- Current branch state
-- Git graph
-- Current next step
-
-## Counterfactual-note discipline
-
-Use `memory/counterfactual-note.md` as durable memory from reverted paths.
-
-Each entry should include:
-
-- hypothesis id
-- patch id or branch
-- expected effect
-- actual effect
-- failing tests
-- relevant logs or stack trace
-- lesson for next attempt
-- explicit “avoid repeating” guidance if applicable
-
-Prefer terse entries with operational value.
-
-## Commit discipline
+## Commit prefixes
 
 Use short prefixes:
 
 - `bb:` blackboard update
 - `cf:` counterfactual note
 - `exp:` experimental patch
-- `rev:` revert of failed patch
+- `rev:` revert failed patch
 - `fix:` successful patch
 - `merge:` winning merge
 
-Example sequence:
+## Assets
 
-- `bb: rank hypotheses for blurry photo bug`
-- `cf: H2 suspect shutter speed path`
-- `exp: tighten motion blur threshold`
-- `rev: revert H2 threshold patch`
-- `cf: H2 failed under low-light tests`
-- `cf: H3 suspect beautification pipeline`
-- `fix: disable unintended beautification filter`
-- `merge: H3 into bugfix-B`
+The files under `assets/` are templates. Copy them into the project-local `memory/` directory before using the workflow.
+
+- `assets/blackboard.md` -> `memory/blackboard.md`
+- `assets/counterfactual-note.md` -> `memory/counterfactual-note.md`
+- `assets/api-breaking-changes.md` -> `memory/api-breaking-changes.md`
+- `assets/sample-ishikawa.md` -> reference only
+
+Do not edit templates in `assets/` directly.
+
+## Standard feature branch workflow
+
+Use this for ordinary feature work.
+
+```mermaid
+gitGraph
+   commit id: "main stable"
+   branch feature-X
+   checkout feature-X
+   commit id: "start"
+   commit id: "build"
+   commit id: "test"
+   checkout main
+   merge feature-X id: "merge X"
+```
+
+## Hypothesis branch workflow
+
+Use this for debugging and regressions.
+
+```mermaid
+gitGraph
+   commit id: "main stable"
+   branch bugfix-B
+   checkout bugfix-B
+   commit id: "bb repro"
+   branch bugfix-B-H1
+   checkout bugfix-B-H1
+   commit id: "cf H1"
+   commit id: "exp H1"
+   checkout bugfix-B
+   commit id: "rev H1"
+   commit id: "cf H1 fail"
+   branch bugfix-B-H2
+   checkout bugfix-B-H2
+   commit id: "cf H2"
+   commit id: "fix H2"
+   checkout bugfix-B
+   merge bugfix-B-H2 id: "merge H2"
+   checkout main
+   merge bugfix-B id: "merge B"
+```
+
+## Minimal Ishikawa template
+
+Keep labels short. Prefer one line per hypothesis.
+
+```mermaid
+ishikawa
+    Delete Bug
+    Logic
+        H1 filter stale
+        H2 wrong order
+        H3 wrong id
+    Data
+        H4 list drift
+    UI
+        H5 no rerender
+    Storage
+        H6 cache drift
+    Test
+        H7 bad fixture
+```
+
+## Workflow
+
+1. update or create `memory/blackboard.md`
+2. capture the repro and failure condition
+3. build a compact Ishikawa chart
+4. rank the hypotheses
+5. create or switch to the task branch
+6. choose the next most testable hypothesis
+7. create a hypothesis branch if needed
+8. write a counterfactual setup note
+9. apply the smallest meaningful patch
+10. test
+11. if failed, revert and record what was learned
+12. if successful, merge the winning hypothesis branch
+13. if the winning hypothesis branch has been merged and is no longer needed, delete it
+14. update blackboard
+15. merge task branch when validated
+16. if the task branch has been merged and is no longer needed, delete it
+
+## Blackboard discipline
+
+Keep `memory/blackboard.md` short and current.
+
+It should answer:
+
+- what is broken
+- how to reproduce it
+- what the top hypotheses are
+- what was already tried
+- what failed and why
+- what branch is active
+- what the next move is
+
+Recommended sections:
+
+- Bug title
+- Repro
+- Failing evidence
+- Ishikawa chart
+- Ranked hypotheses
+- Branch state
+- Next move
+
+## Counterfactual-note discipline
+
+Each entry should include:
+
+- hypothesis id
+- branch
+- expected effect
+- actual effect
+- failing tests or logs
+- lesson
+- avoid-repeating guidance
+
+Bad:
+
+- `patch failed`
+
+Good:
+
+- `H2 failed: deletion updated tasks after filter derivation, so filtered view kept stale item reference`
+
+## Recovery rule
+
+If you started coding without:
+
+- checking git state
+- reading the blackboard
+- using project-local `memory/`
+
+stop and restore workflow discipline before continuing.
 
 ## Agent loop
 
 Follow this loop exactly:
 
-1. update blackboard
-2. rank hypotheses
-3. choose next hypothesis
-4. create hypothesis branch
-5. write counterfactual setup
-6. patch minimally
-7. test
-8. on failure, revert and record
-9. on success, merge winner
-10. update blackboard again
+1. read blackboard
+2. read counterfactual note if present
+3. check git state
+4. choose next hypothesis
+5. update blackboard
+6. create branch
+7. patch minimally
+8. test
+9. on failure, revert and record
+10. on success, merge winner
+11. delete merged branches that are no longer needed
+12. update blackboard again
 
-## Output style for the agent
+## Output contract for the agent
 
 When reporting progress, always include:
 
 - current hypothesis
-- branch name
+- current branch
 - patch status
 - decisive evidence
 - next move
 
 Example:
 
-- `Current hypothesis: H3 beautification filter applied unexpectedly`
-- `Branch: bugfix-B-H3`
-- `Status: success on repro and tests T1 T2 T3`
-- `Evidence: blur disappears only when filter path is bypassed`
-- `Next move: merge H3 into bugfix-B and rerun full regression suite`
+- `Current hypothesis: H2 wrong order`
+- `Branch: bugfix-B-H2`
+- `Status: failed`
+- `Evidence: filtered list still points to stale derived state`
+- `Next move: revert H2, record constraint, test H3 wrong id`
 
 ## Minimal success criteria
 
-A run of this skill is complete when:
+A run is complete when:
 
-- the issue has an explicit Ishikawa model
-- each attempted hypothesis is reflected in gitGraph
-- failed patches are reverted
-- failed attempts leave behind useful counterfactual memory
-- the winning patch is merged cleanly
-- blackboard state reflects the final explanation and fix
+- the issue has a compact Ishikawa model
+- the next move is recorded in `memory/blackboard.md`
+- all working memory stayed inside `<project-root>/memory/`
+- failed attempts preserved learning
+- successful patch history is reflected in git
+- merged branches that are no longer needed have been deleted
+- the final winning fix is merged cleanly

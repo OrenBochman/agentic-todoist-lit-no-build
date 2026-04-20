@@ -1,0 +1,42 @@
+### Completed
+
+- Libraries
+  - [x] Integrated Lit from `https://unpkg.com/lit` and `https://unpkg.com/lit/decorators.js` with proper module imports and usage.
+  - [x] Integrated Webawesome components from `https://unpkg.com/webawesome` for UI elements.
+  - [x] Integrated the official WebMCP widget from `https://webmcp.dev/src/webmcp.js` and registered task tools for browsing, adding, completing, and deleting tasks from chat.
+  - [x] Integrated Mocha for in-browser testing from `https://unpkg.com/mocha` with a basic test setup and reporting.
+  - [x] Integrated Chai for assertions from `https://unpkg.com/chai`.
+- Task management
+  - [x] Add tasks
+  - [x] Mark tasks as completed
+  - [x] Delete tasks
+- Task composer
+  - [x] Use Webawesome `wa-input` and `wa-button` components for the add task composer, ensuring they are properly styled and functional across browsers and viewports.
+  - [x] Keep the add-task composer compact, with the `+` button aligned to the input and matching its height.
+- Storage and Data
+  - [x] developed an initial task schema with `id`, `title`, and `completed` fields to represent tasks in the app.
+  - [x] Persist tasks in localStorage
+  - [x] Import/export tasks as JSON files to allow users to back up their tasks or transfer them between instances of the app.
+  - [x] Add edit task by long-pressing a task to open an edit form, allowing users to modify existing tasks without needing to delete and recreate them.
+- Filtering
+  - [x] Filter tasks by status
+- WebMCP Integration
+  - [x] Integrate the WebMCP widget [blue box]
+  - [x] Register task tools for browsing, adding, completing, and deleting tasks from chat.
+  - [x] Testing webMCP tools from chat to ensure they work as expected and provide a good user experience when accessed from chat.
+- UI/UX
+  - [x] Responsive design that maintains usability and visual integrity across a range of device sizes, from mobile to desktop, ensuring that task toggles and controls are easily accessible and not visually squished.
+  - [x] Dark mode support with appropriate color choices for text, backgrounds, and controls to maintain readability and visual appeal in both light and dark themes.
+  - [x] Adjust css to make the Counters able to shrink to minimal size, 
+  - [x] Use Atkinson Hyperlegible as the primary UI font.
+  - [x] reduced ii foorprint by rename `ALL tasks` to `All` and  `Completed` to `Done`.
+- PWA
+  - [x] Add an app icon `<wa-icon name="list-check" style="color: rgb(255, 212, 59);"></wa-icon>`
+- Tests and Documentation
+  - [x] no build testing using Mocha and Chai.
+  - [x] Created a testing dashboard in `test/index.html` that runs Mocha tests in the browser and reports results.
+  - [x] Regression test added for multiple issues
+  - [x] Added some unit tests for edge cases.
+  - [x] Added skill for writing refactoring xunit style tests
+  - [x] Added skill bugfixing using hypothesis branches with Ishikawa diagrams, git progress charts, and counterfactual notes to keep track of complex bugfix efforts and retain knowledge from failed attempts in a blackboard and counterfactual
+  

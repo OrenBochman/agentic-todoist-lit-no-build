@@ -13,30 +13,56 @@ Use this blackboard to
 
 ## Diagnostic plan 
 
-<!-- use a fishbone diagram for bug B documenting hypotheses -->
 
-```{mermaid}
-ishikawa-beta
-    Blurry Photo
-    Process
-        H1 Out of focus
-        H2 Shutter speed too slow
-        H3 Protective film not removed
-        H4 Beautification filter applied
-    User
-        H5 Shaky hands
-    Equipment
-        LENS
-            H6 Inappropriate lens
-            H7 Damaged lens
-            H8 Dirty lens
-        SENSOR
-            H9 Damaged sensor
-            H10 Dirty sensor
-    Environment
-        H11 Subject moved too quickly
-        H12 Too dark
-```
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.13.0/dist/mermaid.min.js"></script>
+<script>
+(function() { const initMermaid = () => {
+        mermaid.initialize({startOnLoad: true,securityLevel: 'loose', ishikawa: { useMaxWidth: true, width: 1400, diagramPadding: 200   }        });
+    };
+    if (document.readyState === 'complete') {
+        initMermaid();
+    } else {
+        window.addEventListener('load', initMermaid);
+    }
+    })();
+</script>
+
+<pre class="mermaid">
+---
+config:
+  useMaxWidth: true
+  diagramPadding: 200
+  theme: base
+  themeVariables:
+    primaryColor: '#4abd59'
+    lineColor: '#9ca3af'
+    textColor: '#4b74c6'
+    fontSize: '16px'
+---
+ishikawa
+    Filtered Delete Bug
+    Logic
+        Filter 
+            ❌ H1 not reapplied after delete 
+               H7 property not triggering rerender
+        State mutation order
+            H2  tasks/filters out of sync
+        Filtered list
+            H3 Stale reference in UI
+        Task identity
+            H4 wrong task deleted
+        race condition
+            H5 Asynch update in Lit reactivity
+    Data
+        tasks array
+            H6  not updated in place
+    UI
+        H8 Board not rerendering after delete
+    Storage
+        H9 localStorage out of sync with UI
+    Test
+        H10 Test fixture not resetting state between runs
+</pre>
 
 ## Git branch "bugfix-B" with counterfactual memory
 

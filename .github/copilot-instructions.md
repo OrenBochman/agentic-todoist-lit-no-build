@@ -7,25 +7,32 @@
 - The current Lit import pattern is CDN-based and should stay browser-safe.
 - The app includes the official WebMCP widget and exposes task tools for agentic browsing, adding, completing, and deleting tasks.
 
-## Features:
+## Features
 
-Work on each feature one at a time, to facilitate focused code review and easier regression testing and clearer git commits.
+Completed features are listed in [Feature History](Feature-History.md) and the current feature roadmap is in the `Agenda` section of that file.
+  
+### Action ITems
 
-- [x] Add tasks
-- [x] Mark tasks as completed
-- [x] Delete tasks
-- [x] Filter tasks by status
-- [x] Persist tasks in localStorage
-- [x] WebMCP widget with task tools for browsing, adding, completing, and deleting tasks from chat
-- [x] Use Webawesome `wa-input` and `wa-button` components for the add task composer, ensuring they are properly styled and functional across browsers and viewports.
-- [x] Dark mode support with appropriate color choices for text, backgrounds, and controls to maintain readability and visual appeal in both light and dark themes.
-- [ ] Import/export tasks as JSON files to allow users to back up their tasks or transfer them between instances of the app.
-- [ ] Service worker integration for offline support, allowing the app to function without an internet connection and sync changes when connectivity is restored.
-- [ ] Implement the PRPL pattern (Push, Render, Pre-cache, Lazy-load) to optimize performance and load times, especially on slower networks or devices.
-- [ ] Add edit task by long-pressing a task to open an edit form, allowing users to modify existing tasks without needing to delete and recreate them.
-- [ ] Add an app icon `<wa-icon name="list-check" style="color: rgb(255, 212, 59);"></wa-icon>`
-- [ ] Adjust css to make the Counters able to shrink to minimal size, replace `ALL tasks` to `All` and  `Completed` to `Done`.
-- [ ] Responsive design that maintains usability and visual integrity across a range of device sizes, from mobile to desktop, ensuring that task toggles and controls are easily accessible and not visually squished.
+- Storage and Data
+  - [ ] **Schema-Update** task schema for new fields to support due dates, projects, importance, depends on, work-load estimation, work-load uncertainty, and any other fields needed to support the new features.
+  - [ ] **Reducer-Pattern** Use a redux style reducer pattern for state management to ensure predictable state updates and easier debugging, especially as the app grows in complexity.
+  - [ ] **Parser-Update** Add Todoist-style date, project, importance parsing (parser and unit tests) <!-- the parser should handle the bulk of the testing -->
+  - [ ] **Filter-Update** Add more filters for date, project, importance
+  - [ ] **Google-Drive-Integration** Support storage to google drive. 
+- Tests and Documentation
+  - [ ] Improve documentation with Mermaid UML charts
+- UI/UX
+  - [ ] Add calendar view (web component, tests, docs)
+  - [ ] Add kanban view (web component, tests, docs)
+  - [ ] Add gantt view (web component, tests, docs)
+  - [ ] Add PERT view (web component, tests, docs)
+- PWA
+  - [ ] Add service worker integration for offline support, allowing the app to function without an internet connection and sync changes when connectivity is restored.
+  - [ ] Implement the PRPL pattern (Push, Render, Pre-cache, Lazy-load) to optimize performance and load times, especially on slower networks or devices. 
+  - [ ] Add a web app manifest to provide metadata about the app, such as its name, icons, and theme colors, to enhance the user experience when installing the app on their device.
+  
+
+### Stretch goals
 
 ## Architecture
 
@@ -36,6 +43,7 @@ Work on each feature one at a time, to facilitate focused code review and easier
 
 ## Code Style
 
+- Screen real estate is limited, so minimize footprint of UI chrome and controls to maximize space for tasks.
 - Use semantic HTML5 elements where possible in templates and rendered markup.
 - Prefer modern JavaScript features such as `const`, `let`, arrow functions, destructuring, and template literals.
 - Keep UI state local, explicit, and easy to inspect.
@@ -77,37 +85,12 @@ Work on each feature one at a time, to facilitate focused code review and easier
   e.g. removing autocomplete at the app level to sidestep problems with `wa-input` styles when auo-fill is used.
 - Once an issue is fixed add a regression test that verifies the fix and prevents future breakage.
 
-## Testing
-
-1. your mission is to squish the bug and accelerate the development of new features by reducing regressions.
-  - Engage the bugs don't let them escape using workrounds. 
-  - `flex !important;` is not your friend.
-  - make the SUT visible in a fixture using a red dashed outline so your copilot can quickly help the diagnostic and steer the effort to the issue.
-1. your goal in testing is to get all test to pass. Use the integrated browser tool to automate testing in the browser and closing the loop via its console with minimal friction from the human co-pilot - your most valuable resource (e.g. don't ask to rerun tests when you can automate that yourself).
-1. write test with useful errors that can be interpreted and acted on by yourself and your human co-pilot to diagnose and fix the failure.
-1. A rule of thumb: Fix one issue at a time, but make note of new issues that are discovered.
-1. When a  bug fix creates new issues, consider whether the fix created the issue or just revealed it. In the first case revert the fix and try a different approach. In the second case, add the new issue to the list of issues to be fixed and move on to the next one. If multiple issues are interacting you may need to pick a different order to fix them.
-1. Do not assume the issue is in the main code - it is highly likely to be in the test code itself. 
-1. Use Mocha and Chai from `https://unpkg.com`
-2. automate the regression tests as unit tests that can be run in the browser and report pass/fail results.
-3. to split the fixture from the test
-4. to be short and sweet - less complex then the code being tested.
-5. allow me to add more comprehensive unit test as we proceed.
-6. Create a TDD plan - an ordered list of test that can be used to TDD all the features in the spec sequentially from scratch!
-7. Test need a brief descriptive name that indicates the issue being tested and the expected behavior and the context (i.e. bug or feature name + expected behavior and the unit under test) also clarify the fidelity level using native v.s. `wa-input` where relevant.
-8. each fixture is described in a short comment indicating intent (what web component and state is setup)
-9. also the assertion block is also explained briefly to clarify what behavior is being checked at each step.
-
-## Memory
-
-1. use `memory/api-breaking-changes.md` to keep track of incorrect use of library calls or other API changes that were uncovered during coding so you can preempt them next time.
-2. use `memory/blackboard.md` to keep track of intermediate  records, plan and coordinate complex multi-step efforts involving multiple agents, cross cutting concerns, edits that require reversion or complex git  operations, or any other information that is relevant to the project but doesn't fit in the code or the spec.
-3. use `memory/counterfactual-note.md` to keep track of failed patch attempts and their consequences across a sequence of edit and reversions.
-
 ## Skills
 
-use the `webawesome` skill to properly integrate the WebMCP widget and tools, ensuring they work seamlessly with the task manager app and provide a good user experience when accessed from chat.
+- [feature-branches](skills/feature-branches/SKILL.md) to isolate development of new features in separate branches, allowing for focused work, easier code reviews, and safer integration of changes into the main codebase. This approach also supports better collaboration among team members and helps maintain a cleaner commit history.
+- [bugfix-hypothesis-branches](skills/bugfix-hypothesis-branches/SKILL.md) to reduce risks using version control branching strategies that isolate features and bug fixes from each other and allow for easy rollbacks and experimentation without affecting the main codebase. It also supports superior planning using counterfactual reasoning about the potential impacts of changes and the ability to switch between branches to compare different approaches.
+- [unit-testing-pattern-catalog](skills/unit-testing-pattern-catalog/SKILL.md) to refactor and write effective tests for the app.
+- [webawesome](skills/webawesome/SKILL.md) to properly integrate the WebMCP widget and tools, ensuring they work seamlessly with the task manager app and provide a good user experience when accessed from chat.
 
-use the `unit-testing-pattern-catalog` skill to write effective unit tests for the task manager app, covering all features and edge cases, and ensuring that the tests are maintainable and provide clear feedback on failures.
+The first three skills are new so provide feedback on how they are working and any improvements that could be made to them as you use them.
 
-use the `bugfix-hypothesis-branches` skill to isolate bug fixes and features into feature branches, systematically diagnose and fix any bugs that arise during development, maintaining a clear record of hypotheses, attempts, and outcomes to facilitate efficient debugging and knowledge retention.
