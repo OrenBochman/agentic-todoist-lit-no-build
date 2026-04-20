@@ -4,6 +4,7 @@ import { store, setTasks, addTask, editTask, toggleTask, deleteTask, setFilter, 
 import './components/task-composer.js';
 import './components/task-board.js';
 import './components/task-hero.js';
+import './components/kanban-board.js';
 import './components/task-snackbar.js';
 import './components/task-transfer-controls.js';
 import './components/task-utility-bar.js';
@@ -60,6 +61,7 @@ class TaskManagerApp extends LitReduxElement {
     transferStatusMessage: { state: true },
     transferStatusTone: { state: true },
     webMcpStatus: { state: true },
+    showKanban: { state: true },
   };
 
   static styles = css`
@@ -128,6 +130,7 @@ class TaskManagerApp extends LitReduxElement {
     this.transferStatusTone = 'neutral';
     this.webMcpStatus = window.__webmcpStatus || 'loading';
     this._transferStatusTimeout = null;
+    this.showKanban = false;
     // Load persisted state into Redux store on first load
     if (store.getState().tasks.length === 0) {
       const tasks = this.loadTasks();
@@ -180,14 +183,18 @@ class TaskManagerApp extends LitReduxElement {
             </div>
           </article>
 
-          <task-board
-            .filter=${filter}
-            .tasks=${tasks}
-            @filter-change=${this.handleFilterChange}
-            @task-edit=${this.handleTaskEdit}
-            @task-toggle=${this.handleTaskToggle}
-            @task-delete=${this.handleTaskDelete}
-          ></task-board>
+          <wa-button @click=${() => { this.showKanban = !this.showKanban; }} style="margin-bottom: 12px;">${this.showKanban ? 'Show List View' : 'Show Kanban View'}</wa-button>
+
+          ${this.showKanban
+            ? html`<kanban-board .tasks=${tasks}></kanban-board>`
+            : html`<task-board
+                .filter=${filter}
+                .tasks=${tasks}
+                @filter-change=${this.handleFilterChange}
+                @task-edit=${this.handleTaskEdit}
+                @task-toggle=${this.handleTaskToggle}
+                @task-delete=${this.handleTaskDelete}
+              ></task-board>`}
 
           <article class="card transfer-card">
             <div class="panel">
