@@ -1,11 +1,7 @@
 # Known Issues (Kanban & Parser)
 
-- Pill badges are not displayed for tasks in kanban or list view. should be /in or /done or /up coming based on section shortcut or task state.
-- Delete button fails to remove tasks in kanban view.
-- The parser strips `/in` or `/sec` from the input (e.g. `test /in`), but does not assign the correct column/section to the task object.
 - Section shortcuts (e.g. `/in`, `/sec`) are removed from the text but not added to the task state, so tasks are not grouped in kanban columns.
 - Toggled (completed/in-progress) button state is lost on refresh; state is not persisted.
-- Exported tasks do not include section/column assignment in their data, so kanban grouping is lost on reload/export.
 
 # Project coding guidelines
 

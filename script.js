@@ -186,7 +186,12 @@ class TaskManagerApp extends LitReduxElement {
           <wa-button @click=${() => { this.showKanban = !this.showKanban; }} style="margin-bottom: 12px;">${this.showKanban ? 'Show List View' : 'Show Kanban View'}</wa-button>
 
           ${this.showKanban
-            ? html`<kanban-board .tasks=${tasks}></kanban-board>`
+            ? html`<kanban-board
+                .tasks=${tasks}
+                @task-edit=${this.handleTaskEdit}
+                @task-toggle=${this.handleTaskToggle}
+                @task-delete=${this.handleTaskDelete}
+              ></kanban-board>`
             : html`<task-board
                 .filter=${filter}
                 .tasks=${tasks}
@@ -401,6 +406,16 @@ class TaskManagerApp extends LitReduxElement {
         text: task.text,
         completed: task.completed,
         createdAt: task.createdAt,
+        dueDate: task.dueDate ?? null,
+        project: task.project ?? null,
+        importance: task.importance ?? null,
+        dependsOn: Array.isArray(task.dependsOn) ? task.dependsOn : [],
+        workloadEstimate: typeof task.workloadEstimate === 'number' ? task.workloadEstimate : 4,
+        workloadUncertainty: typeof task.workloadUncertainty === 'number' ? task.workloadUncertainty : 1,
+        tags: Array.isArray(task.tags) ? task.tags : [],
+        inProgress: Boolean(task.inProgress),
+        sectionShortcut: task.sectionShortcut ?? null,
+        section: task.section ?? null,
       })),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -525,6 +540,16 @@ class TaskManagerApp extends LitReduxElement {
       text,
       completed: Boolean(task.completed),
       createdAt,
+      dueDate: task.dueDate ?? null,
+      project: task.project ?? null,
+      importance: task.importance ?? null,
+      dependsOn: Array.isArray(task.dependsOn) ? task.dependsOn : [],
+      workloadEstimate: typeof task.workloadEstimate === 'number' ? task.workloadEstimate : 4,
+      workloadUncertainty: typeof task.workloadUncertainty === 'number' ? task.workloadUncertainty : 1,
+      tags: Array.isArray(task.tags) ? task.tags : [],
+      inProgress: Boolean(task.inProgress),
+      sectionShortcut: task.sectionShortcut ?? null,
+      section: task.section ?? null,
     };
   }
 

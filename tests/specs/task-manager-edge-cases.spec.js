@@ -83,6 +83,30 @@ describe('Task Manager Edge Cases', () => {
     expect(fixture.app.tasks[0]?.text, 'Pending task should remain.').to.equal('pending task');
   });
 
+  it('should delete a task from kanban view (unit: edge case)', async () => {
+    const fixture = getFixture();
+    await setTasks(fixture.app, [
+      { id: 'task-a', text: 'Alpha', completed: false, createdAt: new Date().toISOString() },
+      { id: 'task-b', text: 'Beta', completed: false, createdAt: new Date().toISOString(), inProgress: true },
+    ]);
+
+    const kanbanToggle = fixture.appShadow.querySelector('wa-button');
+    expect(kanbanToggle, 'Kanban toggle button should exist.').to.exist;
+    kanbanToggle.click();
+    await waitForRender();
+
+    const kanbanBoard = fixture.appShadow.querySelector('kanban-board');
+    expect(kanbanBoard, 'Kanban board should render after toggling view.').to.exist;
+
+    const firstKanbanItem = kanbanBoard.shadowRoot.querySelector('task-item');
+    const deleteButton = getDeleteButton(firstKanbanItem);
+    expect(deleteButton, 'Kanban task should expose a delete button.').to.exist;
+    deleteButton.click();
+    await waitForRender();
+
+    expect(fixture.app.tasks.map((task) => task.id), 'Deleting in kanban should update app state.').to.deep.equal(['task-b']);
+  });
+
   it('should allow toggle then immediate delete without error (unit: edge case)', async () => {
     const fixture = getFixture();
     await addTaskWithHostInput('toggle-delete');

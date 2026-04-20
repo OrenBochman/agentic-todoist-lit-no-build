@@ -21,6 +21,9 @@ const SEEDED_TASKS = [
     workloadEstimate: 4,
     workloadUncertainty: 1,
     tags: [],
+    inProgress: false,
+    sectionShortcut: '/up',
+    section: 'up',
   },
 ];
 
@@ -181,6 +184,8 @@ describe('Task Transfer Regression', () => {
     expect(parsed.version, 'Exported JSON should have version 1.').to.equal(1);
     expect(Array.isArray(parsed.tasks), 'Exported JSON should have tasks array.').to.equal(true);
     expect(parsed.tasks[0]?.text, 'Exported JSON should include the current task.').to.equal('Seed task');
+    expect(parsed.tasks[0]?.section, 'Exported JSON should preserve section data.').to.equal('up');
+    expect(parsed.tasks[0]?.sectionShortcut, 'Exported JSON should preserve section shortcut data.').to.equal('/up');
   });
 
   it('export feature opens success feedback', async () => {
@@ -208,6 +213,9 @@ describe('Task Transfer Regression', () => {
             workloadEstimate: 4,
             workloadUncertainty: 1,
             tags: [],
+            inProgress: false,
+            sectionShortcut: '/done',
+            section: 'done',
           },
           {
             id: 'imported-task',
@@ -221,6 +229,9 @@ describe('Task Transfer Regression', () => {
             workloadEstimate: 4,
             workloadUncertainty: 1,
             tags: [],
+            inProgress: false,
+            sectionShortcut: '/in',
+            section: 'in',
           },
         ],
       }),
@@ -232,6 +243,8 @@ describe('Task Transfer Regression', () => {
     expect(fixture.app.tasks.length, 'App should have two tasks after import.').to.equal(2);
     expect(fixture.app.tasks[0]?.text, 'Imported task should be first.').to.equal('Imported task');
     expect(fixture.app.tasks[0]?.completed, 'Imported task should be completed.').to.equal(true);
+    expect(fixture.app.tasks[0]?.section, 'Imported task should preserve section.').to.equal('in');
+    expect(fixture.app.tasks[0]?.sectionShortcut, 'Imported task should preserve section shortcut.').to.equal('/in');
     expect(fixture.app.tasks[1]?.text, 'Seed task should be second.').to.equal('Seed task');
     expect(fixture.app.tasks[1]?.completed, 'Seed task should remain not completed.').to.equal(false);
     expect(fixture.app.filter, 'Filter should reset to all after import.').to.equal('all');
