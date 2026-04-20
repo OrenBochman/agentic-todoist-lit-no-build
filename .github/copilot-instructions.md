@@ -30,6 +30,7 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
   - [ ] Add service worker integration for offline support, allowing the app to function without an internet connection and sync changes when connectivity is restored.
   - [ ] Implement the PRPL pattern (Push, Render, Pre-cache, Lazy-load) to optimize performance and load times, especially on slower networks or devices. 
   - [ ] Add a web app manifest to provide metadata about the app, such as its name, icons, and theme colors, to enhance the user experience when installing the app on their device.
+  - [ ] Add analytics integration to track user interactions and gather insights on how the app is being used
   
 
 ### Stretch goals
