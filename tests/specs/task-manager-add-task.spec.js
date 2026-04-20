@@ -41,8 +41,32 @@ describe('Task Manager Add And Edit Regression', () => {
     // Simulate direct state injection with duplicate IDs
     const dupeId = 'dupe-id';
     fixture.app.tasks = [
-      { id: dupeId, text: 'first', completed: false, createdAt: new Date().toISOString() },
-      { id: dupeId, text: 'second', completed: false, createdAt: new Date().toISOString() },
+      {
+        id: dupeId,
+        text: 'first',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        dueDate: null,
+        project: null,
+        importance: null,
+        dependsOn: [],
+        workloadEstimate: 4,
+        workloadUncertainty: 1,
+        tags: [],
+      },
+      {
+        id: dupeId,
+        text: 'second',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        dueDate: null,
+        project: null,
+        importance: null,
+        dependsOn: [],
+        workloadEstimate: 4,
+        workloadUncertainty: 1,
+        tags: [],
+      },
     ];
     fixture.app.saveTasks();
     await waitForRender();

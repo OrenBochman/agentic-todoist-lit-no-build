@@ -21,7 +21,16 @@ describe('Task Composer Regression', () => {
     fixture.input.value = 'test 123';
     fixture.button.click();
     await waitForRender();
-    expect(await addedTask, 'Add click should emit the entered task.').to.deep.equal({ text: 'test 123' });
+    expect(await addedTask, 'Add click should emit the entered task.').to.deep.equal({
+      text: 'test 123',
+      dueDate: null,
+      project: null,
+      importance: null,
+      dependsOn: [],
+      workloadEstimate: 4,
+      workloadUncertainty: 1,
+      tags: [],
+    });
   });
 
   it('add click clears validation and resets input', async () => {
@@ -52,7 +61,16 @@ describe('Task Composer Regression', () => {
     await waitForRender();
     fixture.button.click();
     await waitForRender();
-    expect(await addedTask, 'Add click should emit the live native input value.').to.deep.equal({ text: 'native typed submit' });
+    expect(await addedTask, 'Add click should emit the live native input value.').to.deep.equal({
+      text: 'native typed submit',
+      dueDate: null,
+      project: null,
+      importance: null,
+      dependsOn: [],
+      workloadEstimate: 4,
+      workloadUncertainty: 1,
+      tags: [],
+    });
   });
 
   it('native input: add click resets input', async () => {
@@ -84,7 +102,16 @@ describe('Task Composer Regression', () => {
     await waitForRender();
     fixture.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await waitForRender();
-    expect(await addedTask, 'Form submit should emit the entered value.').to.deep.equal({ text: 'enter submit' });
+    expect(await addedTask, 'Form submit should emit the entered value.').to.deep.equal({
+      text: 'enter submit',
+      dueDate: null,
+      project: null,
+      importance: null,
+      dependsOn: [],
+      workloadEstimate: 4,
+      workloadUncertainty: 1,
+      tags: [],
+    });
   });
 
   it('form submit resets input after submit', async () => {

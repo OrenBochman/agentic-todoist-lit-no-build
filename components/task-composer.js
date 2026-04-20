@@ -210,6 +210,22 @@ class TaskComposer extends LitElement {
   }
 
   /**
+   * Returns a new task object with all schema fields and defaults.
+   */
+  createTask(text) {
+    return {
+      text,
+      dueDate: null,
+      project: null,
+      importance: null,
+      dependsOn: [],
+      workloadEstimate: 4,
+      workloadUncertainty: 1,
+      tags: [],
+    };
+  }
+
+  /**
    * Normalizes the entered text and bubbles a task creation request upward.
    */
   handleSubmit(event) {
@@ -228,7 +244,7 @@ class TaskComposer extends LitElement {
       new CustomEvent('task-add', {
         bubbles: true,
         composed: true,
-        detail: { text: taskText },
+        detail: this.createTask(taskText),
       }),
     );
 

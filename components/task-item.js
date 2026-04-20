@@ -210,6 +210,12 @@ class TaskItem extends LitElement {
       return '';
     }
 
+    // Compose meta info row
+    const meta = [];
+    if (this.task.dueDate) meta.push(`Due: ${this.task.dueDate}`);
+    if (this.task.project) meta.push(`Project: ${this.task.project}`);
+    if (this.task.importance) meta.push(`Priority: ${this.task.importance}`);
+
     return html`
       <article class="task" data-completed=${String(this.task.completed)}>
         <button
@@ -246,6 +252,9 @@ class TaskItem extends LitElement {
               >
                 <p class="task-text">${this.task.text}</p>
                 <span class="task-meta">${this.task.completed ? 'Completed' : 'Pending'}</span>
+                ${meta.length
+                  ? html`<span class="task-meta">${meta.join(' | ')}</span>`
+                  : ''}
               </div>
             `}
         <div class="task-actions">
