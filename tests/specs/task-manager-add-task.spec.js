@@ -14,6 +14,67 @@ import {
   setFilter,
 } from '../fixtures/task-manager-app.fixture.js';
 
+let fixture;
+
+const getBoardItems = () => [...fixture.board.shadowRoot.querySelectorAll('task-item')];
+
+const getBoardItem = (index = 0) => getBoardItems()[index] ?? null;
+
+const getToggleControl = (item) => item?.shadowRoot?.querySelector('.toggle') ?? null;
+
+const getDeleteButton = (item) => item?.shadowRoot?.querySelector('.button') ?? null;
+
+const getEditableTaskMain = (item) => item?.shadowRoot?.querySelector('.task-main[data-editable="true"]') ?? null;
+
+const getSaveButton = (item) => [...(item?.shadowRoot?.querySelectorAll('wa-button') ?? [])]
+  .find((control) => control.textContent?.trim() === 'Save') ?? null;
+
+const getNativeInput = (waInput) => waInput?.shadowRoot?.querySelector('input') ?? null;
+
+const setComposerHostValue = async (value) => {
+  fixture.input.value = value;
+  fixture.input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
+  await waitForRender();
+};
+
+const setComposerNativeValue = async (value, data = 'k') => {
+  const internalInput = getNativeInput(fixture.input);
+  expect(internalInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
+  internalInput.value = value;
+  internalInput.dispatchEvent(
+    new InputEvent('input', {
+      bubbles: true,
+      composed: true,
+      data,
+      inputType: 'insertText',
+    }),
+  );
+  await waitForRender();
+  return internalInput;
+};
+
+const clickAddButton = async () => {
+  fixture.button.click();
+  await waitForRender();
+};
+
+const addTaskWithHostInput = async (text) => {
+  await setComposerHostValue(text);
+  await clickAddButton();
+};
+
+const addTaskWithNativeInput = async (text, data = 'k') => {
+  await setComposerNativeValue(text, data);
+  await clickAddButton();
+};
+
+const openEditMode = async (item) => {
+  const taskMain = getEditableTaskMain(item);
+  expect(taskMain, 'Editable task-main should exist for long-press.').to.exist;
+  taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
+  await waitForLongPress();
+};
+
 describe('Task Manager Add And Edit Regression', () => {
 
   it('should not add a task with only newline or tab characters (unit: edge case)', async () => {
@@ -78,57 +139,40 @@ describe('Task Manager Add And Edit Regression', () => {
   });
 
   it('should update filtered and full list correctly when deleting in filtered view (unit: edge case)', async () => {
-    // Add two tasks, one completed
-    fixture.input.value = 'pending task';
-    fixture.button.click();
-    await waitForRender();
-    fixture.input.value = 'completed';
-    fixture.button.click();
-    await waitForRender();
+    await addTaskWithHostInput('pending task');
+    await addTaskWithHostInput('completed');
 
-    // Mark 'completed' as done
-    let items = fixture.board.shadowRoot.querySelectorAll('task-item');
-    let completedItem = Array.from(items).find(item => item.shadowRoot.querySelector('.task-main').textContent.includes('completed'));
-    let completedToggle = completedItem?.shadowRoot?.querySelector('.toggle');
+    const completedItem = getBoardItems().find((item) =>
+      item.shadowRoot.querySelector('.task-main')?.textContent?.includes('completed'));
+    const completedToggle = getToggleControl(completedItem);
+    expect(completedToggle, 'Completed task should expose a toggle control.').to.exist;
     completedToggle.click();
     await waitForRender();
 
-    // Filter to completed
     await setFilter(fixture.app, 'completed');
 
-    // Diagnostic: log tasks before delete
-    // eslint-disable-next-line no-console
-    console.log('Tasks before delete:', fixture.app.tasks.map(t => ({text: t.text, completed: t.completed})));
-
-    // Delete completed task
-    let filteredCompletedItem = fixture.board.shadowRoot.querySelector('task-item');
-    let deleteBtn = filteredCompletedItem?.shadowRoot?.querySelector('.button');
+    const filteredCompletedItem = getBoardItem();
+    const deleteBtn = getDeleteButton(filteredCompletedItem);
+    expect(deleteBtn, 'Filtered completed task should expose a delete button.').to.exist;
     deleteBtn.click();
     await waitForRender();
 
-    // Diagnostic: log tasks after delete
-    // eslint-disable-next-line no-console
-    console.log('Tasks after delete:', fixture.app.tasks.map(t => ({text: t.text, completed: t.completed})));
-
-    // Should only have pending left
     expect(fixture.app.tasks.length, 'Only pending task should remain after deleting in filtered view.').to.equal(1);
     expect(fixture.app.tasks[0]?.text, 'Pending task should remain.').to.equal('pending task');
   });
 
   it('should allow toggle then immediate delete without error (unit: edge case)', async () => {
-    fixture.input.value = 'toggle-delete';
-    fixture.button.click();
-    await waitForRender();
-    let item = fixture.board.shadowRoot.querySelector('task-item');
-    if (!item) {
-      console.error('[diagnostic] No task-item found before toggle/delete. DOM:', fixture.board.shadowRoot.innerHTML, 'Tasks:', JSON.stringify(fixture.app.tasks));
-      throw new Error('No task-item found before toggle/delete');
-    }
-    let toggle = item?.shadowRoot?.querySelector('.toggle');
+    await addTaskWithHostInput('toggle-delete');
+
+    const item = getBoardItem();
+    expect(item, 'A task-item should exist before toggle/delete.').to.exist;
+
+    const toggle = getToggleControl(item);
     expect(toggle, 'Toggle should exist before clicking.').to.exist;
     toggle.click();
     await waitForRender();
-    let deleteBtn = item?.shadowRoot?.querySelector('.button');
+
+    const deleteBtn = getDeleteButton(item);
     expect(deleteBtn, 'Delete button should exist before clicking.').to.exist;
     deleteBtn.click();
     await waitForRender();
@@ -136,57 +180,42 @@ describe('Task Manager Add And Edit Regression', () => {
   });
 
   it('should not allow editing a task to empty or whitespace (unit: edge case)', async () => {
-    fixture.input.value = 'edit-me';
-    fixture.button.click();
-    await waitForRender();
-    let item = fixture.board.shadowRoot.querySelector('task-item');
-    if (!item) {
-      console.error('[diagnostic] No task-item found before edit. DOM:', fixture.board.shadowRoot.innerHTML, 'Tasks:', JSON.stringify(fixture.app.tasks));
-      throw new Error('No task-item found before edit');
-    }
-    let taskMain = item?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-    expect(taskMain, 'Editable task-main should exist for long-press.').to.exist;
-    taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-    await waitForLongPress();
-    let editInput = item.shadowRoot.querySelector('wa-input');
-    if (!editInput) {
-      console.error('[diagnostic] wa-input not found in edit mode. DOM:', item.shadowRoot.innerHTML);
-      throw new Error('wa-input not found in edit mode');
-    }
-    let saveBtn = [...item.shadowRoot.querySelectorAll('wa-button')].find((c) => c.textContent?.trim() === 'Save');
-    if (!saveBtn) {
-      console.error('[diagnostic] Save button not found in edit mode. DOM:', item.shadowRoot.innerHTML);
-      throw new Error('Save button not found in edit mode');
-    }
+    await addTaskWithHostInput('edit-me');
+
+    const item = getBoardItem();
+    expect(item, 'A task-item should exist before edit.').to.exist;
+
+    await openEditMode(item);
+
+    const editInput = item.shadowRoot.querySelector('wa-input');
+    const saveBtn = getSaveButton(item);
+    expect(editInput, 'wa-input should be present in edit mode.').to.exist;
+    expect(saveBtn, 'Save button should be present in edit mode.').to.exist;
+
     editInput.value = '   ';
     editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
     await waitForRender();
     saveBtn.click();
     await waitForRender();
     const editError = item.shadowRoot.querySelector('.edit-error');
-    if (!editError) {
-      console.error('[diagnostic] Edit error not found after invalid save. DOM:', item.shadowRoot.innerHTML);
-      throw new Error('Edit error not found after invalid save');
-    }
+    expect(editError, 'Invalid edit save should render an edit error.').to.exist;
     expect(editError.textContent, 'Should show validation error for empty edit.').to.match(/enter a task/i);
   });
 
   it('should allow rapid toggle of the same task without state inconsistency (unit: edge case)', async () => {
-    fixture.input.value = 'rapid-toggle';
-    fixture.button.click();
-    await waitForRender();
-    let item = fixture.board.shadowRoot.querySelector('task-item');
-    if (!item) {
-      console.error('[diagnostic] No task-item found before rapid toggles. DOM:', fixture.board.shadowRoot.innerHTML, 'Tasks:', JSON.stringify(fixture.app.tasks));
-      throw new Error('No task-item found before rapid toggles');
-    }
-    let toggle = item?.shadowRoot?.querySelector('.toggle');
+    await addTaskWithHostInput('rapid-toggle');
+
+    const item = getBoardItem();
+    expect(item, 'A task-item should exist before rapid toggles.').to.exist;
+
+    const toggle = getToggleControl(item);
     expect(toggle, 'Toggle should exist before rapid toggles.').to.exist;
+
     for (let i = 0; i < 10; i++) {
       toggle.click();
       await waitForRender();
     }
-    // Should end up in the opposite state if even, same if odd
+
     expect(fixture.app.tasks[0]?.completed, 'Task completed state should be consistent after rapid toggles.').to.equal(false);
   });
 
@@ -261,52 +290,46 @@ describe('Task Manager Add And Edit Regression', () => {
   });
 
   it('should handle rapid add and delete of tasks without error (unit: edge case)', async () => {
-    // Edge case: stress test for rapid add/delete
     expect(fixture.app.tasks.length, 'Fixture should start with zero tasks.').to.equal(0);
+
     for (let i = 0; i < 5; i++) {
-      fixture.input.value = `rapid${i}`;
-      fixture.button.click();
-      await waitForRender();
+      await addTaskWithHostInput(`rapid${i}`);
     }
+
     expect(fixture.app.tasks.length, 'Fixture should have 5 tasks after rapid add.').to.equal(5);
 
     for (let i = 0; i < 5; i++) {
-      const items = fixture.board.shadowRoot.querySelectorAll('task-item');
-      const firstDelete = items[0]?.shadowRoot?.querySelector('.button');
-      console.log(`[diagnostic] Before delete ${i + 1}: items=${items.length}, tasks=${fixture.app.tasks.length}`);
-      if (firstDelete) {
-        firstDelete.click();
-        await waitForRender();
-        const newItems = fixture.board.shadowRoot.querySelectorAll('task-item');
-        console.log(`[diagnostic] After delete ${i + 1}: items=${newItems.length}, tasks=${fixture.app.tasks.length}`);
-        expect(
-          newItems.length,
-          `After delete ${i + 1}, task-item count should decrease by 1.`
-        ).to.equal(items.length - 1);
-      } else {
-        console.log(`[diagnostic] Delete button not found on iteration ${i + 1}`);
-      }
+      const items = getBoardItems();
+      const firstDelete = getDeleteButton(items[0]);
+      expect(firstDelete, `Delete button should exist before delete ${i + 1}.`).to.exist;
+
+      firstDelete.click();
+      await waitForRender();
+
+      expect(
+        getBoardItems().length,
+        `After delete ${i + 1}, task-item count should decrease by 1.`,
+      ).to.equal(items.length - 1);
     }
 
     expect(fixture.app.tasks.length, 'All rapidly added tasks should be deleted.').to.equal(0);
   });
 
   it('should toggle completed on first and last tasks', async () => {
-    // Add three tasks
     for (let i = 0; i < 3; i++) {
-      fixture.input.value = `edge${i}`;
-      fixture.button.click();
-      await waitForRender();
+      await addTaskWithHostInput(`edge${i}`);
     }
-    // Toggle first
-    let firstItem = fixture.board.shadowRoot.querySelectorAll('task-item')[0];
-    let firstToggle = firstItem?.shadowRoot?.querySelector('.toggle');
+
+    const firstItem = getBoardItem(0);
+    const firstToggle = getToggleControl(firstItem);
+    expect(firstToggle, 'First task should expose a toggle control.').to.exist;
     firstToggle.click();
     await waitForRender();
     expect(fixture.app.tasks[0]?.completed, 'First task should be marked completed.').to.equal(true);
-    // Toggle last
-    let lastItem = fixture.board.shadowRoot.querySelectorAll('task-item')[2];
-    let lastToggle = lastItem?.shadowRoot?.querySelector('.toggle');
+
+    const lastItem = getBoardItem(2);
+    const lastToggle = getToggleControl(lastItem);
+    expect(lastToggle, 'Last task should expose a toggle control.').to.exist;
     lastToggle.click();
     await waitForRender();
     expect(fixture.app.tasks[2]?.completed, 'Last task should be marked completed.').to.equal(true);
@@ -324,7 +347,6 @@ describe('Task Manager Add And Edit Regression', () => {
     window.localStorage.setItem = originalSetItem;
   });
 
-  let fixture;
   // Default seeded task for tests that require a task-item
   const SEEDED_TASKS = [
     { id: 'seed-task', text: 'Seed task', completed: false, createdAt: new Date().toISOString() },
@@ -350,11 +372,8 @@ describe('Task Manager Add And Edit Regression', () => {
 
   it('add flow: clicking add increases task count', async () => {
     const beforeCount = fixture.app.tasks.length;
-    fixture.input.value = 'test 123';
-    fixture.input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
-    await waitForRender();
-    fixture.button.click();
-    await waitForRender();
+    await addTaskWithHostInput('test 123');
+
     expect(
       fixture.app.tasks.length,
       'Task count should increase by 1 after add click.'
@@ -362,17 +381,13 @@ describe('Task Manager Add And Edit Regression', () => {
   });
 
   it('add flow: new task appears at top of app state and board', async () => {
-    fixture.input.value = 'test 123';
-    fixture.input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
-    await waitForRender();
-    fixture.button.click();
-    await waitForRender();
+    await addTaskWithHostInput('test 123');
+
     expect(
       fixture.app.tasks[0]?.text,
       'First task in app state should match entered text.'
     ).to.equal('test 123');
-    const boardItems = [...fixture.board.shadowRoot.querySelectorAll('task-item')];
-    const firstTaskText = boardItems[0]?.task?.text ?? '';
+    const firstTaskText = getBoardItem()?.task?.text ?? '';
     expect(
       firstTaskText,
       'First rendered task in board should match entered text.'
@@ -380,11 +395,8 @@ describe('Task Manager Add And Edit Regression', () => {
   });
 
   it('add flow: composer input resets after add', async () => {
-    fixture.input.value = 'test 123';
-    fixture.input.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
-    await waitForRender();
-    fixture.button.click();
-    await waitForRender();
+    await addTaskWithHostInput('test 123');
+
     expect(
       fixture.input.value,
       'Composer input should be cleared after adding a task.'
@@ -394,20 +406,8 @@ describe('Task Manager Add And Edit Regression', () => {
 
   it('native input add: clicking add increases task count', async () => {
     const beforeCount = fixture.app.tasks.length;
-    const internalInput = fixture.input.shadowRoot?.querySelector('input');
-    expect(internalInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
-    internalInput.value = 'native add task';
-    internalInput.dispatchEvent(
-      new InputEvent('input', {
-        bubbles: true,
-        composed: true,
-        data: 'k',
-        inputType: 'insertText',
-      }),
-    );
-    await waitForRender();
-    fixture.button.click();
-    await waitForRender();
+    await addTaskWithNativeInput('native add task');
+
     expect(
       fixture.app.tasks.length,
       'Task count should increase by 1 after native input add.'
@@ -415,25 +415,13 @@ describe('Task Manager Add And Edit Regression', () => {
   });
 
   it('native input add: new task appears at top of app state and board', async () => {
-    const internalInput = fixture.input.shadowRoot?.querySelector('input');
-    expect(internalInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
-    internalInput.value = 'native add task';
-    internalInput.dispatchEvent(
-      new InputEvent('input', {
-        bubbles: true,
-        composed: true,
-        data: 'k',
-        inputType: 'insertText',
-      }),
-    );
-    await waitForRender();
-    fixture.button.click();
-    await waitForRender();
+    await addTaskWithNativeInput('native add task');
+
     expect(
       fixture.app.tasks[0]?.text,
       'First task in app state should match native input value.'
     ).to.equal('native add task');
-    const firstTaskText = fixture.board.shadowRoot.querySelector('task-item')?.task?.text;
+    const firstTaskText = getBoardItem()?.task?.text;
     expect(
       firstTaskText,
       'First rendered task in board should match native input value.'
@@ -441,21 +429,9 @@ describe('Task Manager Add And Edit Regression', () => {
   });
 
   it('native input add: board renders the live native input value', async () => {
-    const internalInput = fixture.input.shadowRoot?.querySelector('input');
-    expect(internalInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
-    internalInput.value = 'native add task';
-    internalInput.dispatchEvent(
-      new InputEvent('input', {
-        bubbles: true,
-        composed: true,
-        data: 'k',
-        inputType: 'insertText',
-      }),
-    );
-    await waitForRender();
-    fixture.button.click();
-    await waitForRender();
-    const firstTaskText = fixture.board.shadowRoot.querySelector('task-item')?.task?.text;
+    await addTaskWithNativeInput('native add task');
+
+    const firstTaskText = getBoardItem()?.task?.text;
     expect(
       firstTaskText,
       'Board should render the live native input value after add.'
@@ -472,11 +448,8 @@ describe('Task Manager Add And Edit Regression', () => {
     });
 
     it('toggle control exists and is initially unchecked', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
-      if (!toggle) {
-        console.error('[diagnostic] toggle not found. firstItem:', firstItem, 'firstItem shadow:', firstItem?.shadowRoot?.innerHTML);
-      }
+      const firstItem = getBoardItem();
+      const toggle = getToggleControl(firstItem);
       await waitForRender();
       expect(toggle, 'Toggle control should exist in first task-item.').to.exist;
       expect(
@@ -486,12 +459,13 @@ describe('Task Manager Add And Edit Regression', () => {
     });
 
     it('clicking toggle updates app state and task-item', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
+      const firstItem = getBoardItem();
+      const toggle = getToggleControl(firstItem);
+      expect(toggle, 'Toggle control should exist before toggling.').to.exist;
       await waitForRender();
       toggle.click();
       await waitForRender();
-      const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const updatedFirstItem = getBoardItem();
       expect(
         fixture.app.tasks[0]?.completed,
         'App state should reflect completed after toggle.'
@@ -503,12 +477,13 @@ describe('Task Manager Add And Edit Regression', () => {
     });
 
     it('completed status is visible in task meta after toggle', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const toggle = firstItem?.shadowRoot?.querySelector('.toggle');
+      const firstItem = getBoardItem();
+      const toggle = getToggleControl(firstItem);
+      expect(toggle, 'Toggle control should exist before toggling.').to.exist;
       await waitForRender();
       toggle.click();
       await waitForRender();
-      const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const updatedFirstItem = getBoardItem();
       const meta = updatedFirstItem?.shadowRoot?.querySelector('.task-meta')?.textContent?.trim() ?? '';
       expect(
         meta,
@@ -526,60 +501,50 @@ describe('Task Manager Add And Edit Regression', () => {
     });
 
     it('host wa-input is present and editable', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
+      const firstItem = getBoardItem();
+      const taskMain = getEditableTaskMain(firstItem);
       await waitForRender();
       expect(taskMain, 'Editable task-main should exist for long-press.').to.exist;
     });
 
     it('edit mode can be entered and wa-input is present', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-      await waitForRender();
-      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-      await waitForLongPress();
+      const firstItem = getBoardItem();
+      await openEditMode(firstItem);
       const editInput = firstItem.shadowRoot.querySelector('wa-input');
       expect(editInput, 'wa-input should be present in edit mode.').to.exist;
     });
 
     it('edit mode: save button is present', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-      await waitForRender();
-      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-      await waitForLongPress();
-      const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+      const firstItem = getBoardItem();
+      await openEditMode(firstItem);
+      const saveButton = getSaveButton(firstItem);
       expect(saveButton, 'Save button should be present in edit mode.').to.exist;
     });
 
     it('edit mode: saving host wa-input value updates app state and board', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-      await waitForRender();
-      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-      await waitForLongPress();
+      const firstItem = getBoardItem();
+      await openEditMode(firstItem);
       const editInput = firstItem.shadowRoot.querySelector('wa-input');
-      const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+      const saveButton = getSaveButton(firstItem);
+      expect(editInput, 'wa-input should be present in edit mode.').to.exist;
+      expect(saveButton, 'Save button should be present in edit mode.').to.exist;
       editInput.value = 'edited task text';
       editInput.dispatchEvent(new CustomEvent('wa-input', { bubbles: true, composed: true }));
       await waitForRender();
       saveButton.click();
       await waitForRender();
-      const updatedFirstItem = fixture.board.shadowRoot.querySelector('task-item');
+      const updatedFirstItem = getBoardItem();
       const updatedText = updatedFirstItem?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
       expect(fixture.app.tasks[0]?.text, 'App state should update after save.').to.equal('edited task text');
       expect(updatedText, 'Board should render updated text after save.').to.equal('edited task text');
     });
 
     it('edit mode: saving native input value updates app state and board', async () => {
-      const firstItem = fixture.board.shadowRoot.querySelector('task-item');
-      const taskMain = firstItem?.shadowRoot?.querySelector('.task-main[data-editable="true"]');
-      await waitForRender();
-      taskMain.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }));
-      await waitForLongPress();
+      const firstItem = getBoardItem();
+      await openEditMode(firstItem);
       const editInput = firstItem.shadowRoot.querySelector('wa-input');
-      const internalEditInput = editInput?.shadowRoot?.querySelector('input');
-      const saveButton = [...firstItem.shadowRoot.querySelectorAll('wa-button')].find((control) => control.textContent?.trim() === 'Save');
+      const internalEditInput = getNativeInput(editInput);
+      const saveButton = getSaveButton(firstItem);
       expect(internalEditInput, 'Native input should exist in wa-input shadowRoot.').to.exist;
       expect(saveButton, 'Save button should be present in edit mode.').to.exist;
       internalEditInput.value = 'edited through native input';
@@ -594,7 +559,7 @@ describe('Task Manager Add And Edit Regression', () => {
       await waitForRender();
       saveButton.click();
       await waitForRender();
-      const updatedText = fixture.board.shadowRoot.querySelector('task-item')?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
+      const updatedText = getBoardItem()?.shadowRoot?.querySelector('.task-text')?.textContent?.trim() ?? '';
       expect(fixture.app.tasks[0]?.text, 'App state should update after saving native input.').to.equal('edited through native input');
       expect(updatedText, 'Board should render updated text after saving native input.').to.equal('edited through native input');
     });
