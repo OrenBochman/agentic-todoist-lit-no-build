@@ -8,6 +8,13 @@ import './task-item.js';
  * @property {string} createdAt
  * @property {string} id
  * @property {string} text
+ * @property {string|null} dueDate - ISO date string or null
+ * @property {string|null} project - Freeform project name or null
+ * @property {string|null} importance - Importance (e.g., 'P1'-'P5'), nullable
+ * @property {string[]} dependsOn - Array of task IDs (default: [])
+ * @property {number} workloadEstimate - Estimated hours (default: 4)
+ * @property {number} workloadUncertainty - Uncertainty in hours (default: 1)
+ * @property {string[]} tags - Array of tags (default: [])
  */
 
 /**

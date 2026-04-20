@@ -265,6 +265,13 @@ class TaskManagerApp extends LitElement {
         text: taskText,
         completed: false,
         createdAt: new Date().toISOString(),
+        dueDate: null,
+        project: null,
+        importance: null,
+        dependsOn: [],
+        workloadEstimate: 4,
+        workloadUncertainty: 1,
+        tags: [],
       },
       ...this.tasks,
     ];

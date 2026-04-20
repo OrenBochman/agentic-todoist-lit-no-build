@@ -12,6 +12,13 @@ const SEEDED_TASKS = [
     text: 'Seed task',
     completed: false,
     createdAt: '2026-04-14T00:00:00.000Z',
+    dueDate: null,
+    project: null,
+    importance: null,
+    dependsOn: [],
+    workloadEstimate: 4,
+    workloadUncertainty: 1,
+    tags: [],
   },
 ];
 
