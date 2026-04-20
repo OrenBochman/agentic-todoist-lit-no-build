@@ -17,11 +17,14 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
   - [x] **Schema-Update** task schema for new fields to support due dates, projects, importance, depends on, work-load estimation, work-load uncertainty, and any other fields needed to support the new features.
   - [x] **Parser-Update** Add Todoist-style date, project, importance parsing (parser and unit tests, including todoist-parser-element.spec.js integrated in main regression suite)
   - [x] **Reducer-Pattern** Use a redux style reducer pattern for state management to ensure predictable state updates and easier debugging, especially as the app grows in complexity.
-  - [ ] **kanban view** (web component, tests, docs)
-  - [ ] **Filter-Update** Add more filters for date, project, importance
   - [ ] **Google-Drive-Integration** Support storage to google drive. 
+  - [ ] **Filter-Update** Add more filters for date, project, importance
+- Project management
+  - [ ] **kanban view** (web component, tests, docs)
+  - [ ] drag-drop-element interface for task reordering and project organization.
+  - [ ] drop-target-element interface for drag-drop-element to enable drag and drop between projects and kanban columns. 
 - Tests and Documentation
-  - [ ] Improve documentation with Mermaid UML charts
+  - [ ] Improve documentation with Mermaid UML charts (class diagrams, sequence diagrams) to illustrate app architecture, component relationships, and data flow.
 - UI/UX
   - [ ] Add calendar view (web component, tests, docs)
   - [ ] Add gantt view (web component, tests, docs)
@@ -40,8 +43,6 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 4. [ ] share tasks with other users...
 5. [ ] add my own insights about lit and webawesome. possible blog post.
 6. [ ] add a rl agent script.
-7. [ ] drag-drop-element interface for task reordering and project organization.
-8. [ ] drop-target-element interface for drag-drop-element to enable drag and drop between projects and kanban columns. 
 9. [ ] notifications for due dates and reminders.
 10. [ ] add a "focus mode" and a pomodoro timer.
 
