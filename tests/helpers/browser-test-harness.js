@@ -8,6 +8,7 @@ if (!mocha || !chai) {
 mocha.setup({
   ui: 'bdd',
   checkLeaks: true,
+  slow: 1,
   timeout: 15000,
 });
 
