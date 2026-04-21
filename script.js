@@ -5,6 +5,7 @@ import './components/task-composer.js';
 import './components/task-board.js';
 import './components/task-hero.js';
 import './components/kanban-board.js';
+import './components/gantt-view.js';
 import './components/task-snackbar.js';
 import './components/task-transfer-controls.js';
 import './components/task-utility-bar.js';
@@ -93,11 +94,27 @@ class TaskManagerApp extends LitReduxElement {
     this.saveTheme();
     this.requestUpdate();
   }
+
+  get activeView() {
+    return this._activeView || 'list';
+  }
+  set activeView(val) {
+    const normalized = val === 'kanban' || val === 'gantt' ? val : 'list';
+    this._activeView = normalized;
+    this.requestUpdate();
+  }
+
+  get showKanban() {
+    return this.activeView === 'kanban';
+  }
+  set showKanban(val) {
+    this.activeView = val ? 'kanban' : 'list';
+  }
   static properties = {
+    activeView: { state: true },
     transferStatusMessage: { state: true },
     transferStatusTone: { state: true },
     webMcpStatus: { state: true },
-    showKanban: { state: true },
   };
 
   static styles = css`
@@ -166,7 +183,7 @@ class TaskManagerApp extends LitReduxElement {
     this.transferStatusTone = 'neutral';
     this.webMcpStatus = window.__webmcpStatus || 'loading';
     this._transferStatusTimeout = null;
-    this.showKanban = this.loadView() === 'kanban';
+    this.activeView = this.loadView();
     // Load persisted state into Redux store on first load
     if (store.getState().tasks.length === 0) {
       const tasks = this.loadTasks();
@@ -180,6 +197,18 @@ class TaskManagerApp extends LitReduxElement {
     this.applyTheme();
     this.syncWebMcpStatus();
     this.registerWebMcpTools();
+  }
+
+  getNextViewLabel() {
+    if (this.activeView === 'list') {
+      return 'Show Kanban View';
+    }
+
+    if (this.activeView === 'kanban') {
+      return 'Show Gantt View';
+    }
+
+    return 'Show List View';
   }
 
   render() {
@@ -219,9 +248,9 @@ class TaskManagerApp extends LitReduxElement {
             </div>
           </article>
 
-          <wa-button @click=${this.toggleTaskView} style="margin-bottom: 12px;">${this.showKanban ? 'Show List View' : 'Show Kanban View'}</wa-button>
+          <wa-button @click=${this.toggleTaskView} style="margin-bottom: 12px;">${this.getNextViewLabel()}</wa-button>
 
-          ${this.showKanban
+          ${this.activeView === 'kanban'
             ? html`<kanban-board
                 .filter=${filter}
                 .projectFilter=${projectFilter}
@@ -233,6 +262,17 @@ class TaskManagerApp extends LitReduxElement {
                 @task-delete=${this.handleTaskDelete}
                 @task-move=${this.handleTaskMove}
               ></kanban-board>`
+            : this.activeView === 'gantt'
+              ? html`<gantt-view
+                  .filter=${filter}
+                  .projectFilter=${projectFilter}
+                  .tasks=${tasks}
+                  @filter-change=${this.handleFilterChange}
+                  @project-filter-change=${this.handleProjectFilterChange}
+                  @task-edit=${this.handleTaskEdit}
+                  @task-toggle=${this.handleTaskToggle}
+                  @task-delete=${this.handleTaskDelete}
+                ></gantt-view>`
             : html`<task-board
                 .filter=${filter}
                 .projectFilter=${projectFilter}
@@ -291,7 +331,8 @@ class TaskManagerApp extends LitReduxElement {
 
   loadView() {
     try {
-      return window.localStorage.getItem(VIEW_STORAGE_KEY) === 'kanban' ? 'kanban' : 'list';
+      const view = window.localStorage.getItem(VIEW_STORAGE_KEY);
+      return view === 'kanban' || view === 'gantt' ? view : 'list';
     } catch {
       return 'list';
     }
@@ -315,7 +356,7 @@ class TaskManagerApp extends LitReduxElement {
 
   saveView() {
     try {
-      window.localStorage.setItem(VIEW_STORAGE_KEY, this.showKanban ? 'kanban' : 'list');
+      window.localStorage.setItem(VIEW_STORAGE_KEY, this.activeView);
     } catch {
       return;
     }
@@ -333,7 +374,11 @@ class TaskManagerApp extends LitReduxElement {
   };
 
   toggleTaskView = () => {
-    this.showKanban = !this.showKanban;
+    this.activeView = this.activeView === 'list'
+      ? 'kanban'
+      : this.activeView === 'kanban'
+        ? 'gantt'
+        : 'list';
     this.saveView();
   };
 
