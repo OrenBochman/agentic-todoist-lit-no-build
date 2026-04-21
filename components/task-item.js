@@ -98,6 +98,13 @@ class TaskItem extends LitElement {
       overflow-wrap: anywhere;
     }
 
+    .task-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .task[data-completed='true'] .task-text {
       color: var(--text-muted);
       text-decoration: line-through;
@@ -229,9 +236,7 @@ class TaskItem extends LitElement {
       meta.push(`Tags: ${this.task.tags.map((tag) => `@${tag}`).join(' ')}`);
     }
     const pillText = this.showStatusBadge ? getTaskStatusShortcut(this.task) : null;
-    const pill = pillText
-      ? html`<wa-badge pill style="margin-left:8px;">${pillText}</wa-badge>`
-      : '';
+    const pill = pillText ? html`<wa-badge pill>${pillText}</wa-badge>` : '';
 
     return html`
       <article class="task" data-completed=${String(this.task.completed)}>
@@ -267,7 +272,10 @@ class TaskItem extends LitElement {
                 @pointerleave=${this.clearLongPress}
                 @pointercancel=${this.clearLongPress}
               >
-                <p class="task-text">${this.task.text}${pill}</p>
+                <div class="task-header">
+                  <p class="task-text">${this.task.text}</p>
+                  ${pill}
+                </div>
                 <span class="task-meta">${this.task.completed ? 'Completed' : 'Pending'}</span>
                 ${meta.length
                   ? html`<span class="task-meta">${meta.join(' | ')}</span>`
