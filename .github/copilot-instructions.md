@@ -82,7 +82,7 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 
 - Project management
   - [x] **kanban view** (web component, tests, docs)
-  - [ ] improve the kan ban view to support drag and drop of task card between column.
+  - [ ] **Drag and Drop** improve the kan ban view to support drag and drop of task card between column.
         do this by adding  drag-drop-element interface for task and a drop-target-element interface for the kanban column containers.  
 - Storage and Data
   - [ ] **Google-Drive-Integration** Support storage to google drive. 
