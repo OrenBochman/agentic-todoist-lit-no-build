@@ -163,161 +163,75 @@ class GanttView extends LitElement {
       justify-content: flex-end;
       margin-bottom: 20px;
     }
-    .surface {
-      border: 1px solid var(--panel-border);
-      border-radius: 28px;
-      overflow: hidden;
-      background: color-mix(in srgb, var(--panel-background) 96%, transparent);
-      box-shadow: var(--panel-shadow);
-        .bar-handle-right {
-          background: #3867d6;
-          right: 0;
-          transform: translateX(50%) translateY(-50%);
-      display: grid;
-      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-      gap: 0;
+    .gantt-outer {
+      width: 100%;
+      overflow-x: auto;
+      background: var(--wa-surface, #fff);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      margin: 0 auto;
+      padding: 0;
     }
-    .header {
-      border-bottom: 1px solid var(--panel-border);
-      background: color-mix(in srgb, var(--panel-background) 90%, transparent);
+    .gantt-grid {
+      display: grid;
+      align-items: center;
+      width: max-content;
+      min-width: 100%;
+    }
+    .gantt-header {
       position: sticky;
       top: 0;
-      z-index: 1;
+      z-index: 2;
+      background: var(--wa-surface, #fff);
+      border-bottom: 1px solid var(--wa-border, #e0e0e0);
     }
-    .header-title,
-    .lane {
-      padding: 18px 20px;
-    }
-    .header-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-strong);
-            background: #3867d6;
-            position: absolute;
-            top: 50%;
-            right: 0;
-            transform: translate(50%, -50%);
-    }
-    .timeline-grid {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(56px, 1fr);
-    }
-    .tick {
-      padding: 10px 8px;
-      border-right: 1px solid color-mix(in srgb, var(--text-strong) 10%, transparent);
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.82rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    .row + .row {
-      border-top: 1px solid color-mix(in srgb, var(--text-strong) 8%, transparent);
-    }
-    .task-cell {
-      padding: 16px;
-      border-right: 1px solid var(--panel-border);
-      background: color-mix(in srgb, var(--panel-background) 98%, transparent);
-    }
-    .gantt-task-title {
-      font-size: 1.02rem;
-      font-weight: 600;
-      color: var(--text-strong);
+    .gantt-header-cell, .gantt-body-cell {
+      border-bottom: 1px solid var(--wa-border, #e0e0e0);
+      background: var(--wa-surface, #fff);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 100%;
+      padding: 6px 8px;
     }
-    .lane {
-      min-height: 112px;
+    .gantt-header-cell.task-col, .gantt-body-cell.task-col {
+      font-weight: 500;
+      width: 140px;
+      min-width: 140px;
+      max-width: 140px;
+    }
+    .gantt-header-cell.status-col, .gantt-body-cell.status-col {
+      font-weight: 400;
+      width: 80px;
+      min-width: 80px;
+      max-width: 80px;
+    }
+    .gantt-header-cell.month-col {
+      font-weight: 600;
+      text-align: center;
+      background: var(--wa-surface, #f9f9f9);
+      border-bottom: none;
+    }
+    .gantt-header-cell.day-col, .gantt-body-cell.day-col {
+      font-size: 0.82rem;
+      text-align: center;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--wa-border, #e0e0e0);
+    }
+    .gantt-row {
+      border-bottom: 1px solid var(--wa-border, #e0e0e0);
+    }
+    .gantt-bar {
+      grid-row: 1;
+      z-index: 1;
       position: relative;
-      background:
-        repeating-linear-gradient(
-          90deg,
-          transparent,
-          transparent calc((100% / var(--day-count)) - 1px),
-          color-mix(in srgb, var(--text-strong) 8%, transparent) calc((100% / var(--day-count)) - 1px),
-          color-mix(in srgb, var(--text-strong) 8%, transparent) calc(100% / var(--day-count))
-        );
-    }
-    .bar {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 18px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 68%, white));
-      box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent);
-      min-width: 14px;
+      height: 28px;
       display: flex;
       align-items: center;
-      z-index: 1;
     }
-    .bar[data-completed='true'] {
-      background: linear-gradient(90deg, #36a269, #7acb98);
-      box-shadow: 0 8px 20px rgba(54, 162, 105, 0.2);
-    }
-    .bar-label {
-      position: absolute;
-      top: calc(50% - 28px);
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-    .bar-handle {
-      display: inline-block;
-      width: 14px;
-      height: 18px;
-      background: var(--panel-border);
-      opacity: 0.7;
-      .bar {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        height: 18px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 68%, white));
-        box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent);
-        min-width: 14px;
-        display: block;
-        z-index: 1;
-      }
-      .bar-inner {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: stretch;
-      }
-    .bar-handle-center {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 14px;
-        height: 18px;
-        background: var(--panel-border);
-        opacity: 0.7;
-        cursor: pointer;
-        border-radius: 3px;
-        transition: background 0.2s, opacity 0.2s;
     .empty {
       padding: 40px 28px;
-        background: #f7b731;
-        left: -7px;
-    }
-    @media (max-width: 900px) {
-        background: #3867d6;
-        right: -7px;
-        grid-template-columns: 1fr;
-      }
-        background: #20bf6b;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 12px;
-        border-radius: 50%;
-      }
+      color: #888;
+      text-align: center;
     }
   `;
 
@@ -451,6 +365,9 @@ class GanttView extends LitElement {
     const barHeight = 20;
     const handleRadius = 7;
     const svgHeight = 48;
+    const timelineCols = timeline.totalDays;
+    // CSS grid template: 140px (Task) 80px (Status) then 40px per day
+    const gridTemplate = `140px 80px repeat(${timelineCols}, 40px)`;
 
     return html`
       <div class="toolbar">
@@ -462,80 +379,70 @@ class GanttView extends LitElement {
           @project-filter-change=${this._bubbleEvent}
         ></task-filter-bar>
       </div>
-
-      <section class="surface">
-        ${timeline.visibleTasks.length
-          ? html`
-              <div class="header">
-                <div class="header-title">Task Timeline</div>
-                <div class="gantt-header-grid">
-                  <div class="gantt-header-fixed">
-                    <div class="tick" style="font-weight:700;">Task</div>
-                    <div class="tick" style="font-weight:700;">Status</div>
-                  </div>
-                  <div class="gantt-header-scroll" style="width:${laneWidthPx}px;">
-                    <div class="month-row">
-                      ${months.map(month => html`<div class="month-cell" style="grid-column: span ${month.span};">${month.label}</div>`)}
-                    </div>
-                    <div class="day-row">
-                      ${ticks.map((tick) => html`<div class="day-cell">${tick.label}</div>`)}
-                    </div>
-                  </div>
-                </div>
+      <div class="gantt-outer">
+        <div class="gantt-grid gantt-header" style="grid-template-columns:${gridTemplate};">
+          <div class="gantt-header-cell task-col">Task</div>
+          <div class="gantt-header-cell status-col">Status</div>
+          ${months.map(month => html`<div class="gantt-header-cell month-col" style="grid-column: span ${month.span};">${month.label}</div>`)}
+          ${ticks.map((tick) => html`<div class="gantt-header-cell day-col">${tick.label}</div>`)}
+        </div>
+        ${timeline.visibleTasks.map((entry, idx) => {
+          const { x, width } = this.getBarGeometry(entry, timeline.startDate, timeline.totalDays, timelineCols * 40);
+          const barColStart = 3 + getDayOffset(timeline.startDate, entry.startDate);
+          const barColEnd = barColStart + Math.max(1, getDayOffset(entry.startDate, entry.endDate) + 1);
+          return html`
+            <div class="gantt-grid gantt-row" style="grid-template-columns:${gridTemplate};">
+              <div class="gantt-body-cell task-col">${entry.task.text}</div>
+              <div class="gantt-body-cell status-col">${entry.task.section || entry.task.status || ''}</div>
+              ${Array.from({length: timelineCols}).map((_, i) => html`<div class="gantt-body-cell day-col"></div>`)}
+              <div class="gantt-bar" style="grid-column:${barColStart} / ${barColEnd};">
+                <svg width="${width}" height="${barHeight}" style="display:block;overflow:visible;">
+                  <rect x="0" y="0" width="${width}" height="${barHeight}" rx="12" fill="#ECECFE" stroke="#bfc7e6" stroke-width="2" />
+                  <circle
+                    cx="0"
+                    cy="${barHeight/2}"
+                    r="${handleRadius}"
+                    fill="#facc15" stroke="#fff" stroke-width="2"
+                    style="cursor:ew-resize;"
+                    @pointerdown=${(ev) => this._onLeftHandlePointerDown(idx, ev, entry, timeline, timelineCols * 40)}
+                  />
+                  <circle
+                    cx="${width/2}"
+                    cy="${barHeight/2}"
+                    r="${handleRadius}"
+                    fill="#ef4444" stroke="#fff" stroke-width="2"
+                  />
+                  <circle
+                    cx="${width}"
+                    cy="${barHeight/2}"
+                    r="${handleRadius}"
+                    fill="#3b82f6" stroke="#fff" stroke-width="2"
+                    style="cursor:pointer;"
+                    @pointerdown=${(ev) => this._onRightHandlePointerDown(idx, ev, entry, timeline, timelineCols * 40)}
+                  />
+                  <text x="${width/2}" y="${barHeight/2+4}" text-anchor="middle" font-size="13" fill="#333">${entry.task.text}</text>
+                </svg>
               </div>
-              <div class="gantt-body">
-                <div class="gantt-body-fixed">
-                  ${timeline.visibleTasks.map((entry) => html`
-                    <div class="task-cell"><div class="gantt-task-title" title=${entry.task.text}>${entry.task.text}</div></div>
-                    <div class="task-cell"><div class="gantt-task-status" title=${entry.task.section || entry.task.status || ''}>${entry.task.section || entry.task.status || ''}</div></div>
-                  `)}
-                </div>
-                <div class="gantt-body-scroll" style="width:${laneWidthPx}px;">
-                  ${timeline.visibleTasks.map((entry, idx) => {
-                    const { x, width } = this.getBarGeometry(entry, timeline.startDate, timeline.totalDays, laneWidthPx);
-                    const y = (svgHeight - barHeight) / 2;
-                    const dragPx = (this._dragTaskIdx === idx) ? this._dragPx : 0;
-                    const leftHandleX = x + dragPx;
-                    const centerHandleX = x + width/2 + dragPx;
-                    const rightHandleX = x + width + dragPx;
-                    return html`
-                      <div class="lane" style="position:relative;min-height:${svgHeight}px;">
-                        <svg width="${laneWidthPx}" height="${svgHeight}" style="display:block;overflow:visible;">
-                          <!-- Bar and handles -->
-                          <rect x="${leftHandleX}" y="${y}" width="${width}" height="${barHeight}" rx="12" fill="#ECECFE" stroke="#bfc7e6" stroke-width="2" />
-                          <circle
-                            cx="${leftHandleX}"
-                            cy="${y+barHeight/2}"
-                            r="${handleRadius}"
-                            fill="#facc15" stroke="#fff" stroke-width="2"
-                            style="cursor:ew-resize;"
-                            @pointerdown=${(ev) => this._onLeftHandlePointerDown(idx, ev, entry, timeline, laneWidthPx)}
-                          />
-                          <circle
-                            cx="${centerHandleX}"
-                            cy="${y+barHeight/2}"
-                            r="${handleRadius}"
-                            fill="#ef4444" stroke="#fff" stroke-width="2"
-                          />
-                          <circle
-                            cx="${rightHandleX}"
-                            cy="${y+barHeight/2}"
-                            r="${handleRadius}"
-                            fill="#3b82f6" stroke="#fff" stroke-width="2"
-                            style="cursor:pointer;"
-                            @pointerdown=${(ev) => this._onRightHandlePointerDown(idx, ev, entry, timeline, laneWidthPx)}
-                          />
-                          <text x="${centerHandleX}" y="${y+barHeight/2+4}" text-anchor="middle" font-size="13" fill="#333">${entry.task.text}</text>
-                        </svg>
-                      </div>
-                    `;
-                  })}
-                </div>
-              </div>
-            `
-          : html`<div class="empty">No tasks available for the current filters.</div>`}
-      </section>
+            </div>
+          `;
+        })}
+        ${!timeline.visibleTasks.length ? html`<div class="empty">No tasks available for the current filters.</div>` : ''}
+      </div>
     `;
+  }
+
+  firstUpdated() {
+    // Sync scroll between header and body timeline
+    const headerScroll = this.renderRoot.querySelector('.gantt-header-scroll');
+    const bodyScroll = this.renderRoot.querySelector('.gantt-body-scroll');
+    if (headerScroll && bodyScroll) {
+      bodyScroll.addEventListener('scroll', () => {
+        headerScroll.scrollLeft = bodyScroll.scrollLeft;
+      });
+      headerScroll.addEventListener('scroll', () => {
+        bodyScroll.scrollLeft = headerScroll.scrollLeft;
+      });
+    }
   }
 }
 
