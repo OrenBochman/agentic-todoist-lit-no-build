@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "exportedAt": "2026-04-21T22:51:01.554Z",
+  "tasks": [
+    {
+      "id": "6fb7e1d6-7abf-43f5-9e5c-19f9f28a44b7",
+      "text": "task3",
+      "completed": true,
+      "createdAt": "2026-04-25T22:46:46.803Z",
+      "dueDate": "2026-04-26",
+      "project": "toys",
+      "importance": null,
+      "dependsOn": ["f08d50d6-80ff-443f-ad78-0f94c3079be5"],
+      "workloadEstimate": 4,
+      "workloadUncertainty": 1,
+      "tags": [],
+      "inProgress": false,
+      "sectionShortcut": "/done",
+      "section": "done"
+    },
+    {
+      "id": "f08d50d6-80ff-443f-ad78-0f94c3079be5",
+      "text": "task2",
+      "completed": false,
+      "createdAt": "2026-04-23T22:46:40.174Z",
+      "dueDate": "2026-04-24",
+      "project": "toys",
+      "importance": null,
+      "dependsOn": ["2ce6173e-bd1f-4cf1-8100-c85448000b72"],
+      "workloadEstimate": 4,
+      "workloadUncertainty": 1,
+      "tags": [],
+      "inProgress": true,
+      "sectionShortcut": "/in",
+      "section": "in"
+    },
+    {
+      "id": "2ce6173e-bd1f-4cf1-8100-c85448000b72",
+      "text": "task1",
+      "completed": false,
+      "createdAt": "2026-04-21T22:46:32.033Z",
+      "dueDate": "2026-04-22",
+      "project": "toys",    
+      "importance": null,
+      "dependsOn": [],
+      "workloadEstimate": 4,
+      "workloadUncertainty": 1,
+      "tags": [],
+      "inProgress": false,
+      "sectionShortcut": "/up",
+      "section": "up"
+    }
+  ]
+}
