@@ -81,11 +81,10 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 - Bugs
 
 - Project management
-  - [ ] **kanban view** (web component, tests, docs)
-  - [ ] drag-drop-element interface for task reordering and project organization.
-  - [ ] drop-target-element interface for drag-drop-element to enable drag and drop between projects and kanban columns. 
+  - [x] **kanban view** (web component, tests, docs)
+  - [ ] improve the kan ban view to support drag and drop of task card between column.
+        do this by adding  drag-drop-element interface for task and a drop-target-element interface for the kanban column containers.  
 - Storage and Data
-
   - [ ] **Google-Drive-Integration** Support storage to google drive. 
   - [ ] **Filter-Update** Add more filters for date, project, importance
 - Tests and Documentation
