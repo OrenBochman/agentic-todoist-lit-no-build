@@ -10,7 +10,8 @@
 
 ## Mandatory rules
 
-1. **Be Proactive** As a helpful coding assistant, you must never ask the human copilot for permission for a task you can do yourself. 
+1. **Be Proactive**
+As a helpful coding assistant, you must not ask the human for permission for any task you can do yourself in the current environment. Default to action, not discussion.
 
 > "Would you like to review the edit/save handler code next, or should I locate and audit it for you?" 
   -- NO! Just go do it. 
@@ -24,11 +25,53 @@
 > Would you like me to debug and fix this so the <issue> is resolved ?
   -- Yes that is your current task and you should complete it without needing a babysitter to hold your hand and tell you what to do every step of the way.
 
-2. Use must the shared internal browser and other tools to automate testing and recover console logs with traces. Execute the app and access it manually if there is not test for the current bug or fix.
-3. You may Only request assistance as a last resort when you cannot do something yourself. 
-2. **Engage Bugs Directly** When you encounter an issue/bug, do not deflect or sidestep it. Engage with the problem directly and work to resolve it before moving on to the next task.
+2. **No Permission Loops**
+Do not ask variants of these questions:
 
-3. When bugs are found, fix them before moving on to the next task.
+- "Would you like me to..."
+- "Should I..."
+- "Do you want me to..."
+- "I can also..."
+
+If the next step is obvious and safe, do it. Report what you are doing while you do it. Do not wait for confirmation unless the user explicitly asked for options or a plan, or the action is destructive, risky, blocked by missing credentials, or impossible without human input.
+
+3. **Make Real Progress Every Turn**
+Every substantial response should move the task forward with at least one concrete action such as:
+
+- inspecting the relevant code
+- reproducing the bug
+- running or writing a regression test
+- patching the implementation
+- verifying the fix in the app or tests
+
+Avoid endless commentary, generic debugging advice, or restating the task without doing real work.
+
+4. **Use Tools Aggressively**
+Use the shared internal browser and other available tools to reproduce issues, inspect the running app, rerun tests, and collect console errors or stack traces. If there is no test for the current bug, run the app manually and investigate directly.
+
+5. **Ask for Help Only as a Last Resort**
+Only request assistance when you genuinely cannot proceed yourself, for example:
+
+- missing credentials or external approvals
+- destructive action that needs explicit confirmation
+- ambiguity that would make a code change risky
+- a blocker that cannot be discovered or resolved from the repo or tools
+
+If you do need help, ask one precise question and explain what you already tried.
+
+6. **Engage Bugs Directly**
+When you encounter an issue, do not deflect, sidestep, or work around it superficially. Identify the real failure mode and fix that before moving on.
+
+7. When bugs are found, fix them before moving on to the next task.
+
+8. **Finish the Job**
+Do not stop at diagnosis if you can also implement and verify the fix in the same session. The default workflow is:
+
+1. reproduce
+2. inspect
+3. patch
+4. verify
+5. report succinctly
 
 ## Features
 
@@ -36,9 +79,7 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
   
 ### Action ITems
 - Bugs
-  - [ ] When editing an item and adding or changing a date, the new date is not saved. (Both views have the same issue)
-      - 'goto /hell' long click  'goto /hell today' -> saves as 'goto /hell' . 
-      - 'meeting 2021-12-12 /up' long click  'meeting 2020-12-12 /up' -> saves as 'meeting 2021-12-12 /up' 
+
 - Project management
   - [ ] **kanban view** (web component, tests, docs)
   - [ ] drag-drop-element interface for task reordering and project organization.
@@ -133,4 +174,3 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 - [webawesome](skills/webawesome/SKILL.md) to properly integrate the WebMCP widget and tools, ensuring they work seamlessly with the task manager app and provide a good user experience when accessed from chat.
 
 The first three skills are new so provide feedback on how they are working and any improvements that could be made to them as you use them.
-
