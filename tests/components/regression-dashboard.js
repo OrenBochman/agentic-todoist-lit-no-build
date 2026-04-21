@@ -1,197 +1,33 @@
 import { LitElement, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import './regression-failure-list.js';
+import './regression-metrics.js';
+import './regression-summary.js';
+import './regression-toolbar.js';
 
-class RegressionSummary extends LitElement {
-  static properties = {
-    body: { state: true },
-    durationLabel: { state: true },
-    failuresLabel: { state: true },
-    heading: { state: true },
-    passRate: { state: true },
-    status: { state: true },
-    totalLabel: { state: true },
-  };
-
-  createRenderRoot() {
-    return this;
-  }
-
-  constructor() {
-    super();
-    this.body = 'Collecting results from the browser suite.';
-    this.durationLabel = '0 ms';
-    this.failuresLabel = '0 failures';
-    this.heading = 'Running regression suite...';
-    this.passRate = 0;
-    this.status = 'running';
-    this.totalLabel = '0 tests';
-  }
-
-  setStatus(status) {
-    this.status = status;
-  }
-
-  setValues({ passRate, totalLabel, failuresLabel, durationLabel, heading, body }) {
-    this.passRate = passRate;
-    this.totalLabel = totalLabel;
-    this.failuresLabel = failuresLabel;
-    this.durationLabel = durationLabel;
-    this.heading = heading;
-    this.body = body;
-  }
-
-  render() {
-    return html`
-      <div class="summary-layout">
-        <div class="summary-ring" id="summary-ring" style=${`--progress: ${(this.passRate / 100) * 360}deg;`}>
-          <div class="summary-ring-value" id="summary-percent">${this.passRate}%</div>
-        </div>
-        <div class="summary-copy">
-          <h2 class="summary-heading" id="summary-heading">${this.heading}</h2>
-          <div class="summary-body" id="summary-body">${this.body}</div>
-          <div class="summary-meta">
-            <span class="summary-chip" id="summary-tests-chip">${this.totalLabel}</span>
-            <span class="summary-chip fail" id="summary-failures-chip">${this.failuresLabel}</span>
-            <span class="summary-chip" id="summary-duration-chip">${this.durationLabel}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  updated() {
-    this.dataset.status = this.status;
-  }
-}
-
-class RegressionMetrics extends LitElement {
-  static properties = {
-    duration: { state: true },
-    failures: { state: true },
-    filtered: { state: true },
-    slowest: { state: true },
-    topFailure: { state: true },
-    total: { state: true },
-  };
-
-  createRenderRoot() {
-    return this;
-  }
-
-  constructor() {
-    super();
-    this.duration = '0 ms';
-    this.failures = 0;
-    this.filtered = 'No results yet';
-    this.slowest = 'No timing data yet';
-    this.topFailure = 'No failures recorded';
-    this.total = 0;
-  }
-
-  setValues({ total, filtered, failures, duration, slowest, topFailure }) {
-    this.total = total;
-    this.filtered = filtered;
-    this.failures = failures;
-    this.duration = duration;
-    this.slowest = slowest;
-    this.topFailure = topFailure;
-  }
-
-  render() {
-    return html`
-      <article class="metric-card">
-        <div class="metric-label">Registered</div>
-        <div class="metric-value" id="metric-total">${this.total}</div>
-        <div class="metric-subcopy" id="metric-filtered">${this.filtered}</div>
-      </article>
-      <article class="metric-card">
-        <div class="metric-label">Failing</div>
-        <div class="metric-value fail" id="metric-failures">${this.failures}</div>
-        <div class="metric-subcopy" id="metric-top-failure">${this.topFailure}</div>
-      </article>
-      <article class="metric-card">
-        <div class="metric-label">Duration</div>
-        <div class="metric-value duration" id="metric-duration">${this.duration}</div>
-        <div class="metric-subcopy" id="metric-slowest">${this.slowest}</div>
-      </article>
-    `;
-  }
-}
-
-class RegressionToolbar extends LitElement {
+export class RegressionDashboard extends LitElement {
   static properties = {
     activeFilter: { state: true },
+    executedCount: { state: true },
   };
-
-  createRenderRoot() {
-    return this;
-  }
 
   constructor() {
     super();
     this.activeFilter = 'all';
+    this.executedCount = 0;
   }
 
-  get filterButtons() {
-    return [...this.querySelectorAll('.filter-button')];
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('click', this.handleToolbarClick);
+    this.addEventListener('input', this.handleToolbarInput);
   }
 
-  get searchInput() {
-    return this.querySelector('#test-search');
+  disconnectedCallback() {
+    this.removeEventListener('click', this.handleToolbarClick);
+    this.removeEventListener('input', this.handleToolbarInput);
+    super.disconnectedCallback();
   }
 
-  setActiveFilter(filter) {
-    this.activeFilter = filter;
-  }
-
-  render() {
-    return html`
-      <div class="toolbar-group">
-        <button class="filter-button" type="button" data-filter="all" data-active=${String(this.activeFilter === 'all')}>All</button>
-        <button class="filter-button" type="button" data-filter="fail" data-active=${String(this.activeFilter === 'fail')}>Failures</button>
-        <button class="filter-button" type="button" data-filter="pass" data-active=${String(this.activeFilter === 'pass')}>Passing</button>
-      </div>
-      <div class="toolbar-group">
-        <input id="test-search" type="search" placeholder="Filter tests by title or suite" aria-label="Filter tests by title or suite" />
-      </div>
-    `;
-  }
-}
-
-class RegressionFailureList extends LitElement {
-  static properties = {
-    visible: { state: true },
-  };
-
-  createRenderRoot() {
-    return this;
-  }
-
-  constructor() {
-    super();
-    this.visible = false;
-  }
-
-  get listElement() {
-    return this.querySelector('#failure-list');
-  }
-
-  setVisible(isVisible) {
-    this.visible = isVisible;
-  }
-
-  render() {
-    return html`
-      <h2 class="failure-title">Failure List</h2>
-      <ol id="failure-list" class="failure-list"></ol>
-    `;
-  }
-
-  updated() {
-    this.dataset.visible = String(this.visible);
-  }
-}
-
-export class RegressionDashboard extends LitElement {
   get failureList() {
     return this.querySelector('regression-failure-list')?.listElement ?? null;
   }
@@ -228,6 +64,104 @@ export class RegressionDashboard extends LitElement {
     return this;
   }
 
+  getEntryLabel(entry) {
+    return entry.fullTitle || entry.title || 'Unnamed test';
+  }
+
+  handleToolbarClick = (event) => {
+    const button = event.target.closest('.filter-button');
+    if (!button || !this.contains(button)) {
+      return;
+    }
+
+    this.setToolbarFilter(button.dataset.filter || 'all');
+    this.applyFilters();
+  };
+
+  handleToolbarInput = (event) => {
+    if (event.target?.id !== 'test-search' || !this.contains(event.target)) {
+      return;
+    }
+
+    this.applyFilters();
+  };
+
+  renderFailureEntries(entries) {
+    const failureList = this.failureList;
+    if (!failureList) {
+      return;
+    }
+
+    failureList.replaceChildren();
+
+    if (!entries.length) {
+      this.setFailureListVisible(false);
+      return;
+    }
+
+    const testRowsByIndex = new Map();
+    this.querySelectorAll('#mocha [data-test-index]').forEach((row) => {
+      const index = Number.parseInt(row.dataset.testIndex || '', 10);
+      if (Number.isInteger(index)) {
+        testRowsByIndex.set(index, row);
+      }
+    });
+
+    entries.forEach((entry, index) => {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      const row = testRowsByIndex.get(entry.index) ?? null;
+
+      link.href = row ? `#${row.id}` : '#mocha';
+      link.textContent = `${index + 1}. ${this.getEntryLabel(entry)}`;
+      link.addEventListener('click', () => {
+        this.querySelectorAll('#mocha .test.highlighted').forEach((node) => {
+          node.classList.remove('highlighted');
+        });
+        if (row) {
+          row.classList.add('highlighted');
+        }
+      });
+
+      item.append(link);
+      failureList.append(item);
+    });
+
+    this.setFailureListVisible(true);
+  }
+
+  applyFilters() {
+    const searchTerm = this.searchInput?.value.trim().toLowerCase() || '';
+    const testRows = [...this.querySelectorAll('#mocha li.test')];
+    let visibleCount = 0;
+
+    testRows.forEach((row) => {
+      const isPass = row.classList.contains('pass');
+      const isFail = row.classList.contains('fail');
+      const text = row.textContent.toLowerCase();
+      const matchesFilter = this.activeFilter === 'all'
+        || (this.activeFilter === 'pass' && isPass)
+        || (this.activeFilter === 'fail' && isFail);
+      const matchesSearch = !searchTerm || text.includes(searchTerm);
+      const visible = matchesFilter && matchesSearch;
+
+      row.classList.toggle('is-hidden', !visible);
+      if (visible) {
+        visibleCount += 1;
+      }
+    });
+
+    const suiteRows = [...this.querySelectorAll('#mocha-report li.suite')].reverse();
+    suiteRows.forEach((suiteRow) => {
+      const visibleChildTests = suiteRow.querySelectorAll(':scope > ul > li.test:not(.is-hidden)');
+      const visibleChildSuites = suiteRow.querySelectorAll(':scope > ul > li.suite:not(.is-hidden)');
+      const hasVisibleContent = visibleChildTests.length > 0 || visibleChildSuites.length > 0;
+      suiteRow.classList.toggle('is-hidden', !hasVisibleContent);
+    });
+
+    this.setFilteredMetrics(`${visibleCount} visible • ${this.executedCount} executed`);
+  }
+
   setFailureListVisible(isVisible) {
     this.failurePanel?.setVisible(isVisible);
   }
@@ -252,6 +186,10 @@ export class RegressionDashboard extends LitElement {
     this.metrics?.setValues(values);
   }
 
+  setExecutedCount(count) {
+    this.executedCount = count;
+  }
+
   setStatus(status) {
     this.summary?.setStatus(status);
   }
@@ -261,6 +199,7 @@ export class RegressionDashboard extends LitElement {
   }
 
   setToolbarFilter(filter) {
+    this.activeFilter = filter;
     this.toolbar?.setActiveFilter(filter);
   }
 
@@ -293,8 +232,4 @@ export class RegressionDashboard extends LitElement {
   }
 }
 
-customElements.define('regression-summary', RegressionSummary);
-customElements.define('regression-metrics', RegressionMetrics);
-customElements.define('regression-toolbar', RegressionToolbar);
-customElements.define('regression-failure-list', RegressionFailureList);
 customElements.define('regression-dashboard', RegressionDashboard);

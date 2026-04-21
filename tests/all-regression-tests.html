@@ -24,7 +24,6 @@
         failedTests: [],
         registeredTests: 0,
       };
-      let activeFilter = 'all';
 
       const countRegisteredTests = (suite) => {
         if (!suite) {
@@ -111,84 +110,12 @@
       };
 
       const updateFailureList = () => {
-        const failureList = dashboard.failureList;
-        if (!failureList) {
-          return;
-        }
-
-        failureList.replaceChildren();
-
-        if (!runMetrics.failedTests.length) {
-          dashboard.setFailureListVisible(false);
-          return;
-        }
-
-        runMetrics.failedTests.forEach((entry, index) => {
-          const item = document.createElement('li');
-          const link = document.createElement('a');
-          const row = document.querySelector(`#test-row-${entry.index}`);
-
-          link.href = row ? `#${row.id}` : '#mocha';
-          link.textContent = `${index + 1}. ${testLabel(entry)}`;
-          link.addEventListener('click', () => {
-            document.querySelectorAll('#mocha .test.highlighted').forEach((node) => {
-              node.classList.remove('highlighted');
-            });
-            if (row) {
-              row.classList.add('highlighted');
-            }
-          });
-
-          item.append(link);
-          failureList.append(item);
-        });
-
-        dashboard.setFailureListVisible(true);
+        dashboard.renderFailureEntries(runMetrics.failedTests);
       };
 
       const applyDashboardFilters = () => {
-        const searchTerm = dashboard.searchInput?.value.trim().toLowerCase() || '';
-        const testRows = [...document.querySelectorAll('#mocha li.test')];
-        let visibleCount = 0;
-
-        testRows.forEach((row) => {
-          const isPass = row.classList.contains('pass');
-          const isFail = row.classList.contains('fail');
-          const text = row.textContent.toLowerCase();
-          const matchesFilter = activeFilter === 'all'
-            || (activeFilter === 'pass' && isPass)
-            || (activeFilter === 'fail' && isFail);
-          const matchesSearch = !searchTerm || text.includes(searchTerm);
-          const visible = matchesFilter && matchesSearch;
-
-          row.classList.toggle('is-hidden', !visible);
-          if (visible) {
-            visibleCount += 1;
-          }
-        });
-
-        const suiteRows = [...document.querySelectorAll('#mocha-report li.suite')].reverse();
-        suiteRows.forEach((suiteRow) => {
-          const visibleChildTests = suiteRow.querySelectorAll(':scope > ul > li.test:not(.is-hidden)');
-          const visibleChildSuites = suiteRow.querySelectorAll(':scope > ul > li.suite:not(.is-hidden)');
-          const hasVisibleContent = visibleChildTests.length > 0 || visibleChildSuites.length > 0;
-          suiteRow.classList.toggle('is-hidden', !hasVisibleContent);
-        });
-
-        dashboard.setFilteredMetrics(`${visibleCount} visible • ${runMetrics.allTests.length} executed`);
+        dashboard.applyFilters();
       };
-
-      dashboard.filterButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          activeFilter = button.dataset.filter;
-          dashboard.setToolbarFilter(activeFilter);
-          applyDashboardFilters();
-        });
-      });
-
-      dashboard.searchInput?.addEventListener('input', () => {
-        applyDashboardFilters();
-      });
 
       // Add global error logging for test failures
       if (window.mocha) {
@@ -223,6 +150,7 @@
                 duration: test.duration || 0,
                 state: test.state || 'unknown',
               });
+              dashboard.setExecutedCount(testIndex + 1);
               testIndex += 1;
             });
             return runner;
@@ -235,6 +163,7 @@
       const failures = await runBrowserTests();
 
       dashboard.setStatus(failures === 0 ? 'passed' : 'failed');
+      dashboard.setExecutedCount(runMetrics.allTests.length);
       dashboard.hideMount();
 
       assignTestRowIds();
