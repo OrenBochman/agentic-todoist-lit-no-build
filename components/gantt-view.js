@@ -204,6 +204,9 @@ class GanttView extends LitElement {
       width: 80px;
       min-width: 80px;
       max-width: 80px;
+      border-right: 2px solid var(--wa-border, #bfc7e6);
+      position: relative;
+      z-index: 3;
     }
     .gantt-header-cell.month-col {
       font-weight: 600;
@@ -359,15 +362,20 @@ class GanttView extends LitElement {
 
   render() {
     const timeline = this.getTimelineModel();
-    const ticks = this.buildTimelineTicks(timeline.startDate, timeline.totalDays);
-    const months = this.buildMonthTicks(timeline.startDate, timeline.totalDays);
-    const laneWidthPx = Math.max(700, timeline.totalDays * 40); // 40px per day, min 700px
-    const barHeight = 20;
-    const handleRadius = 7;
-    const svgHeight = 48;
-    const timelineCols = timeline.totalDays;
-    // CSS grid template: 140px (Task) 80px (Status) then 40px per day
-    const gridTemplate = `140px 80px repeat(${timelineCols}, 40px)`;
+    const days = Array.from({ length: timeline.totalDays }, (_, i) => new Date(timeline.startDate.getTime() + i * DAY_MS));
+    const months = [];
+    let monthStart = 0;
+    for (let i = 1; i <= days.length; i++) {
+      if (i === days.length || days[i].getMonth() !== days[monthStart].getMonth()) {
+        months.push({
+          label: days[monthStart].toLocaleString(undefined, { month: 'short', year: 'numeric' }),
+          start: monthStart + 3, // grid col start (offset for Task/Status)
+          end: i + 3 // grid col end
+        });
+        monthStart = i;
+      }
+    }
+    const gridTemplate = `140px 80px repeat(${days.length}, 1fr)`;
 
     return html`
       <div class="toolbar">
@@ -383,44 +391,21 @@ class GanttView extends LitElement {
         <div class="gantt-grid gantt-header" style="grid-template-columns:${gridTemplate};">
           <div class="gantt-header-cell task-col">Task</div>
           <div class="gantt-header-cell status-col">Status</div>
-          ${months.map(month => html`<div class="gantt-header-cell month-col" style="grid-column: span ${month.span};">${month.label}</div>`)}
-          ${ticks.map((tick) => html`<div class="gantt-header-cell day-col">${tick.label}</div>`)}
+          ${months.map(month => html`<div class="gantt-header-cell month-col" style="grid-column: ${month.start + 2} / ${month.end + 2};">${month.label}</div>`)}
+          ${days.map(() => html`<div class="gantt-header-cell day-col"></div>`)}
         </div>
         ${timeline.visibleTasks.map((entry, idx) => {
-          const { x, width } = this.getBarGeometry(entry, timeline.startDate, timeline.totalDays, timelineCols * 40);
-          const barColStart = 3 + getDayOffset(timeline.startDate, entry.startDate);
-          const barColEnd = barColStart + Math.max(1, getDayOffset(entry.startDate, entry.endDate) + 1);
+          const startCol = 2 + getDayOffset(timeline.startDate, entry.startDate);
+          const endCol = 2 + getDayOffset(timeline.startDate, entry.endDate) + 1;
           return html`
             <div class="gantt-grid gantt-row" style="grid-template-columns:${gridTemplate};">
               <div class="gantt-body-cell task-col">${entry.task.text}</div>
               <div class="gantt-body-cell status-col">${entry.task.section || entry.task.status || ''}</div>
-              ${Array.from({length: timelineCols}).map((_, i) => html`<div class="gantt-body-cell day-col"></div>`)}
-              <div class="gantt-bar" style="grid-column:${barColStart} / ${barColEnd};">
-                <svg width="${width}" height="${barHeight}" style="display:block;overflow:visible;">
-                  <rect x="0" y="0" width="${width}" height="${barHeight}" rx="12" fill="#ECECFE" stroke="#bfc7e6" stroke-width="2" />
-                  <circle
-                    cx="0"
-                    cy="${barHeight/2}"
-                    r="${handleRadius}"
-                    fill="#facc15" stroke="#fff" stroke-width="2"
-                    style="cursor:ew-resize;"
-                    @pointerdown=${(ev) => this._onLeftHandlePointerDown(idx, ev, entry, timeline, timelineCols * 40)}
-                  />
-                  <circle
-                    cx="${width/2}"
-                    cy="${barHeight/2}"
-                    r="${handleRadius}"
-                    fill="#ef4444" stroke="#fff" stroke-width="2"
-                  />
-                  <circle
-                    cx="${width}"
-                    cy="${barHeight/2}"
-                    r="${handleRadius}"
-                    fill="#3b82f6" stroke="#fff" stroke-width="2"
-                    style="cursor:pointer;"
-                    @pointerdown=${(ev) => this._onRightHandlePointerDown(idx, ev, entry, timeline, timelineCols * 40)}
-                  />
-                  <text x="${width/2}" y="${barHeight/2+4}" text-anchor="middle" font-size="13" fill="#333">${entry.task.text}</text>
+              ${days.map(() => html`<div class="gantt-body-cell day-col"></div>`)}
+              <div class="gantt-bar" style="grid-column:${startCol} / ${endCol};">
+                <svg width="100%" height="20" style="display:block;overflow:visible;">
+                  <rect x="0" y="0" width="100%" height="20" rx="12" fill="#ECECFE" stroke="#bfc7e6" stroke-width="2" />
+                  <text x="50%" y="15" text-anchor="middle" font-size="13" fill="#333">${entry.task.text}</text>
                 </svg>
               </div>
             </div>
