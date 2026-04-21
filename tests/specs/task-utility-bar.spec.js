@@ -1,8 +1,12 @@
-import { expect, waitForRender } from '../helpers/browser-test-harness.js';
+import { expect } from '../helpers/browser-test-harness.js';
 import { clearTaskUtilityBarFixture, mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
 
 const getThemeButton = (fixture) => fixture.bar.shadowRoot.querySelector('wa-button[theme-icon]');
 const getThemeIcon = (fixture) => getThemeButton(fixture)?.querySelector('wa-icon');
+const clickThemeButton = async (fixture) => {
+  getThemeButton(fixture)?.click();
+  await fixture.bar.updateComplete;
+};
 
 describe('task-utility-bar regression', () => {
   let fixture;
@@ -31,12 +35,11 @@ describe('task-utility-bar regression', () => {
     fixture.bar.addEventListener('theme-toggle', () => {
       fixture.bar.theme = fixture.bar.theme === 'dark' ? 'light' : 'dark';
     });
-    const button = getThemeButton(fixture);
-    button.click();
-    await waitForRender();
+
+    await clickThemeButton(fixture);
     expect(fixture.bar.theme, 'Theme should be dark after first toggle.').to.equal('dark');
-    button.click();
-    await waitForRender();
+
+    await clickThemeButton(fixture);
     expect(fixture.bar.theme, 'Theme should be light after second toggle.').to.equal('light');
   });
 
@@ -44,12 +47,11 @@ describe('task-utility-bar regression', () => {
     fixture.bar.addEventListener('theme-toggle', () => {
       fixture.bar.theme = fixture.bar.theme === 'dark' ? 'light' : 'dark';
     });
-    const button = getThemeButton(fixture);
-    button.click();
-    await waitForRender();
+
+    await clickThemeButton(fixture);
     expect(getThemeIcon(fixture)?.getAttribute('name'), 'Dark mode should switch the icon to sun.').to.equal('sun');
-    button.click();
-    await waitForRender();
+
+    await clickThemeButton(fixture);
     expect(getThemeIcon(fixture)?.getAttribute('name'), 'Light mode should restore the moon icon.').to.equal('moon');
   });
 });

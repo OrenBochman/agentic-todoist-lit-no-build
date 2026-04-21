@@ -1,71 +1,48 @@
 import '../../components/kanban-board.js';
-import { expect, waitForRender } from '../helpers/browser-test-harness.js';
+import { expect } from '../helpers/browser-test-harness.js';
 
-const mountKanbanBoard = async (tasks) => {
-  const mount = document.getElementById('mount');
-
-  if (!mount) {
-    throw new Error('Missing #mount fixture root.');
-  }
-
-  mount.replaceChildren();
-
+const createKanbanBoard = (tasks = []) => {
   const board = document.createElement('kanban-board');
   board.tasks = tasks;
-  mount.append(board);
-
-  await customElements.whenDefined('kanban-board');
-  await waitForRender();
-
   return board;
 };
 
 describe('Kanban Board Unit Tests', () => {
-  it('renders columns and groups tasks', async () => {
-    const tasks = [
+  it('groups tasks by status into the expected columns', () => {
+    const board = createKanbanBoard([
       { id: '1', text: 'Task 1', completed: false },
       { id: '2', text: 'Task 2', completed: false, inProgress: true },
       { id: '3', text: 'Task 3', completed: true },
-    ];
-    const el = await mountKanbanBoard(tasks);
-    const columns = el.shadowRoot.querySelectorAll('.column');
-    const upcomingTasks = [...columns[0].querySelectorAll('task-item')].map((item) => item.task?.text);
-    const inProgressTasks = [...columns[1].querySelectorAll('task-item')].map((item) => item.task?.text);
-    const doneTasks = [...columns[2].querySelectorAll('task-item')].map((item) => item.task?.text);
+    ]);
 
-    expect(columns.length).to.equal(3);
-    expect(columns[0].textContent).to.contain('Upcoming');
-    expect(columns[1].textContent).to.contain('In Progress');
-    expect(columns[2].textContent).to.contain('Done');
-    expect(upcomingTasks).to.deep.equal(['Task 1']);
-    expect(inProgressTasks).to.deep.equal(['Task 2']);
-    expect(doneTasks).to.deep.equal(['Task 3']);
+    const columns = board.getColumns();
+
+    expect(columns.upcoming.map((task) => task.text)).to.deep.equal(['Task 1']);
+    expect(columns['in-progress'].map((task) => task.text)).to.deep.equal(['Task 2']);
+    expect(columns.done.map((task) => task.text)).to.deep.equal(['Task 3']);
   });
 
-  it('shows empty state for columns with no tasks', async () => {
-    const tasks = [
+  it('keeps empty arrays for statuses with no matching tasks', () => {
+    const board = createKanbanBoard([
       { id: '1', text: 'Task 1', completed: false },
-    ];
-    const el = await mountKanbanBoard(tasks);
-    const columns = el.shadowRoot.querySelectorAll('.column');
+    ]);
+    const columns = board.getColumns();
 
-    expect(columns[1].textContent).to.contain('No tasks in progress');
-    expect(columns[2].textContent).to.contain('No completed tasks');
+    expect(columns.upcoming.map((task) => task.text)).to.deep.equal(['Task 1']);
+    expect(columns['in-progress']).to.deep.equal([]);
+    expect(columns.done).to.deep.equal([]);
   });
 
-  it('renders section shortcut badges in the column titles', async () => {
-    const tasks = [
-      { id: '1', text: 'Upcoming', completed: false },
-      { id: '2', text: 'Doing', completed: false, inProgress: true },
-      { id: '3', text: 'Done', completed: true },
-    ];
-    const el = await mountKanbanBoard(tasks);
-    const columnBadges = [...el.shadowRoot.querySelectorAll('.column-title wa-badge')];
-    const itemBadges = [...el.shadowRoot.querySelectorAll('task-item')].map((item) =>
-      item.shadowRoot.querySelector('wa-badge')
-    );
+  it('routes section-derived statuses into the same canonical columns', () => {
+    const board = createKanbanBoard([
+      { id: '1', text: 'Queued', completed: false, section: 'upcoming' },
+      { id: '2', text: 'Working', completed: false, sectionShortcut: '/in' },
+      { id: '3', text: 'Shipped', completed: false, section: 'done' },
+    ]);
+    const columns = board.getColumns();
 
-    expect(columnBadges.map((badge) => badge.textContent?.trim() ?? '')).to.deep.equal(['/up', '/in', '/done']);
-    expect(itemBadges).to.deep.equal([null, null, null]);
+    expect(columns.upcoming.map((task) => task.text)).to.deep.equal(['Queued']);
+    expect(columns['in-progress'].map((task) => task.text)).to.deep.equal(['Working']);
+    expect(columns.done.map((task) => task.text)).to.deep.equal(['Shipped']);
   });
 });

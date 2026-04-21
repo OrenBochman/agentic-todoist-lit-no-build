@@ -18,6 +18,7 @@ export async function mountTaskUtilityBar(opts = {}) {
   const bar = document.createElement('task-utility-bar');
   if (opts.theme) bar.theme = opts.theme;
   mount.appendChild(bar);
+  await customElements.whenDefined('task-utility-bar');
   await bar.updateComplete;
   return { mount, bar };
 }
