@@ -8,93 +8,23 @@
     <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.5.0/styles/themes/default.css" />
     <link rel="stylesheet" href="./all-regression-tests.css" />
     <script type="module" src="https://ka-f.webawesome.com/webawesome@3.5.0/webawesome.loader.js"></script>
+    <script type="module" src="./components/regression-dashboard.js"></script>
   </head>
   <body>
-    <main>
-      <section class="card">
-        <h1>Task Manager Regression Dashboard</h1>
-        <p>
-          This page runs the full browser regression suite in one Mocha session so you can verify
-          composer, app, hero, and transfer behavior from a single dashboard.
-        </p>
-
-        <div id="summary" data-status="running" aria-live="polite">
-          <div class="summary-layout">
-            <div class="summary-ring" id="summary-ring">
-              <div class="summary-ring-value" id="summary-percent">0%</div>
-            </div>
-            <div class="summary-copy">
-              <h2 class="summary-heading" id="summary-heading">Running regression suite...</h2>
-              <div class="summary-body" id="summary-body">Collecting results from the browser suite.</div>
-              <div class="summary-meta">
-                <span class="summary-chip" id="summary-tests-chip">0 tests</span>
-                <span class="summary-chip fail" id="summary-failures-chip">0 failures</span>
-                <span class="summary-chip" id="summary-duration-chip">0 ms</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="dashboard-grid" aria-label="Regression metrics">
-          <article class="metric-card">
-            <div class="metric-label">Registered</div>
-            <div class="metric-value" id="metric-total">0</div>
-            <div class="metric-subcopy" id="metric-filtered">No results yet</div>
-          </article>
-          <article class="metric-card">
-            <div class="metric-label">Failing</div>
-            <div class="metric-value fail" id="metric-failures">0</div>
-            <div class="metric-subcopy" id="metric-top-failure">No failures recorded</div>
-          </article>
-          <article class="metric-card">
-            <div class="metric-label">Duration</div>
-            <div class="metric-value duration" id="metric-duration">0 ms</div>
-            <div class="metric-subcopy" id="metric-slowest">No timing data yet</div>
-          </article>
-        </div>
-
-        <div class="dashboard-toolbar" aria-label="Dashboard controls">
-          <div class="toolbar-group">
-            <button class="filter-button" type="button" data-filter="all" data-active="true">All</button>
-            <button class="filter-button" type="button" data-filter="fail" data-active="false">Failures</button>
-            <button class="filter-button" type="button" data-filter="pass">Passing</button>
-          </div>
-          <div class="toolbar-group">
-            <input id="test-search" type="search" placeholder="Filter tests by title or suite" aria-label="Filter tests by title or suite" />
-          </div>
-        </div>
-
-        <section id="failure-panel" class="failure-panel" aria-live="polite" data-visible="false">
-          <h2 class="failure-title">Failure List</h2>
-          <ol id="failure-list" class="failure-list"></ol>
-        </section>
-
-        <div id="mocha"></div>
-        <div id="mount"></div>
-      </section>
-    </main>
+    <regression-dashboard></regression-dashboard>
 
     <script src="https://unpkg.com/mocha@10.7.3/mocha.js"></script>
     <script src="https://unpkg.com/chai@4.5.0/chai.js"></script>
     <script type="module">
       import { runBrowserTests } from './helpers/browser-test-harness.js';
-      const summary = document.getElementById('summary');
-      const summaryRing = document.getElementById('summary-ring');
-      const summaryPercent = document.getElementById('summary-percent');
-      const summaryHeading = document.getElementById('summary-heading');
-      const summaryBody = document.getElementById('summary-body');
-      const summaryTestsChip = document.getElementById('summary-tests-chip');
-      const summaryFailuresChip = document.getElementById('summary-failures-chip');
-      const summaryDurationChip = document.getElementById('summary-duration-chip');
-      const metricTotal = document.getElementById('metric-total');
-      const metricFiltered = document.getElementById('metric-filtered');
-      const metricFailures = document.getElementById('metric-failures');
-      const metricDuration = document.getElementById('metric-duration');
-      const metricSlowest = document.getElementById('metric-slowest');
-      const metricTopFailure = document.getElementById('metric-top-failure');
-      const failurePanel = document.getElementById('failure-panel');
-      const failureList = document.getElementById('failure-list');
-      const searchInput = document.getElementById('test-search');
-      const filterButtons = [...document.querySelectorAll('.filter-button')];
+      const dashboard = document.querySelector('regression-dashboard');
+      const summary = dashboard.querySelector('regression-summary');
+      const metrics = dashboard.querySelector('regression-metrics');
+      const toolbar = dashboard.querySelector('regression-toolbar');
+      const failurePanel = dashboard.querySelector('regression-failure-list');
+      const failureList = failurePanel.listElement;
+      const searchInput = toolbar.searchInput;
+      const filterButtons = toolbar.filterButtons;
       const runMetrics = {
         allTests: [],
         passedTests: [],
@@ -140,43 +70,58 @@
         const duration = runMetrics.allTests.reduce((sum, test) => sum + (test.duration || 0), 0);
         const passRate = total ? Math.round((passes / total) * 100) : 0;
 
-        metricTotal.textContent = String(total);
-        metricFailures.textContent = String(runMetrics.failedTests.length);
-        metricDuration.textContent = formatDuration(duration);
-
-        summaryPercent.textContent = `${passRate}%`;
-        summaryRing.style.setProperty('--progress', `${(passRate / 100) * 360}deg`);
-        summaryTestsChip.textContent = `${total} registered`;
-        summaryFailuresChip.textContent = `${failures} ${failures === 1 ? 'failure' : 'failures'}`;
-        summaryDurationChip.textContent = formatDuration(duration);
-
+        const durationLabel = formatDuration(duration);
         if (!total) {
-          summaryHeading.textContent = 'Running regression suite...';
-          summaryBody.textContent = 'Collecting results from the browser suite.';
+          summary.setValues({
+            passRate,
+            totalLabel: `${total} registered`,
+            failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
+            durationLabel,
+            heading: 'Running regression suite...',
+            body: 'Collecting results from the browser suite.',
+          });
         } else if (!failures) {
-          summaryHeading.textContent = 'Regression suite passed';
-          summaryBody.textContent = 'No failures detected. The dashboard is focused on failure triage, so the test list can stay filtered unless you need to inspect passes.';
+          summary.setValues({
+            passRate,
+            totalLabel: `${total} registered`,
+            failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
+            durationLabel,
+            heading: 'Regression suite passed',
+            body: 'No failures detected. The dashboard is focused on failure triage, so the test list can stay filtered unless you need to inspect passes.',
+          });
         } else {
-          summaryHeading.textContent = `${failures} ${failures === 1 ? 'failure' : 'failures'} need attention`;
-          summaryBody.textContent = 'The list below is filtered to failing tests by default so the useful information stays on screen.';
+          summary.setValues({
+            passRate,
+            totalLabel: `${total} registered`,
+            failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
+            durationLabel,
+            heading: `${failures} ${failures === 1 ? 'failure' : 'failures'} need attention`,
+            body: 'The list below is filtered to failing tests by default so the useful information stays on screen.',
+          });
         }
 
         const slowest = [...runMetrics.allTests]
           .sort((a, b) => (b.duration || 0) - (a.duration || 0))[0];
-        metricSlowest.textContent = slowest
-          ? `${testLabel(slowest)} • ${formatDuration(slowest.duration || 0)}`
-          : 'No timing data yet';
 
-        metricTopFailure.textContent = runMetrics.failedTests.length
-          ? testLabel(runMetrics.failedTests[0])
-          : 'No failures recorded';
+        metrics.setValues({
+          total,
+          filtered: `${document.querySelectorAll('#mocha li.test:not(.is-hidden)').length} visible • ${executed} executed`,
+          failures,
+          duration: durationLabel,
+          slowest: slowest
+            ? `${testLabel(slowest)} • ${formatDuration(slowest.duration || 0)}`
+            : 'No timing data yet',
+          topFailure: runMetrics.failedTests.length
+            ? testLabel(runMetrics.failedTests[0])
+            : 'No failures recorded',
+        });
       };
 
       const updateFailureList = () => {
         failureList.replaceChildren();
 
         if (!runMetrics.failedTests.length) {
-          failurePanel.dataset.visible = 'false';
+          failurePanel.setVisible(false);
           return;
         }
 
@@ -200,7 +145,7 @@
           failureList.append(item);
         });
 
-        failurePanel.dataset.visible = 'true';
+        failurePanel.setVisible(true);
       };
 
       const applyDashboardFilters = () => {
@@ -232,15 +177,13 @@
           suiteRow.classList.toggle('is-hidden', !hasVisibleContent);
         });
 
-        metricFiltered.textContent = `${visibleCount} visible • ${runMetrics.allTests.length} executed`;
+        metrics.querySelector('#metric-filtered').textContent = `${visibleCount} visible • ${runMetrics.allTests.length} executed`;
       };
 
       filterButtons.forEach((button) => {
         button.addEventListener('click', () => {
           activeFilter = button.dataset.filter;
-          filterButtons.forEach((candidate) => {
-            candidate.dataset.active = String(candidate === button);
-          });
+          toolbar.setActiveFilter(activeFilter);
           applyDashboardFilters();
         });
       });
@@ -293,8 +236,8 @@
       runMetrics.registeredTests = countRegisteredTests(window.mocha?.suite);
       const failures = await runBrowserTests();
 
-      summary.dataset.status = failures === 0 ? 'passed' : 'failed';
-      document.getElementById('mount').dataset.hidden = 'true';
+      summary.setStatus(failures === 0 ? 'passed' : 'failed');
+      dashboard.querySelector('#mount').dataset.hidden = 'true';
 
       assignTestRowIds();
       updateMetrics();
