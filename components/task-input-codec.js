@@ -66,8 +66,7 @@ export const parseTaskInput = (input) => {
   const parsed = TodoistParserElement.parseTask(String(input || ''));
   const normalizedSection = normalizeSection(parsed.section);
   const dueToken = extractDueToken(input, parsed.due);
-
-  return {
+  const result = {
     text: parsed.title || String(input || '').trim(),
     dueDate: dueToken,
     project: parsed.project ?? null,
@@ -81,6 +80,8 @@ export const parseTaskInput = (input) => {
     sectionShortcut: normalizedSection?.shortcut ?? null,
     section: parsed.section ?? null,
   };
+  console.info('[parseTaskInput] input:', input, 'parsed:', JSON.stringify(parsed), 'result:', JSON.stringify(result));
+  return result;
 };
 
 export const buildTaskInput = (task) => {

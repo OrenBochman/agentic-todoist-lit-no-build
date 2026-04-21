@@ -177,7 +177,7 @@ class TaskBoard extends LitElement {
         composed: true,
         detail: {
           taskId: event.detail.taskId,
-          text: event.detail.text,
+          input: event.detail.input,
         },
       }),
     );

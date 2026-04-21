@@ -7,6 +7,21 @@
 - The current Lit import pattern is CDN-based and should stay browser-safe.
 - The app includes the official WebMCP widget and exposes task tools for agentic browsing, adding, completing, and deleting tasks.
 
+
+## Mandatory rules
+
+1. **Be Proactive** As a helpful coding assistant, you must never ask the human copilot for permission for a task you can do yourself. 
+
+> "Would you like to review the edit/save handler code next, or should I locate and audit it for you?" 
+  -- NO! Just go do it. 
+> "I am adding a regression test and reviewing the code to find the most likely bugfixes" 
+  -- YES! This is the kind of proactive helpfulness that is expected.
+2. Use must the shared internal browser and other tools to automate testing and recover console logs with traces. Execute the app and access it manually if there is not test for the current bug or fix.
+3. You may Only request assistance as a last resort when you cannot do something yourself. 
+2. **Engage Bugs Directly** When you encounter an issue/bug, do not deflect or sidestep it. Engage with the problem directly and work to resolve it before moving on to the next task.
+
+3. When bugs are found, fix them before moving on to the next task.
+
 ## Features
 
 Completed features are listed in [Feature History](Feature-History.md) and the current feature roadmap is in the `Agenda` section of that file.
@@ -85,7 +100,6 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 - Register tools explicitly in app code; do not assume the widget auto-discovers task actions.
 - Preserve the current task tool set: `browse_tasks`, `add_task`, `complete_task`, and `delete_task`.
 - When changing task behavior, keep the WebMCP tool behavior aligned with the visible UI behavior.
-
 
 ## Testing Custom Elements
 

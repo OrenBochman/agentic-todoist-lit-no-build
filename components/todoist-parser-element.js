@@ -19,6 +19,7 @@ export class TodoistParserElement extends HTMLElement {
 
   // Static parser logic (from grammar.md)
   static parseTask(input) {
+    console.info('[TodoistParser] Parsing input:', input);
     const meta = {
       project: input.match(/(?:^|\s)#(\w+)/)?.[1] ?? null,
       section: input.match(/(?:^|\s)\/(\w+)/)?.[1] ?? null,
@@ -72,6 +73,13 @@ export class TodoistParserElement extends HTMLElement {
       if (wd) recurrence = `WEEKLY:${wd[1].toUpperCase()}`;
     }
 
+    const result = {
+      title: s,
+      due,
+      recurrence,
+      ...meta
+    };
+    console.info('[TodoistParser] Parsed result:', JSON.stringify(result));
     return {
       title: s,
       due,
