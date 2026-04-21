@@ -1,0 +1,17 @@
+  
+### Action Items
+
+
+- Gantt view (feature branch Gantt-view;web component, tests, docs)
+  - [ ] Add a gantt view that shows tasks on a timeline based on their due dates and durations, allowing for easy visualization of task dependencies and scheduling.
+  - [ ] Add a view selector to toggle to the gantt view.
+  - [ ] support dragging an arrow from one task to another to indicate a dependency between the two tasks.
+  - [ ] support highlighting tasks that are on the critical path in red.
+  - [ ] support dragging tasks to change their due dates and durations, with the gantt chart updating accordingly.
+  - [ ] support zooming in and out of the timeline for better visibility of tasks with different durations.
+  - [ ] support filtering tasks by project in the gantt view. 
+
+- BugsFixes (on bugfix branch Bug-fixes)
+  - [ ] The testing dashboard filters dont respond to clicks.
+  - [ ] The task composer input should repond to enter as a submit action.
+- Storage and Data

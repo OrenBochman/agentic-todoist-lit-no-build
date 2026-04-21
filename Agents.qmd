@@ -1,0 +1,13 @@
+---
+title: "Todoist Agent"
+description: "An agent that manages a todo list using the Todoist API, with features like task creation, project management, and calendar integration."
+format: gfm
+editor:
+  markdown:
+    wrap: 72
+---
+
+{{< include ".github/action-items.qmd" >}}
+
+
+  
