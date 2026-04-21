@@ -1,10 +1,14 @@
 import { expect } from '../helpers/browser-test-harness.js';
-import { mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
+import { clearTaskUtilityBarFixture, mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
 
 describe('task-utility-bar visibility regression', () => {
   let fixture;
   beforeEach(async () => {
     fixture = await mountTaskUtilityBar({ theme: 'light' });
+  });
+
+  afterEach(() => {
+    clearTaskUtilityBarFixture();
   });
 
   it('utility bar is present in shadow DOM', () => {

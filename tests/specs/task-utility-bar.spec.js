@@ -1,5 +1,5 @@
 import { expect, waitForRender } from '../helpers/browser-test-harness.js';
-import { mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
+import { clearTaskUtilityBarFixture, mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
 
 const getThemeButton = (fixture) => fixture.bar.shadowRoot.querySelector('wa-button[theme-icon]');
 const getThemeIcon = (fixture) => getThemeButton(fixture)?.querySelector('wa-icon');
@@ -8,6 +8,10 @@ describe('task-utility-bar regression', () => {
   let fixture;
   beforeEach(async () => {
     fixture = await mountTaskUtilityBar({ theme: 'light' });
+  });
+
+  afterEach(() => {
+    clearTaskUtilityBarFixture();
   });
 
   it('renders the theme toggle button', () => {
