@@ -1,4 +1,3 @@
-
 import '../../components/todoist-parser-element.js';
 import { expect } from '../helpers/browser-test-harness.js';
 
@@ -16,6 +15,37 @@ function defineMount() {
 }
 
 describe('TodoistParser', () => {
+    it('removes /section tokens with punctuation and in all positions', () => {
+      const cases = [
+        { input: 'foo /up', expected: 'foo' },
+        { input: '/up foo', expected: 'foo' },
+        { input: 'foo /up bar', expected: 'foo bar' },
+        { input: 'foo /up, bar', expected: 'foo, bar' },
+        { input: 'foo, /up', expected: 'foo,' },
+        { input: 'foo /up.', expected: 'foo.' },
+        { input: 'foo /up!', expected: 'foo!' },
+        { input: 'foo /up /down', expected: 'foo' },
+        { input: 'foo /up /down bar', expected: 'foo bar' },
+        { input: 'foo   /up   bar', expected: 'foo bar' },
+        { input: 'foo /up', expected: 'foo' },
+        { input: 'foo /up /up', expected: 'foo' },
+        { input: 'foo /up, /down.', expected: 'foo,' },
+        { input: 'foo /up, /down! bar', expected: 'foo, bar' },
+        { input: 'foo /up... bar', expected: 'foo... bar' },
+        { input: 'foo /up:/down bar', expected: 'foo: bar' },
+        { input: 'foo /up; bar', expected: 'foo; bar' },
+        { input: 'foo /up? bar', expected: 'foo? bar' },
+        { input: 'foo /up—bar', expected: 'foo—bar' },
+        { input: 'foo /up–bar', expected: 'foo–bar' },
+        { input: 'foo /up/bar', expected: 'foo/bar' },
+        { input: 'foo /up bar /down', expected: 'foo bar' },
+        { input: 'foo /up, bar /down!', expected: 'foo, bar' },
+      ];
+      for (const { input, expected } of cases) {
+        const result = parserEl.parse(input);
+        expect(result.title).to.equal(expected);
+      }
+    });
   let parserEl;
   beforeEach(() => {
     parserEl = window.mountTodoistParser();
@@ -84,5 +114,28 @@ describe('TodoistParser', () => {
       done();
     });
     parserEl.parse('task #Work');
+  });
+
+  it('strips /section shortcuts from title in all positions', () => {
+    const cases = [
+      { input: 'foo /up', expected: 'foo' },
+      { input: '/up foo', expected: 'foo' },
+      { input: 'foo /up bar', expected: 'foo bar' },
+      { input: 'foo /up, bar', expected: 'foo, bar' },
+      { input: 'foo, /up', expected: 'foo,' },
+      { input: 'foo /up.', expected: 'foo.' },
+      { input: 'foo /up!', expected: 'foo!' },
+      { input: 'foo /up /down', expected: 'foo' },
+      { input: 'foo /up /down bar', expected: 'foo bar' },
+      { input: 'foo   /up   bar', expected: 'foo bar' },
+      { input: 'foo /up', expected: 'foo' },
+      { input: 'foo /up /up', expected: 'foo' },
+      { input: 'foo /up, /down.', expected: 'foo,' },
+      { input: 'foo /up, /down! bar', expected: 'foo, bar' },
+    ];
+    for (const { input, expected } of cases) {
+      const result = parserEl.parse(input);
+      expect(result.title).to.equal(expected);
+    }
   });
 });

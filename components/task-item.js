@@ -301,6 +301,7 @@ class TaskItem extends LitElement {
   };
 
   startEditing() {
+    // Prefill with the full reconstructable string for round-tripping metadata
     this.draftText = buildTaskInput(this.task);
     this.editError = '';
     this.editing = true;
@@ -360,14 +361,13 @@ class TaskItem extends LitElement {
 
   handleEditSubmit(event) {
     event?.preventDefault?.();
-    const nextValue = String(this.draftText || '').trim()
-      ? this.draftText
-      : this.getCurrentEditValue(event, true);
-    const nextText = nextValue.trim();
+    // Always get the live value from the input field (host or native)
+    const nextValue = this.getCurrentEditValue(event, true);
+    const nextInput = String(nextValue || '').trim();
 
-    this.draftText = nextValue;
+    this.draftText = nextInput;
 
-    if (!nextText) {
+    if (!nextInput) {
       this.editError = 'Enter a task before saving it.';
       return;
     }
@@ -378,7 +378,7 @@ class TaskItem extends LitElement {
         composed: true,
         detail: {
           taskId: this.task.id,
-          input: nextText,
+          input: nextInput,
         },
       }),
     );
@@ -386,7 +386,7 @@ class TaskItem extends LitElement {
     this.removeNativeEditListener();
     this.editing = false;
     this.editError = '';
-    this.draftText = nextText;
+    this.draftText = nextInput;
   }
 
   emitDelete = () => {

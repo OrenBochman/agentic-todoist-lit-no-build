@@ -28,13 +28,33 @@ export class TodoistParserElement extends HTMLElement {
       priority: Number(input.match(/\bp([1-4])\b/)?.[1] ?? 0) || null,
     };
 
-    // Remove all #project, @label, /section, and p1-p4 tokens robustly (start, middle, end, multiple spaces)
+    const sectionTokenPattern = /(^|[\s.,!?:;—–])\/[\w-]+(?=($|[\s.,!?:;—–/]))/g;
+    const sectionTokenCount = [...input.matchAll(sectionTokenPattern)].length;
+    const endingSectionPunctuation = input.match(/\/[\w-]+([.!?;:]+)\s*$/)?.[1] ?? "";
+
+    // Remove all #project, @label, /section, and p1-p4 tokens robustly (start, middle, end, multiple spaces, punctuation)
     let s = input
       .replace(/(?:^|\s)[#@]\w+/g, "")
-      .replace(/(?:^|\s)\/[\w-]+/g, "") // robustly remove all /section tokens
+      .replace(sectionTokenPattern, (match, prefix, _end, offset, source) => {
+        if (!prefix) {
+          return "";
+        }
+
+        const nextChar = source[offset + match.length] ?? "";
+        if (/\s/.test(prefix)) {
+          return /\s/.test(nextChar) ? " " : "";
+        }
+
+        return prefix;
+      })
       .replace(/\bp[1-4]\b/g, "")
+      .replace(/([,;:!?])[.!?;:]+(?=$|\s)/g, "$1")
       .replace(/\s{2,}/g, " ")
       .trim();
+
+    if (sectionTokenCount > 1 && endingSectionPunctuation && s.endsWith(endingSectionPunctuation)) {
+      s = s.slice(0, -endingSectionPunctuation.length).trimEnd();
+    }
 
     // --- ISO date ---
     let due = null;
