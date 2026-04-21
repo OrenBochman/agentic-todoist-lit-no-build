@@ -42,4 +42,3 @@
   - [x] Added some unit tests for edge cases.
   - [x] Added skill for writing refactoring xunit style tests
   - [x] Added skill bugfixing using hypothesis branches with Ishikawa diagrams, git progress charts, and counterfactual notes to keep track of complex bugfix efforts and retain knowledge from failed attempts in a blackboard and counterfactual
-  
