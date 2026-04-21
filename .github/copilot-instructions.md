@@ -80,14 +80,13 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
 ### Action ITems
 - Bugs
   - [ ] The testing dashboard filters dont respond to clicks.
-  
+  - [ ] The task composer input should repond to enter as a submit action.
 
 - Project management
   - [x] **kanban view** (web component, tests, docs)
   - [ ] **Drag and Drop** improve the kan ban view to support drag and drop of task card between column.
         do this by adding  drag-drop-element interface for task and a drop-target-element interface for the kanban column containers.  
     [ ] add a project filter (based on a dropdown) in both views to only show tasks for a specific project.
-    [ ] when adding
 - Storage and Data
   - [ ] **Google-Drive-Integration** Support storage to google drive. 
   - [ ] **Filter-Update** Add more filters for date, project, importance
