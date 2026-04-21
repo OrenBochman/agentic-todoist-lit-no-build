@@ -1,5 +1,6 @@
 import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
-import { getTaskStatusShortcut } from './task-status.js';
+import './drag-drop-element.js';
+import { getTaskStatus, getTaskStatusShortcut } from './task-status.js';
 import { buildTaskInput } from './task-input-codec.js';
 
 /**
@@ -25,12 +26,17 @@ class TaskItem extends LitElement {
     draftText: { state: true },
     editError: { state: true },
     editing: { state: true },
+    dragEnabled: { type: Boolean, attribute: 'drag-enabled' },
     showStatusBadge: { type: Boolean, attribute: 'show-status-badge' },
     task: { type: Object },
   };
 
   static styles = css`
     :host {
+      display: block;
+    }
+
+    drag-drop-element {
       display: block;
     }
 
@@ -193,6 +199,7 @@ class TaskItem extends LitElement {
   constructor() {
     super();
     this.draftText = '';
+    this.dragEnabled = false;
     this.editError = '';
     this.editing = false;
     this.showStatusBadge = true;
@@ -238,7 +245,7 @@ class TaskItem extends LitElement {
     const pillText = this.showStatusBadge ? getTaskStatusShortcut(this.task) : null;
     const pill = pillText ? html`<wa-badge pill>${pillText}</wa-badge>` : '';
 
-    return html`
+    const taskCard = html`
       <article class="task" data-completed=${String(this.task.completed)}>
         <button
           class="toggle"
@@ -287,6 +294,23 @@ class TaskItem extends LitElement {
         </div>
       </article>
     `;
+
+    if (!this.dragEnabled || this.editing) {
+      return taskCard;
+    }
+
+    return html`
+      <drag-drop-element
+        .dragData=${{
+          taskId: this.task.id,
+          fromColumn: getTaskStatus(this.task),
+        }}
+        @drag-source-start=${this.handleDragStart}
+        @drag-source-end=${this.handleDragEnd}
+      >
+        ${taskCard}
+      </drag-drop-element>
+    `;
   }
 
   handlePressStart(event) {
@@ -306,6 +330,14 @@ class TaskItem extends LitElement {
       window.clearTimeout(this._longPressTimer);
       this._longPressTimer = null;
     }
+  };
+
+  handleDragStart = () => {
+    this.clearLongPress();
+  };
+
+  handleDragEnd = () => {
+    this.clearLongPress();
   };
 
   startEditing() {

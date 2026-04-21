@@ -15,6 +15,26 @@ const THEME_STORAGE_KEY = 'task-manager-theme';
 const VIEW_STORAGE_KEY = 'task-manager-view';
 const WEBMCP_TOOLS_KEY = '__taskManagerWebMcpToolsRegistered';
 const EXPORT_VERSION = 1;
+const KANBAN_STATUS_UPDATES = {
+  upcoming: {
+    completed: false,
+    inProgress: false,
+    section: 'up',
+    sectionShortcut: '/up',
+  },
+  'in-progress': {
+    completed: false,
+    inProgress: true,
+    section: 'in',
+    sectionShortcut: '/in',
+  },
+  done: {
+    completed: true,
+    inProgress: false,
+    section: 'done',
+    sectionShortcut: '/done',
+  },
+};
 
 function getWebMcpConstructor() {
   if (typeof globalThis.WebMCP === 'function') {
@@ -193,6 +213,7 @@ class TaskManagerApp extends LitReduxElement {
                 @task-edit=${this.handleTaskEdit}
                 @task-toggle=${this.handleTaskToggle}
                 @task-delete=${this.handleTaskDelete}
+                @task-move=${this.handleTaskMove}
               ></kanban-board>`
             : html`<task-board
                 .filter=${filter}
@@ -393,6 +414,40 @@ class TaskManagerApp extends LitReduxElement {
     this.saveTasks();
     this.clearTransferStatus();
   }
+
+  /**
+   * Normalizes a kanban drop into the task status fields used by the rest of the app.
+   */
+  handleTaskMove = (event) => {
+    const taskId = event.detail?.taskId;
+    const toColumn = event.detail?.toColumn;
+    const statusUpdate = KANBAN_STATUS_UPDATES[toColumn];
+
+    if (!taskId || !statusUpdate) {
+      return;
+    }
+
+    const task = this.tasks.find((entry) => entry.id === taskId);
+    if (!task) {
+      return;
+    }
+
+    if (
+      Boolean(task.completed) === statusUpdate.completed
+      && Boolean(task.inProgress) === statusUpdate.inProgress
+      && (task.sectionShortcut ?? null) === statusUpdate.sectionShortcut
+      && (task.section ?? null) === statusUpdate.section
+    ) {
+      return;
+    }
+
+    this.dispatch(editTask({
+      id: taskId,
+      ...statusUpdate,
+    }));
+    this.saveTasks();
+    this.clearTransferStatus();
+  };
 
   /**
    * Clears stale transfer feedback after ordinary task mutations.

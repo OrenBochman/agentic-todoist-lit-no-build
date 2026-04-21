@@ -1,4 +1,5 @@
 import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import './drop-target-element.js';
 import './task-item.js';
 import { getTaskStatus } from './task-status.js';
 
@@ -63,6 +64,17 @@ class KanbanBoard extends LitElement {
       flex-direction: column;
       max-width: 320px;
     }
+    .column-drop-target {
+      display: block;
+      min-width: 240px;
+      flex: 1 1 0;
+      max-width: 320px;
+    }
+    .column-drop-target[active] .column {
+      border: 1px dashed color-mix(in srgb, var(--accent) 56%, transparent);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+      transform: translateY(-2px);
+    }
     .column-title {
       display: flex;
       align-items: center;
@@ -96,6 +108,26 @@ class KanbanBoard extends LitElement {
     this.tasks = [];
   }
 
+  handleDropReceive(event) {
+    const taskId = event.detail?.payload?.taskId;
+    const fromColumn = event.detail?.payload?.fromColumn;
+    const toColumn = event.detail?.targetValue;
+
+    if (!taskId || !toColumn || fromColumn === toColumn) {
+      return;
+    }
+
+    this.dispatchEvent(new CustomEvent('task-move', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        taskId,
+        fromColumn,
+        toColumn,
+      },
+    }));
+  }
+
   getColumns() {
     const columns = {
       upcoming: [],
@@ -123,38 +155,34 @@ class KanbanBoard extends LitElement {
         <wa-badge class="column-shortcut" pill>${shortcut}</wa-badge>
       </div>
     `;
+    const renderColumn = (columnKey, label, shortcut, tasks, emptyMessage) => html`
+      <drop-target-element
+        class="column-drop-target"
+        target-value=${columnKey}
+        @drop-receive=${this.handleDropReceive}
+      >
+        <div class="column">
+          ${renderColumnTitle(label, shortcut)}
+          <div class="task-list">
+            ${tasks.length
+              ? tasks.map(
+                  (task) => html`<task-item
+                    .task=${task}
+                    .dragEnabled=${true}
+                    .showStatusBadge=${false}
+                  ></task-item>`
+                )
+              : html`<div class="empty">${emptyMessage}</div>`}
+          </div>
+        </div>
+      </drop-target-element>
+    `;
+
     return html`
       <div class="kanban">
-        <div class="column">
-          ${renderColumnTitle('Upcoming', '/up')}
-          <div class="task-list">
-            ${columns.upcoming.length
-              ? columns.upcoming.map(
-                  (task) => html`<task-item .task=${task} .showStatusBadge=${false}></task-item>`
-                )
-              : html`<div class="empty">No upcoming tasks</div>`}
-          </div>
-        </div>
-        <div class="column">
-          ${renderColumnTitle('In Progress', '/in')}
-          <div class="task-list">
-            ${columns['in-progress'].length
-              ? columns['in-progress'].map(
-                  (task) => html`<task-item .task=${task} .showStatusBadge=${false}></task-item>`
-                )
-              : html`<div class="empty">No tasks in progress</div>`}
-          </div>
-        </div>
-        <div class="column">
-          ${renderColumnTitle('Done', '/done')}
-          <div class="task-list">
-            ${columns.done.length
-              ? columns.done.map(
-                  (task) => html`<task-item .task=${task} .showStatusBadge=${false}></task-item>`
-                )
-              : html`<div class="empty">No completed tasks</div>`}
-          </div>
-        </div>
+        ${renderColumn('upcoming', 'Upcoming', '/up', columns.upcoming, 'No upcoming tasks')}
+        ${renderColumn('in-progress', 'In Progress', '/in', columns['in-progress'], 'No tasks in progress')}
+        ${renderColumn('done', 'Done', '/done', columns.done, 'No completed tasks')}
       </div>
     `;
   }

@@ -8,6 +8,10 @@ const createKanbanBoard = (tasks = []) => {
 };
 
 describe('Kanban Board Unit Tests', () => {
+  afterEach(() => {
+    document.body.querySelectorAll('kanban-board').forEach((board) => board.remove());
+  });
+
   it('groups tasks by status into the expected columns', () => {
     const board = createKanbanBoard([
       { id: '1', text: 'Task 1', completed: false },
@@ -171,5 +175,59 @@ describe('Kanban Board Unit Tests', () => {
     expect(columns.upcoming.map((task) => task.text)).to.deep.equal(['Queued']);
     expect(columns['in-progress'].map((task) => task.text)).to.deep.equal(['Working']);
     expect(columns.done.map((task) => task.text)).to.deep.equal(['Shipped']);
+  });
+
+  it('emits task-move when a task payload is dropped into a different column', async () => {
+    const board = createKanbanBoard([
+      { id: '1', text: 'Move me', completed: false, sectionShortcut: '/up', section: 'up' },
+    ]);
+    document.body.append(board);
+    await board.updateComplete;
+
+    const moves = [];
+    board.addEventListener('task-move', (event) => moves.push(event.detail));
+
+    const target = board.shadowRoot.querySelector('drop-target-element[target-value="done"]');
+    expect(target, 'Done column drop target should render.').to.exist;
+
+    target.dispatchEvent(new CustomEvent('drop-receive', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        payload: { taskId: '1', fromColumn: 'upcoming' },
+        targetValue: 'done',
+      },
+    }));
+
+    expect(moves).to.deep.equal([
+      { taskId: '1', fromColumn: 'upcoming', toColumn: 'done' },
+    ]);
+  });
+
+  it('ignores drops when the task is dropped back into the same column', async () => {
+    const board = createKanbanBoard([
+      { id: '1', text: 'Stay here', completed: false, sectionShortcut: '/in', section: 'in', inProgress: true },
+    ]);
+    document.body.append(board);
+    await board.updateComplete;
+
+    let moveCount = 0;
+    board.addEventListener('task-move', () => {
+      moveCount += 1;
+    });
+
+    const target = board.shadowRoot.querySelector('drop-target-element[target-value="in-progress"]');
+    expect(target, 'In Progress drop target should render.').to.exist;
+
+    target.dispatchEvent(new CustomEvent('drop-receive', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        payload: { taskId: '1', fromColumn: 'in-progress' },
+        targetValue: 'in-progress',
+      },
+    }));
+
+    expect(moveCount).to.equal(0);
   });
 });
