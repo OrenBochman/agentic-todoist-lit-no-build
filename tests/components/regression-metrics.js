@@ -1,4 +1,4 @@
-import { LitElement, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 
 export class RegressionMetrics extends LitElement {
   static properties = {
@@ -9,10 +9,46 @@ export class RegressionMetrics extends LitElement {
     topFailure: { state: true },
     total: { state: true },
   };
+  static styles = css`
+    :host {
+      display: contents;
+    }
 
-  createRenderRoot() {
-    return this;
-  }
+    .metric-card {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--panel-border);
+      background: rgba(15, 23, 42, 0.44);
+    }
+
+    .metric-label {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .metric-value {
+      margin-top: 8px;
+      font-size: 1.75rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .metric-value.fail {
+      color: #f87171;
+    }
+
+    .metric-value.duration {
+      color: #38bdf8;
+    }
+
+    .metric-subcopy {
+      margin-top: 8px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+  `;
 
   constructor() {
     super();

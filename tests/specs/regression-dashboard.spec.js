@@ -25,9 +25,9 @@ describe('Regression Dashboard Components', () => {
     await summary.updateComplete;
 
     expect(summary.dataset.status).to.equal('passed');
-    expect(summary.querySelector('#summary-heading')?.textContent).to.equal('Regression suite passed');
-    expect(summary.querySelector('#summary-percent')?.textContent).to.equal('100%');
-    expect(summary.querySelector('#summary-tests-chip')?.textContent).to.equal('12 registered');
+    expect(summary.shadowRoot.querySelector('#summary-heading')?.textContent).to.equal('Regression suite passed');
+    expect(summary.shadowRoot.querySelector('#summary-percent')?.textContent).to.equal('100%');
+    expect(summary.shadowRoot.querySelector('#summary-tests-chip')?.textContent).to.equal('12 registered');
   });
 
   it('updates toolbar active filter state declaratively', async () => {
@@ -36,9 +36,9 @@ describe('Regression Dashboard Components', () => {
     toolbar.setActiveFilter('fail');
     await toolbar.updateComplete;
 
-    expect(toolbar.querySelector('[data-filter="all"]')?.dataset.active).to.equal('false');
-    expect(toolbar.querySelector('[data-filter="fail"]')?.dataset.active).to.equal('true');
-    expect(toolbar.querySelector('[data-filter="pass"]')?.dataset.active).to.equal('false');
+    expect(toolbar.shadowRoot.querySelector('[data-filter="all"]')?.dataset.active).to.equal('false');
+    expect(toolbar.shadowRoot.querySelector('[data-filter="fail"]')?.dataset.active).to.equal('true');
+    expect(toolbar.shadowRoot.querySelector('[data-filter="pass"]')?.dataset.active).to.equal('false');
   });
 
   it('shows and hides the failure panel state', async () => {
@@ -77,7 +77,7 @@ describe('Regression Dashboard Components', () => {
     const rows = dashboard.querySelectorAll('#mocha li.test');
     expect(rows[0].classList.contains('is-hidden')).to.equal(true);
     expect(rows[1].classList.contains('is-hidden')).to.equal(false);
-    expect(dashboard.metrics.querySelector('#metric-filtered')?.textContent).to.equal('1 visible • 2 executed');
+    expect(dashboard.metrics.shadowRoot.querySelector('#metric-filtered')?.textContent).to.equal('1 visible • 2 executed');
   });
 
   it('finalizeRun updates summary, metrics, failure list, and row metadata', async () => {
@@ -117,9 +117,9 @@ describe('Regression Dashboard Components', () => {
     await dashboard.failurePanel.updateComplete;
 
     expect(dashboard.summary.dataset.status).to.equal('failed');
-    expect(dashboard.summary.querySelector('#summary-heading')?.textContent).to.equal('1 failure need attention');
-    expect(dashboard.metrics.querySelector('#metric-total')?.textContent).to.equal('2');
-    expect(dashboard.metrics.querySelector('#metric-failures')?.textContent).to.equal('1');
+    expect(dashboard.summary.shadowRoot.querySelector('#summary-heading')?.textContent).to.equal('1 failure need attention');
+    expect(dashboard.metrics.shadowRoot.querySelector('#metric-total')?.textContent).to.equal('2');
+    expect(dashboard.metrics.shadowRoot.querySelector('#metric-failures')?.textContent).to.equal('1');
     expect(dashboard.failurePanel.dataset.visible).to.equal('true');
     expect(dashboard.failureList.children).to.have.length(1);
     expect(dashboard.failureList.textContent).to.contain('Kanban Board Unit Tests moves tasks between columns');

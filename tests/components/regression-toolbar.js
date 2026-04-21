@@ -1,13 +1,69 @@
-import { LitElement, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 
 export class RegressionToolbar extends LitElement {
   static properties = {
     activeFilter: { state: true },
   };
+  static styles = css`
+    :host {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-  createRenderRoot() {
-    return this;
-  }
+    .toolbar-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filter-button {
+      border: 1px solid color-mix(in srgb, var(--text-strong) 12%, transparent);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font: inherit;
+      color: var(--text-strong);
+      background: rgba(15, 23, 42, 0.52);
+      cursor: pointer;
+    }
+
+    .filter-button[data-active='true'] {
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+      background: color-mix(in srgb, var(--accent) 18%, rgba(15, 23, 42, 0.52));
+    }
+
+    #test-search {
+      min-width: min(320px, 100%);
+      border: 1px solid color-mix(in srgb, var(--text-strong) 12%, transparent);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      color: var(--text-strong);
+      background: rgba(15, 23, 42, 0.52);
+    }
+
+    #test-search::placeholder {
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 640px) {
+      :host {
+        align-items: stretch;
+      }
+
+      .toolbar-group {
+        width: 100%;
+      }
+
+      #test-search {
+        min-width: 0;
+        width: 100%;
+      }
+    }
+  `;
 
   constructor() {
     super();
@@ -15,11 +71,11 @@ export class RegressionToolbar extends LitElement {
   }
 
   get filterButtons() {
-    return [...this.querySelectorAll('.filter-button')];
+    return [...this.renderRoot.querySelectorAll('.filter-button')];
   }
 
   get searchInput() {
-    return this.querySelector('#test-search');
+    return this.renderRoot.querySelector('#test-search');
   }
 
   setActiveFilter(filter) {
