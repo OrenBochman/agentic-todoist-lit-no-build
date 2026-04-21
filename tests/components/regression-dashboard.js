@@ -192,8 +192,82 @@ class RegressionFailureList extends LitElement {
 }
 
 export class RegressionDashboard extends LitElement {
+  get failureList() {
+    return this.querySelector('regression-failure-list')?.listElement ?? null;
+  }
+
+  get filterButtons() {
+    return this.querySelector('regression-toolbar')?.filterButtons ?? [];
+  }
+
+  get mochaMount() {
+    return this.querySelector('#mount');
+  }
+
+  get searchInput() {
+    return this.querySelector('regression-toolbar')?.searchInput ?? null;
+  }
+
+  get summary() {
+    return this.querySelector('regression-summary');
+  }
+
+  get toolbar() {
+    return this.querySelector('regression-toolbar');
+  }
+
+  get failurePanel() {
+    return this.querySelector('regression-failure-list');
+  }
+
+  get metrics() {
+    return this.querySelector('regression-metrics');
+  }
+
   createRenderRoot() {
     return this;
+  }
+
+  setFailureListVisible(isVisible) {
+    this.failurePanel?.setVisible(isVisible);
+  }
+
+  setFilteredMetrics(filteredLabel) {
+    const metrics = this.metrics;
+    if (!metrics) {
+      return;
+    }
+
+    metrics.setValues({
+      total: metrics.total,
+      filtered: filteredLabel,
+      failures: metrics.failures,
+      duration: metrics.duration,
+      slowest: metrics.slowest,
+      topFailure: metrics.topFailure,
+    });
+  }
+
+  setMetrics(values) {
+    this.metrics?.setValues(values);
+  }
+
+  setStatus(status) {
+    this.summary?.setStatus(status);
+  }
+
+  setSummary(values) {
+    this.summary?.setValues(values);
+  }
+
+  setToolbarFilter(filter) {
+    this.toolbar?.setActiveFilter(filter);
+  }
+
+  hideMount() {
+    if (this.mochaMount) {
+      this.mochaMount.dataset.hidden = 'true';
+    }
   }
 
   render() {
