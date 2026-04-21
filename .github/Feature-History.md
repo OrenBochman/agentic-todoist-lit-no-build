@@ -42,3 +42,9 @@
   - [x] Added some unit tests for edge cases.
   - [x] Added skill for writing refactoring xunit style tests
   - [x] Added skill bugfixing using hypothesis branches with Ishikawa diagrams, git progress charts, and counterfactual notes to keep track of complex bugfix efforts and retain knowledge from failed attempts in a blackboard and counterfactual
+- Kanban View
+  - [x] **kanban view** (web component, tests, docs)
+  - [x] **Drag and Drop** improve the kan ban view to support drag and drop of task card between column.
+        do this by adding  drag-drop-element interface for task and a drop-target-element interface for the kanban column containers.  
+    [x] add a project filter (based on a dropdown) in both views to only show tasks for a specific project.
+    [x] when adding a task without a project and the project filter is active, add the task to the active project.
