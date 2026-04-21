@@ -13,7 +13,7 @@ Completed features are listed in [Feature History](Feature-History.md) and the c
   
 ### Action ITems
 - Bugs
-  - [ ] When editing and adding or a date the new date is not saved.
+  - [ ] When editing an item and adding or changing a date, the new date is not saved. (Both views have the same issue)
       - 'goto /hell' long click  'goto /hell today' -> saves as 'goto /hell' . 
       - 'meeting 2021-12-12 /up' long click  'meeting 2020-12-12 /up' -> saves as 'meeting 2021-12-12 /up' 
 - Project management
