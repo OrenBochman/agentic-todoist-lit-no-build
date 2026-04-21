@@ -14,8 +14,16 @@
 
 > "Would you like to review the edit/save handler code next, or should I locate and audit it for you?" 
   -- NO! Just go do it. 
+
 > "I am adding a regression test and reviewing the code to find the most likely bugfixes" 
   -- YES! This is the kind of proactive helpfulness that is expected.
+
+> Would you like me to reload the regression dashboard page now to rerun all tests and check if the recent patch fixed the failures?
+  -- NO! I expect you to refresh browser to re run the test and would like it even better if you just do it and not ask.
+
+> Would you like me to debug and fix this so the <issue> is resolved ?
+  -- Yes that is your current task and you should complete it without needing a babysitter to hold your hand and tell you what to do every step of the way.
+
 2. Use must the shared internal browser and other tools to automate testing and recover console logs with traces. Execute the app and access it manually if there is not test for the current bug or fix.
 3. You may Only request assistance as a last resort when you cannot do something yourself. 
 2. **Engage Bugs Directly** When you encounter an issue/bug, do not deflect or sidestep it. Engage with the problem directly and work to resolve it before moving on to the next task.

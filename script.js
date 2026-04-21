@@ -383,23 +383,12 @@ class TaskManagerApp extends LitReduxElement {
     const rawInput = String(event.detail.input || '').trim();
     if (!rawInput) return;
     const parsedTask = parseTaskInput(rawInput);
-    const nextText = String(parsedTask.text || '').trim();
-    if (!nextText) return;
+    if (!parsedTask.text) return;
 
+    // Overwrite all fields from the parser, preserving the id
     this.dispatch(editTask({
       id: taskId,
-      text: nextText,
-      dueDate: parsedTask.dueDate ?? null,
-      project: parsedTask.project ?? null,
-      importance: parsedTask.importance ?? null,
-      dependsOn: Array.isArray(parsedTask.dependsOn) ? parsedTask.dependsOn : [],
-      workloadEstimate: typeof parsedTask.workloadEstimate === 'number' ? parsedTask.workloadEstimate : 4,
-      workloadUncertainty: typeof parsedTask.workloadUncertainty === 'number' ? parsedTask.workloadUncertainty : 1,
-      tags: Array.isArray(parsedTask.tags) ? parsedTask.tags : [],
-      inProgress: Boolean(parsedTask.inProgress),
-      completed: Boolean(parsedTask.completed),
-      sectionShortcut: parsedTask.sectionShortcut ?? null,
-      section: parsedTask.section ?? null,
+      ...parsedTask
     }));
     this.saveTasks();
     this.clearTransferStatus();

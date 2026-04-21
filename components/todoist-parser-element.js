@@ -20,6 +20,7 @@ export class TodoistParserElement extends HTMLElement {
   // Static parser logic (from grammar.md)
   static parseTask(input) {
     console.info('[TodoistParser] Parsing input:', input);
+
     const meta = {
       project: input.match(/(?:^|\s)#(\w+)/)?.[1] ?? null,
       section: input.match(/(?:^|\s)\/(\w+)/)?.[1] ?? null,
@@ -27,9 +28,12 @@ export class TodoistParserElement extends HTMLElement {
       priority: Number(input.match(/\bp([1-4])\b/)?.[1] ?? 0) || null,
     };
 
+    // Remove all #project, @label, /section, and p1-p4 tokens robustly (start, middle, end, multiple spaces)
     let s = input
-      .replace(/(?:^|\s)[#/@]\w+/g, "")
+      .replace(/(?:^|\s)[#@]\w+/g, "")
+      .replace(/(?:^|\s)\/[\w-]+/g, "") // robustly remove all /section tokens
       .replace(/\bp[1-4]\b/g, "")
+      .replace(/\s{2,}/g, " ")
       .trim();
 
     // --- ISO date ---
