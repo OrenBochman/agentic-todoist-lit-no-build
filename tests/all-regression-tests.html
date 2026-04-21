@@ -18,13 +18,6 @@
     <script type="module">
       import { runBrowserTests } from './helpers/browser-test-harness.js';
       const dashboard = document.querySelector('regression-dashboard');
-      const summary = dashboard.querySelector('regression-summary');
-      const metrics = dashboard.querySelector('regression-metrics');
-      const toolbar = dashboard.querySelector('regression-toolbar');
-      const failurePanel = dashboard.querySelector('regression-failure-list');
-      const failureList = failurePanel.listElement;
-      const searchInput = toolbar.searchInput;
-      const filterButtons = toolbar.filterButtons;
       const runMetrics = {
         allTests: [],
         passedTests: [],
@@ -72,7 +65,7 @@
 
         const durationLabel = formatDuration(duration);
         if (!total) {
-          summary.setValues({
+          dashboard.setSummary({
             passRate,
             totalLabel: `${total} registered`,
             failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
@@ -81,7 +74,7 @@
             body: 'Collecting results from the browser suite.',
           });
         } else if (!failures) {
-          summary.setValues({
+          dashboard.setSummary({
             passRate,
             totalLabel: `${total} registered`,
             failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
@@ -90,7 +83,7 @@
             body: 'No failures detected. The dashboard is focused on failure triage, so the test list can stay filtered unless you need to inspect passes.',
           });
         } else {
-          summary.setValues({
+          dashboard.setSummary({
             passRate,
             totalLabel: `${total} registered`,
             failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
@@ -103,7 +96,7 @@
         const slowest = [...runMetrics.allTests]
           .sort((a, b) => (b.duration || 0) - (a.duration || 0))[0];
 
-        metrics.setValues({
+        dashboard.setMetrics({
           total,
           filtered: `${document.querySelectorAll('#mocha li.test:not(.is-hidden)').length} visible • ${executed} executed`,
           failures,
@@ -118,10 +111,15 @@
       };
 
       const updateFailureList = () => {
+        const failureList = dashboard.failureList;
+        if (!failureList) {
+          return;
+        }
+
         failureList.replaceChildren();
 
         if (!runMetrics.failedTests.length) {
-          failurePanel.setVisible(false);
+          dashboard.setFailureListVisible(false);
           return;
         }
 
@@ -145,11 +143,11 @@
           failureList.append(item);
         });
 
-        failurePanel.setVisible(true);
+        dashboard.setFailureListVisible(true);
       };
 
       const applyDashboardFilters = () => {
-        const searchTerm = searchInput.value.trim().toLowerCase();
+        const searchTerm = dashboard.searchInput?.value.trim().toLowerCase() || '';
         const testRows = [...document.querySelectorAll('#mocha li.test')];
         let visibleCount = 0;
 
@@ -177,18 +175,18 @@
           suiteRow.classList.toggle('is-hidden', !hasVisibleContent);
         });
 
-        metrics.querySelector('#metric-filtered').textContent = `${visibleCount} visible • ${runMetrics.allTests.length} executed`;
+        dashboard.setFilteredMetrics(`${visibleCount} visible • ${runMetrics.allTests.length} executed`);
       };
 
-      filterButtons.forEach((button) => {
+      dashboard.filterButtons.forEach((button) => {
         button.addEventListener('click', () => {
           activeFilter = button.dataset.filter;
-          toolbar.setActiveFilter(activeFilter);
+          dashboard.setToolbarFilter(activeFilter);
           applyDashboardFilters();
         });
       });
 
-      searchInput.addEventListener('input', () => {
+      dashboard.searchInput?.addEventListener('input', () => {
         applyDashboardFilters();
       });
 
@@ -236,8 +234,8 @@
       runMetrics.registeredTests = countRegisteredTests(window.mocha?.suite);
       const failures = await runBrowserTests();
 
-      summary.setStatus(failures === 0 ? 'passed' : 'failed');
-      dashboard.querySelector('#mount').dataset.hidden = 'true';
+      dashboard.setStatus(failures === 0 ? 'passed' : 'failed');
+      dashboard.hideMount();
 
       assignTestRowIds();
       updateMetrics();
