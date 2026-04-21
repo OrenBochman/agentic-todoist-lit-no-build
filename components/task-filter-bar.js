@@ -107,7 +107,8 @@ class TaskFilterBar extends LitElement {
             </button>
           `,
         )}
-        <select class="project-select" .value=${this.projectFilter} @change=${this.handleProjectFilterChange} aria-label="Project filter">
+        <label for="project-select" style="margin-left:8px;font-weight:600;">Project:</label>
+        <select id="project-select" class="project-select" .value=${this.projectFilter} @change=${this.handleProjectFilterChange} aria-label="Project filter">
           ${projectOptions.map(
             (option) => html`<option value=${option.value}>${option.label}</option>`,
           )}

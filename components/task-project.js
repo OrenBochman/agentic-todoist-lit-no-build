@@ -2,8 +2,16 @@ export const ALL_PROJECTS_FILTER = 'all-projects';
 export const DEFAULT_PROJECT_FILTER = 'default-project';
 export const DEFAULT_PROJECT_LABEL = 'Default Project';
 
+/**
+ * Normalize a project value to a trimmed string or null.
+ * Accepts null/undefined and returns null for those values.
+ * If a non-string value is passed, coerces to string and trims.
+ * @param {string|null|undefined} project
+ * @returns {string|null}
+ */
 export const normalizeTaskProject = (project) => {
-  const normalized = String(project || '').trim();
+  if (project == null) return null;
+  const normalized = String(project).trim();
   return normalized || null;
 };
 

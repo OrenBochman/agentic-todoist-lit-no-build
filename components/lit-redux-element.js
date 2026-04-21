@@ -14,6 +14,7 @@ export class LitReduxElement extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._reduxState = store.getState();
+    // Redux subscription triggers requestUpdate() on every state change
     this._reduxUnsubscribe = store.subscribe(() => {
       this._reduxState = store.getState();
       this.requestUpdate();
