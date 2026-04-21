@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { expect } from '../helpers/browser-test-harness.js';
 import { mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
 
 describe('task-utility-bar visibility regression', () => {

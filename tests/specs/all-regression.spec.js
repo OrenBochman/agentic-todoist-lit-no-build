@@ -1,9 +1,15 @@
 await import('./task-composer.spec.js');
 await import('./task-filter-bar.spec.js');
+await import('./task-board.spec.js');
+await import('./task-input-codec.spec.js');
+await import('./task-status.spec.js');
+await import('./kanban-board.spec.js');
 await import('./lit-redux-element.spec.js');
 await import('./task-manager-add-task.spec.js');
 await import('./task-hero.spec.js');
 await import('./task-snackbar.spec.js');
 await import('./task-transfer.spec.js');
 await import('./task-transfer-controls.spec.js');
+await import('./task-utility-bar.spec.js');
+await import('./task-utility-bar-visibility.spec.js');
 await import('./todoist-parser-element.spec.js');

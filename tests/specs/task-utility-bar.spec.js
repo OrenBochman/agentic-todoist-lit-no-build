@@ -1,6 +1,5 @@
-import { expect } from 'chai';
+import { expect, waitForRender } from '../helpers/browser-test-harness.js';
 import { mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
-import { waitForRender } from '../helpers/browser-test-harness.js';
 
 describe('task-utility-bar regression', () => {
   let fixture;

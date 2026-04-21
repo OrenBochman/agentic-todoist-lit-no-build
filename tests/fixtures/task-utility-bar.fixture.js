@@ -1,5 +1,5 @@
 // Fixture for mounting the utility bar in isolation for regression/unit tests
-import '../components/task-utility-bar.js';
+import '../../components/task-utility-bar.js';
 
 /**
  * Mounts a <task-utility-bar> for isolated testing.

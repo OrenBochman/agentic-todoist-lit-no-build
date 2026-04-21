@@ -384,7 +384,7 @@
         </div>
         <div class="dashboard-grid" aria-label="Regression metrics">
           <article class="metric-card">
-            <div class="metric-label">Tests</div>
+            <div class="metric-label">Registered</div>
             <div class="metric-value" id="metric-total">0</div>
             <div class="metric-subcopy" id="metric-filtered">No results yet</div>
           </article>
@@ -402,8 +402,8 @@
 
         <div class="dashboard-toolbar" aria-label="Dashboard controls">
           <div class="toolbar-group">
-            <button class="filter-button" type="button" data-filter="all" data-active="false">All</button>
-            <button class="filter-button" type="button" data-filter="fail" data-active="true">Failures</button>
+            <button class="filter-button" type="button" data-filter="all" data-active="true">All</button>
+            <button class="filter-button" type="button" data-filter="fail" data-active="false">Failures</button>
             <button class="filter-button" type="button" data-filter="pass">Passing</button>
           </div>
           <div class="toolbar-group">
@@ -447,8 +447,19 @@
         allTests: [],
         passedTests: [],
         failedTests: [],
+        registeredTests: 0,
       };
-      let activeFilter = 'fail';
+      let activeFilter = 'all';
+
+      const countRegisteredTests = (suite) => {
+        if (!suite) {
+          return 0;
+        }
+
+        const childSuites = Array.isArray(suite.suites) ? suite.suites : [];
+        const ownTests = Array.isArray(suite.tests) ? suite.tests.length : 0;
+        return ownTests + childSuites.reduce((total, childSuite) => total + countRegisteredTests(childSuite), 0);
+      };
 
       const formatDuration = (duration) => {
         if (!Number.isFinite(duration)) {
@@ -470,19 +481,20 @@
       };
 
       const updateMetrics = () => {
-        const total = runMetrics.allTests.length;
+        const total = runMetrics.registeredTests || runMetrics.allTests.length;
+        const executed = runMetrics.allTests.length;
         const failures = runMetrics.failedTests.length;
         const passes = runMetrics.passedTests.length;
         const duration = runMetrics.allTests.reduce((sum, test) => sum + (test.duration || 0), 0);
         const passRate = total ? Math.round((passes / total) * 100) : 0;
 
-        metricTotal.textContent = String(runMetrics.allTests.length);
+        metricTotal.textContent = String(total);
         metricFailures.textContent = String(runMetrics.failedTests.length);
         metricDuration.textContent = formatDuration(duration);
 
         summaryPercent.textContent = `${passRate}%`;
         summaryRing.style.setProperty('--progress', `${(passRate / 100) * 360}deg`);
-        summaryTestsChip.textContent = `${total} ${total === 1 ? 'test' : 'tests'}`;
+        summaryTestsChip.textContent = `${total} registered`;
         summaryFailuresChip.textContent = `${failures} ${failures === 1 ? 'failure' : 'failures'}`;
         summaryDurationChip.textContent = formatDuration(duration);
 
@@ -568,7 +580,7 @@
           suiteRow.classList.toggle('is-hidden', !hasVisibleContent);
         });
 
-        metricFiltered.textContent = `${visibleCount} visible in current filter`;
+        metricFiltered.textContent = `${visibleCount} visible • ${runMetrics.allTests.length} executed`;
       };
 
       filterButtons.forEach((button) => {
@@ -625,7 +637,8 @@
         })(mocha.run);
       }
 
-      await import('./specs/all-regression.spec.js');
+      await import('./specs/all-regression.spec.js?v=2026-04-21-coverage-pass-2');
+      runMetrics.registeredTests = countRegisteredTests(window.mocha?.suite);
       const failures = await runBrowserTests();
 
       summary.dataset.status = failures === 0 ? 'passed' : 'failed';
