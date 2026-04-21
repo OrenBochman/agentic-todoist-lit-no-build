@@ -28,9 +28,17 @@
         - project, 
         - importance
 
+  - [ ] Chat client via firebase ?
+  - [ ] Etherpad clone web sockets integration for real-time collaboration on tasks and projects.
+  - [ ] Add a obsedian clone view for a personal wiki via a #wiki tag on tasks.
+  - [ ] OAth inrgration usin Auth0 c.f. https://gemini.google.com/share/b820d06a69d2 
+  - [ ] Web api calls via kiota
+  - [ ] Markdown Editor based on Stackedit.
+
 - Tests and Documentation
   - [ ] Improve documentation with Mermaid UML charts (class diagrams, sequence diagrams) to illustrate app architecture, component relationships, and data flow.
   - [ ] Access to the QA dashboard via WebMCP to allow agents to run all tests, a test suite, or a single test from chat and get the result, test logs, and screenshots when relevant.
+  
 
 - UI/UX
   - [ ] Add calendar view (web component, tests, docs)
@@ -42,4 +50,5 @@
   - [ ] Implement the [PRPL pattern](https://developers.google.com/web/fundamentals/performance/prpl-pattern) (Push, Render, Pre-cache, Lazy-load)
   - [ ] Add a web app manifest to provide metadata about the app, such as its name, icons, and theme colors, to enhance the user experience when installing the app on their device.
   - [ ] Add analytics integration to track user interactions and gather insights on how the app is being used
-  
+
+

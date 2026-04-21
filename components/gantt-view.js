@@ -18,7 +18,7 @@ const parseDateValue = (value) => {
   const text = String(value).trim();
   if (!text) {
     return null;
-  }
+  } 
 
   const dateToken = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (dateToken) {
@@ -42,11 +42,42 @@ const formatHeaderDate = (date) => date.toLocaleDateString(undefined, {
 const getDayOffset = (left, right) => Math.round((right.getTime() - left.getTime()) / DAY_MS);
 
 class GanttView extends LitElement {
-    // Drag state for left handle
+      buildMonthTicks(startDate, totalDays) {
+        // Returns array of {label, span} for each month in the visible range
+        const months = [];
+        let current = new Date(startDate);
+        let lastMonth = current.getMonth();
+        let lastYear = current.getFullYear();
+        let monthStartIdx = 0;
+        for (let i = 0; i < totalDays; i++) {
+          const d = new Date(startDate.getTime() + i * DAY_MS);
+          if (d.getMonth() !== lastMonth || d.getFullYear() !== lastYear) {
+            const span = i - monthStartIdx;
+            months.push({
+              label: new Date(startDate.getTime() + monthStartIdx * DAY_MS).toLocaleString(undefined, { month: 'short', year: 'numeric' }),
+              span,
+            });
+            monthStartIdx = i;
+            lastMonth = d.getMonth();
+            lastYear = d.getFullYear();
+          }
+        }
+        // Push the last month
+        if (monthStartIdx < totalDays) {
+          const d = new Date(startDate.getTime() + monthStartIdx * DAY_MS);
+          months.push({
+            label: d.toLocaleString(undefined, { month: 'short', year: 'numeric' }),
+            span: totalDays - monthStartIdx,
+          });
+        }
+        return months;
+      }
+    // Drag state for handles
     _dragTaskIdx = null;
     _dragStartX = null;
     _dragOrigDate = null;
     _dragPx = 0;
+    _dragType = null; // 'left' or 'right'
 
     _onLeftHandlePointerDown(idx, event, entry, timeline, laneWidthPx) {
       event.preventDefault();
@@ -54,6 +85,19 @@ class GanttView extends LitElement {
       this._dragStartX = event.clientX;
       this._dragOrigDate = new Date(entry.startDate);
       this._dragPx = 0;
+      this._dragType = 'left';
+      window.addEventListener('pointermove', this._onPointerMove);
+      window.addEventListener('pointerup', this._onPointerUp);
+      this.requestUpdate();
+    }
+
+    _onRightHandlePointerDown(idx, event, entry, timeline, laneWidthPx) {
+      event.preventDefault();
+      this._dragTaskIdx = idx;
+      this._dragStartX = event.clientX;
+      this._dragOrigDate = new Date(entry.endDate);
+      this._dragPx = 0;
+      this._dragType = 'right';
       window.addEventListener('pointermove', this._onPointerMove);
       window.addEventListener('pointerup', this._onPointerUp);
       this.requestUpdate();
@@ -74,13 +118,23 @@ class GanttView extends LitElement {
       const dayDelta = Math.round(this._dragPx / pxPerDay);
       const entry = timeline.visibleTasks[this._dragTaskIdx];
       if (entry && dayDelta !== 0) {
-        const newDate = new Date(this._dragOrigDate.getTime() + dayDelta * 24 * 60 * 60 * 1000);
-        if (newDate.getTime() <= entry.endDate.getTime()) {
-          const tasks = [...this.tasks];
-          const taskIdx = tasks.findIndex(t => t.id === entry.task.id);
-          if (taskIdx !== -1) {
-            tasks[taskIdx] = { ...tasks[taskIdx], createdAt: newDate.toISOString().slice(0, 10) };
-            this.tasks = tasks;
+        if (this._dragType === 'left') {
+          const newDate = new Date(this._dragOrigDate.getTime() + dayDelta * 24 * 60 * 60 * 1000);
+          if (newDate.getTime() <= entry.endDate.getTime()) {
+            this.dispatchEvent(new CustomEvent('task-edit', {
+              detail: { id: entry.task.id, createdAt: newDate.toISOString().slice(0, 10) },
+              bubbles: true,
+              composed: true
+            }));
+          }
+        } else if (this._dragType === 'right') {
+          const newDate = new Date(this._dragOrigDate.getTime() + dayDelta * 24 * 60 * 60 * 1000);
+          if (newDate.getTime() >= entry.startDate.getTime()) {
+            this.dispatchEvent(new CustomEvent('task-edit', {
+              detail: { id: entry.task.id, dueDate: newDate.toISOString().slice(0, 10) },
+              bubbles: true,
+              composed: true
+            }));
           }
         }
       }
@@ -88,6 +142,7 @@ class GanttView extends LitElement {
       this._dragStartX = null;
       this._dragOrigDate = null;
       this._dragPx = 0;
+      this._dragType = null;
       window.removeEventListener('pointermove', this._onPointerMove);
       window.removeEventListener('pointerup', this._onPointerUp);
       this.requestUpdate();
@@ -391,10 +446,11 @@ class GanttView extends LitElement {
   render() {
     const timeline = this.getTimelineModel();
     const ticks = this.buildTimelineTicks(timeline.startDate, timeline.totalDays);
-    const laneWidthPx = 1200; // SVG width for each lane, ~2 months
+    const months = this.buildMonthTicks(timeline.startDate, timeline.totalDays);
+    const laneWidthPx = Math.max(700, timeline.totalDays * 40); // 40px per day, min 700px
     const barHeight = 20;
     const handleRadius = 7;
-    const svgHeight = 8; // Further shrink row height, keep bar/handles centered
+    const svgHeight = 48;
 
     return html`
       <div class="toolbar">
@@ -412,48 +468,70 @@ class GanttView extends LitElement {
           ? html`
               <div class="header">
                 <div class="header-title">Task Timeline</div>
-                <div class="timeline-grid header-title">
-                  ${ticks.map((tick) => html`<div class="tick">${tick.label}</div>`)}
-                </div>
-              </div>
-              ${timeline.visibleTasks.map((entry, idx) => {
-                const { x, width } = this.getBarGeometry(entry, timeline.startDate, timeline.totalDays, laneWidthPx);
-                const y = (svgHeight - barHeight) / 2;
-                // If dragging this bar, offset by drag px
-                const dragPx = (this._dragTaskIdx === idx) ? this._dragPx : 0;
-                return html`
-                  <div class="row" style="min-height:${svgHeight}px;">
-                    <div class="task-cell">
-                      <div class="gantt-task-title" title=${entry.task.text}>${entry.task.text}</div>
+                <div class="gantt-header-grid">
+                  <div class="gantt-header-fixed">
+                    <div class="tick" style="font-weight:700;">Task</div>
+                    <div class="tick" style="font-weight:700;">Status</div>
+                  </div>
+                  <div class="gantt-header-scroll" style="width:${laneWidthPx}px;">
+                    <div class="month-row">
+                      ${months.map(month => html`<div class="month-cell" style="grid-column: span ${month.span};">${month.label}</div>`)}
                     </div>
-                    <div class="lane" style="position:relative;min-height:${svgHeight}px;">
-                      <svg width="${laneWidthPx}" height="${svgHeight}" style="display:block;overflow:visible;">
-                        <!-- Date label above bar -->
-                        <text x="${x+dragPx}" y="${y-4}" text-anchor="start" font-size="11" fill="#888">
-                          ${formatHeaderDate(entry.startDate)}
-                        </text>
-                        <!-- Bar -->
-                        <rect x="${x+dragPx}" y="${y}" width="${width}" height="${barHeight}" rx="3" fill="#ECECFE" stroke="#bfc7e6" stroke-width="2" />
-                        <!-- Left handle -->
-                        <circle
-                          cx="${x+dragPx}"
-                          cy="${y+barHeight/2}"
-                          r="${handleRadius}"
-                          fill="#facc15" stroke="#fff" stroke-width="1.5"
-                          style="cursor:ew-resize;"
-                          @pointerdown=${(ev) => this._onLeftHandlePointerDown(idx, ev, entry, timeline, laneWidthPx)}
-                        />
-                        <!-- Center handle -->
-                        <circle cx="${x+width/2+dragPx}" cy="${y+barHeight/2}" r="${handleRadius}" fill="#ef4444" stroke="#fff" stroke-width="1.5" />
-                        <!-- Right handle -->
-                        <circle cx="${x+width+dragPx}" cy="${y+barHeight/2}" r="${handleRadius}" fill="#3b82f6" stroke="#fff" stroke-width="1.5" />
-                        <!-- Task label -->
-                        <text x="${x+width/2+dragPx}" y="${y+barHeight/2+4}" text-anchor="middle" font-size="13" fill="#333">${entry.task.text}</text>
-                      </svg>
+                    <div class="day-row">
+                      ${ticks.map((tick) => html`<div class="day-cell">${tick.label}</div>`)}
                     </div>
                   </div>
-                `;
-              })}
+                </div>
+              </div>
+              <div class="gantt-body">
+                <div class="gantt-body-fixed">
+                  ${timeline.visibleTasks.map((entry) => html`
+                    <div class="task-cell"><div class="gantt-task-title" title=${entry.task.text}>${entry.task.text}</div></div>
+                    <div class="task-cell"><div class="gantt-task-status" title=${entry.task.section || entry.task.status || ''}>${entry.task.section || entry.task.status || ''}</div></div>
+                  `)}
+                </div>
+                <div class="gantt-body-scroll" style="width:${laneWidthPx}px;">
+                  ${timeline.visibleTasks.map((entry, idx) => {
+                    const { x, width } = this.getBarGeometry(entry, timeline.startDate, timeline.totalDays, laneWidthPx);
+                    const y = (svgHeight - barHeight) / 2;
+                    const dragPx = (this._dragTaskIdx === idx) ? this._dragPx : 0;
+                    const leftHandleX = x + dragPx;
+                    const centerHandleX = x + width/2 + dragPx;
+                    const rightHandleX = x + width + dragPx;
+                    return html`
+                      <div class="lane" style="position:relative;min-height:${svgHeight}px;">
+                        <svg width="${laneWidthPx}" height="${svgHeight}" style="display:block;overflow:visible;">
+                          <!-- Bar and handles -->
+                          <rect x="${leftHandleX}" y="${y}" width="${width}" height="${barHeight}" rx="12" fill="#ECECFE" stroke="#bfc7e6" stroke-width="2" />
+                          <circle
+                            cx="${leftHandleX}"
+                            cy="${y+barHeight/2}"
+                            r="${handleRadius}"
+                            fill="#facc15" stroke="#fff" stroke-width="2"
+                            style="cursor:ew-resize;"
+                            @pointerdown=${(ev) => this._onLeftHandlePointerDown(idx, ev, entry, timeline, laneWidthPx)}
+                          />
+                          <circle
+                            cx="${centerHandleX}"
+                            cy="${y+barHeight/2}"
+                            r="${handleRadius}"
+                            fill="#ef4444" stroke="#fff" stroke-width="2"
+                          />
+                          <circle
+                            cx="${rightHandleX}"
+                            cy="${y+barHeight/2}"
+                            r="${handleRadius}"
+                            fill="#3b82f6" stroke="#fff" stroke-width="2"
+                            style="cursor:pointer;"
+                            @pointerdown=${(ev) => this._onRightHandlePointerDown(idx, ev, entry, timeline, laneWidthPx)}
+                          />
+                          <text x="${centerHandleX}" y="${y+barHeight/2+4}" text-anchor="middle" font-size="13" fill="#333">${entry.task.text}</text>
+                        </svg>
+                      </div>
+                    `;
+                  })}
+                </div>
+              </div>
             `
           : html`<div class="empty">No tasks available for the current filters.</div>`}
       </section>

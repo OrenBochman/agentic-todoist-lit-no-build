@@ -57,13 +57,28 @@ describe('Gantt View Unit Tests', () => {
 
   it('renders a gantt row for each visible task', async () => {
     const view = createGanttView([
-      { id: '1', text: 'Plan', completed: false, createdAt: '2026-04-01', dueDate: '2026-04-03' },
-      { id: '2', text: 'Ship', completed: false, createdAt: '2026-04-02', dueDate: '2026-04-04' },
+      { id: '1', text: 'Plan', completed: false, createdAt: '2026-04-01', dueDate: '2026-04-03', section: 'In Progress' },
+      { id: '2', text: 'Ship', completed: false, createdAt: '2026-04-02', dueDate: '2026-04-04', section: 'Review' },
     ]);
     document.body.append(view);
     await view.updateComplete;
 
-    expect(view.shadowRoot.querySelectorAll('.row').length).to.equal(2);
-    expect(view.shadowRoot.querySelectorAll('.bar').length).to.equal(2);
+    // Check that there are two rows
+    const rows = view.shadowRoot.querySelectorAll('.row');
+    expect(rows.length).to.equal(2);
+
+    // Check that each row has a status cell with the correct value
+    const statusCells = Array.from(view.shadowRoot.querySelectorAll('.gantt-task-status'));
+    expect(statusCells.length).to.equal(2);
+    expect(statusCells[0].textContent).to.include('In Progress');
+    expect(statusCells[1].textContent).to.include('Review');
+
+    // Check that there are two bars (SVG rects)
+    const svgs = view.shadowRoot.querySelectorAll('svg');
+    let barCount = 0;
+    svgs.forEach(svg => {
+      barCount += svg.querySelectorAll('rect').length;
+    });
+    expect(barCount).to.equal(2);
   });
 });

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Gantt Web Component Prototype</title>
+  <style>
+    body { margin: 0; padding: 24px; background: #f8fafc; font-family: Inter, Arial, sans-serif; }
+    gantt-chart { display: block; max-width: 1280px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <gantt-chart></gantt-chart>
+
+  <script type="module">
+    class GanttChart extends HTMLElement {
+      connectedCallback() {
+        const tasks = [
+          { id: "t1", name: "Research", owner: "Dana", start: 2, duration: 6, color: "#60a5fa" },
+          { id: "t2", name: "Wireframes", owner: "Oren", start: 11, duration: 7, color: "#34d399", dependsOn: "t1" },
+          { id: "t3", name: "Web Component", owner: "Maya", start: 21, duration: 8, color: "#a78bfa", dependsOn: "t2" },
+          { id: "t4", name: "Dependency Logic", owner: "Noam", start: 32, duration: 6, color: "#f59e0b", dependsOn: "t3" },
+          { id: "t5", name: "Integration", owner: "Lia", start: 38, duration: 7, color: "#fb7185", dependsOn: "t4" },
+          { id: "t6", name: "QA Pass", owner: "Avi", start: 47, duration: 6, color: "#22c55e", dependsOn: "t5" }
+        ];
+
+        const dayWidth = 20;
+        const rowHeight = 60;
+        const barHeight = 20;
+        const leftPanel = 292;
+        const width = 1280;
+        const height = 620;
+        const top = 110;
+        const headerH = 56;
+        const rowsTop = top + headerH;
+        const svgX = 52;
+        const timelineX = svgX + leftPanel;
+
+        const taskMap = new Map(tasks.map((t, i) => [t.id, { ...t, row: i }]));
+
+        const barGeom = (task) => {
+          const x = timelineX + task.start * dayWidth;
+          const y = rowsTop + task.row * rowHeight + 12;
+          const w = task.duration * dayWidth;
+          return {
+            x, y, w, h: barHeight,
+            left: { x, y: y + barHeight / 2 },
+            mid: { x: x + w / 2, y: y + barHeight / 2 },
+            right: { x: x + w, y: y + barHeight / 2 }
+          };
+        };
+
+        const rows = tasks.map((task, i) => {
+          const g = barGeom(task);
+          return `
+            <text x="64" y="${rowsTop + i * rowHeight + 24}" class="label">${task.name}</text>
+            <text x="272" y="${rowsTop + i * rowHeight + 24}" text-anchor="end" class="small">${task.owner}</text>
+
+            <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="10" fill="${task.color}"/>
+            <circle cx="${g.left.x}" cy="${g.left.y}" r="5.5" fill="#facc15" stroke="#fff" stroke-width="1.2"/>
+            <circle cx="${g.mid.x}" cy="${g.mid.y}" r="5.5" fill="#ef4444" stroke="#fff" stroke-width="1.2"/>
+            <circle cx="${g.right.x}" cy="${g.right.y}" r="5.5" fill="#2563eb" stroke="#fff" stroke-width="1.2"/>
+          `;
+        }).join("");
+
+        const deps = tasks
+          .filter(t => t.dependsOn)
+          .map(task => {
+            const source = barGeom(taskMap.get(task.dependsOn));
+            const target = barGeom(task);
+            const sx = source.right.x;
+            const sy = source.right.y;
+            const tx = target.left.x;
+            const ty = target.left.y;
+            const elbow = Math.max(sx + 28, tx - 20); // stay mostly rightward before dropping
+            return `<path class="dep" marker-end="url(#arrowHead)"
+              d="M${sx},${sy} H${elbow} Q${elbow + 12},${sy} ${elbow + 12},${sy + 12}
+                 V${ty - 12} Q${elbow + 12},${ty} ${Math.min(elbow + 24, tx - 8)},${ty}
+                 H${tx}" />`;
+          })
+          .join("");
+
+        const dayLines = Array.from({ length: 22 }, (_, i) => {
+          const x = timelineX + i * 40;
+          const day = i < 16 ? 1 + i * 2 : 2 + (i - 16) * 2;
+          return `
+            <line x1="${x}" y1="${top}" x2="${x}" y2="${top + 430}" class="grid"/>
+            <text x="${x + 20}" y="${top + 46}" text-anchor="middle" class="day">${day}</text>
+          `;
+        }).join("");
+
+        const rowLines = Array.from({ length: 7 }, (_, i) => {
+          const y = top + 56 + i * 60;
+          return `<line x1="${svgX}" y1="${y}" x2="${svgX + 1172}" y2="${y}" class="rowline"/>`;
+        }).join("");
+
+        this.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <defs>
+              <style>
+                .title { font: 700 24px Inter, Arial, sans-serif; fill: #111827; }
+                .subtitle { font: 500 12px Inter, Arial, sans-serif; fill: #6b7280; }
+                .label { font: 600 13px Inter, Arial, sans-serif; fill: #111827; }
+                .small { font: 500 11px Inter, Arial, sans-serif; fill: #6b7280; }
+                .header { font: 700 12px Inter, Arial, sans-serif; fill: #374151; }
+                .day { font: 500 11px Inter, Arial, sans-serif; fill: #6b7280; }
+                .grid { stroke: #eef2f7; stroke-width: 1; }
+                .rowline { stroke: #f3f4f6; stroke-width: 1; }
+                .panel { fill: #ffffff; stroke: #e5e7eb; stroke-width: 1; }
+                .timeline-bg { fill: #fafafa; }
+                .dep { stroke: #64748b; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+              </style>
+              <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="7.5" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+                <path d="M1,1 L9,5 L1,9 Z" fill="#64748b"/>
+              </marker>
+            </defs>
+
+            <rect width="${width}" height="${height}" fill="#f8fafc"/>
+            <rect x="28" y="28" width="1224" height="564" rx="18" class="panel"/>
+
+            <text x="52" y="66" class="title">Project Plan</text>
+            <text x="52" y="88" class="subtitle">Web component prototype</text>
+
+            <rect x="${timelineX}" y="${top}" width="880" height="430" class="timeline-bg"/>
+            <rect x="52" y="${top}" width="${leftPanel}" height="430" fill="#fff"/>
+            <line x1="${svgX + 290}" y1="${top}" x2="${svgX + 290}" y2="${top + 430}" stroke="#e5e7eb"/>
+
+            <text x="64" y="${top + 22}" class="header">Task</text>
+            <text x="272" y="${top + 22}" text-anchor="end" class="header">Owner</text>
+
+            <rect x="${timelineX}" y="${top}" width="880" height="28" fill="#fff"/>
+            <rect x="${timelineX}" y="${top + 28}" width="880" height="28" fill="#f8fafc"/>
+            <text x="${timelineX + 120}" y="${top + 18}" class="header">May</text>
+            <text x="${timelineX + 456}" y="${top + 18}" class="header">June</text>
+            <text x="${timelineX + 760}" y="${top + 18}" class="header">July</text>
+
+            ${dayLines}
+            ${rowLines}
+            ${rows}
+            ${deps}
+          </svg>
+        `;
+      }
+    }
+
+    customElements.define("gantt-chart", GanttChart);
+  </script>
+</body>
+</html>
