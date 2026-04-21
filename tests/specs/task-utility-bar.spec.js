@@ -1,6 +1,9 @@
 import { expect, waitForRender } from '../helpers/browser-test-harness.js';
 import { mountTaskUtilityBar } from '../fixtures/task-utility-bar.fixture.js';
 
+const getThemeButton = (fixture) => fixture.bar.shadowRoot.querySelector('wa-button[theme-icon]');
+const getThemeIcon = (fixture) => getThemeButton(fixture)?.querySelector('wa-icon');
+
 describe('task-utility-bar regression', () => {
   let fixture;
   beforeEach(async () => {
@@ -8,20 +11,23 @@ describe('task-utility-bar regression', () => {
   });
 
   it('renders the theme toggle button', () => {
-    const button = fixture.bar.shadowRoot.querySelector('wa-button');
+    const button = getThemeButton(fixture);
     expect(button, 'Theme toggle button should exist.').to.exist;
   });
 
-  it('theme toggle button has correct label for light mode', () => {
-    const button = fixture.bar.shadowRoot.querySelector('wa-button');
-    expect(button.textContent, 'Theme toggle button should say Dark Mode in light mode.').to.include('Dark Mode');
+  it('theme toggle button shows the light-mode affordance', () => {
+    const button = getThemeButton(fixture);
+    const icon = getThemeIcon(fixture);
+
+    expect(button?.getAttribute('aria-label'), 'Theme toggle button should expose an accessible label.').to.equal('Toggle dark mode');
+    expect(icon?.getAttribute('name'), 'Light mode should show the moon icon to indicate dark-mode toggle.').to.equal('moon');
   });
 
   it('toggles dark mode and updates theme property', async () => {
     fixture.bar.addEventListener('theme-toggle', () => {
       fixture.bar.theme = fixture.bar.theme === 'dark' ? 'light' : 'dark';
     });
-    const button = fixture.bar.shadowRoot.querySelector('wa-button');
+    const button = getThemeButton(fixture);
     button.click();
     await waitForRender();
     expect(fixture.bar.theme, 'Theme should be dark after first toggle.').to.equal('dark');
@@ -30,16 +36,16 @@ describe('task-utility-bar regression', () => {
     expect(fixture.bar.theme, 'Theme should be light after second toggle.').to.equal('light');
   });
 
-  it('theme toggle button label updates after toggling', async () => {
+  it('theme toggle icon updates after toggling', async () => {
     fixture.bar.addEventListener('theme-toggle', () => {
       fixture.bar.theme = fixture.bar.theme === 'dark' ? 'light' : 'dark';
     });
-    const button = fixture.bar.shadowRoot.querySelector('wa-button');
+    const button = getThemeButton(fixture);
     button.click();
     await waitForRender();
-    expect(button.textContent, 'Theme toggle button should say Light Mode in dark mode.').to.include('Light Mode');
+    expect(getThemeIcon(fixture)?.getAttribute('name'), 'Dark mode should switch the icon to sun.').to.equal('sun');
     button.click();
     await waitForRender();
-    expect(button.textContent, 'Theme toggle button should say Dark Mode in light mode.').to.include('Dark Mode');
+    expect(getThemeIcon(fixture)?.getAttribute('name'), 'Light mode should restore the moon icon.').to.equal('moon');
   });
 });

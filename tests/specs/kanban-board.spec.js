@@ -29,14 +29,17 @@ describe('Kanban Board Unit Tests', () => {
     ];
     const el = await mountKanbanBoard(tasks);
     const columns = el.shadowRoot.querySelectorAll('.column');
+    const upcomingTasks = [...columns[0].querySelectorAll('task-item')].map((item) => item.task?.text);
+    const inProgressTasks = [...columns[1].querySelectorAll('task-item')].map((item) => item.task?.text);
+    const doneTasks = [...columns[2].querySelectorAll('task-item')].map((item) => item.task?.text);
 
     expect(columns.length).to.equal(3);
     expect(columns[0].textContent).to.contain('Upcoming');
     expect(columns[1].textContent).to.contain('In Progress');
     expect(columns[2].textContent).to.contain('Done');
-    expect(columns[0].textContent).to.contain('Task 1');
-    expect(columns[1].textContent).to.contain('Task 2');
-    expect(columns[2].textContent).to.contain('Task 3');
+    expect(upcomingTasks).to.deep.equal(['Task 1']);
+    expect(inProgressTasks).to.deep.equal(['Task 2']);
+    expect(doneTasks).to.deep.equal(['Task 3']);
   });
 
   it('shows empty state for columns with no tasks', async () => {
