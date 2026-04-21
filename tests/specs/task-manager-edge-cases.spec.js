@@ -10,6 +10,7 @@ import {
   getDeleteButton,
   setTasks,
   setFilter,
+  setProjectFilter,
   waitForRender,
 } from './task-manager-test-helpers.js';
 
@@ -81,6 +82,32 @@ describe('Task Manager Edge Cases', () => {
 
     expect(fixture.app.tasks.length, 'Only pending task should remain after deleting in filtered view.').to.equal(1);
     expect(fixture.app.tasks[0]?.text, 'Pending task should remain.').to.equal('pending task');
+  });
+
+  it('should filter both views by the selected project, using default project for unassigned tasks', async () => {
+    const fixture = getFixture();
+    await setTasks(fixture.app, [
+      { id: 'task-a', text: 'Inbox', completed: false, createdAt: new Date().toISOString(), project: null },
+      { id: 'task-b', text: 'Work item', completed: false, createdAt: new Date().toISOString(), project: 'Work', inProgress: true },
+    ]);
+
+    await setProjectFilter(fixture.app, 'Work');
+    expect(getBoardItems().map((item) => item.task.text)).to.deep.equal(['Work item']);
+
+    const kanbanToggle = fixture.appShadow.querySelector('wa-button');
+    expect(kanbanToggle, 'Kanban toggle button should exist.').to.exist;
+    kanbanToggle.click();
+    await waitForRender();
+
+    const kanbanBoard = fixture.appShadow.querySelector('kanban-board');
+    expect(kanbanBoard, 'Kanban board should render after toggling view.').to.exist;
+    const kanbanItems = [...kanbanBoard.shadowRoot.querySelectorAll('task-item')];
+    expect(kanbanItems.map((item) => item.task.text)).to.deep.equal(['Work item']);
+
+    await setProjectFilter(fixture.app, 'default-project');
+    await waitForRender();
+    const defaultProjectItems = [...kanbanBoard.shadowRoot.querySelectorAll('task-item')];
+    expect(defaultProjectItems.map((item) => item.task.text)).to.deep.equal(['Inbox']);
   });
 
   it('should delete a task from kanban view (unit: edge case)', async () => {

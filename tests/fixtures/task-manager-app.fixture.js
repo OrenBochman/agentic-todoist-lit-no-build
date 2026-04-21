@@ -12,6 +12,10 @@ export const setFilter = async (app, filter) => {
   app.filter = filter;
   await waitForRender();
 };
+export const setProjectFilter = async (app, projectFilter) => {
+  app.projectFilter = projectFilter;
+  await waitForRender();
+};
 export const setTheme = async (app, theme) => {
   app.theme = theme;
   await waitForRender();

@@ -1,5 +1,6 @@
 import '../../components/kanban-board.js';
 import { expect } from '../helpers/browser-test-harness.js';
+import { DEFAULT_PROJECT_FILTER } from '../../components/task-project.js';
 
 const createKanbanBoard = (tasks = []) => {
   const board = document.createElement('kanban-board');
@@ -175,6 +176,26 @@ describe('Kanban Board Unit Tests', () => {
     expect(columns.upcoming.map((task) => task.text)).to.deep.equal(['Queued']);
     expect(columns['in-progress'].map((task) => task.text)).to.deep.equal(['Working']);
     expect(columns.done.map((task) => task.text)).to.deep.equal(['Shipped']);
+  });
+
+  it('filters kanban columns by project, treating missing projects as the default project', () => {
+    const board = createKanbanBoard([
+      { id: '1', text: 'Inbox', completed: false, project: null },
+      { id: '2', text: 'Working', completed: false, project: 'Work', inProgress: true },
+      { id: '3', text: 'Done work', completed: true, project: 'Work' },
+    ]);
+    board.projectFilter = DEFAULT_PROJECT_FILTER;
+
+    let columns = board.getColumns();
+    expect(columns.upcoming.map((task) => task.text)).to.deep.equal(['Inbox']);
+    expect(columns['in-progress']).to.deep.equal([]);
+    expect(columns.done).to.deep.equal([]);
+
+    board.projectFilter = 'Work';
+    columns = board.getColumns();
+    expect(columns.upcoming).to.deep.equal([]);
+    expect(columns['in-progress'].map((task) => task.text)).to.deep.equal(['Working']);
+    expect(columns.done.map((task) => task.text)).to.deep.equal(['Done work']);
   });
 
   it('emits task-move when a task payload is dropped into a different column', async () => {

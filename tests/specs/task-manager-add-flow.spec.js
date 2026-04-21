@@ -6,6 +6,7 @@ import {
   addTaskWithHostInput,
   addTaskWithNativeInput,
   getBoardItem,
+  setProjectFilter,
 } from './task-manager-test-helpers.js';
 
 describe('Task Manager Add Flow Regression', () => {
@@ -89,5 +90,33 @@ describe('Task Manager Add Flow Regression', () => {
       getBoardItem()?.task?.text,
       'Board should render the live native input value after add.',
     ).to.equal('native add task');
+  });
+
+  it('inherits the active named project filter when adding a task without a project', async () => {
+    const fixture = getFixture();
+    await setProjectFilter(fixture.app, 'Work');
+
+    await addTaskWithHostInput('follow up');
+
+    expect(fixture.app.tasks[0]?.project).to.equal('Work');
+    expect(getBoardItem()?.task?.project).to.equal('Work');
+  });
+
+  it('keeps tasks unassigned when adding under the default project filter', async () => {
+    const fixture = getFixture();
+    await setProjectFilter(fixture.app, 'default-project');
+
+    await addTaskWithHostInput('inbox item');
+
+    expect(fixture.app.tasks[0]?.project).to.equal(null);
+  });
+
+  it('preserves an explicit project in the input over the active project filter', async () => {
+    const fixture = getFixture();
+    await setProjectFilter(fixture.app, 'Work');
+
+    await addTaskWithHostInput('review notes #Personal');
+
+    expect(fixture.app.tasks[0]?.project).to.equal('Personal');
   });
 });

@@ -1,7 +1,9 @@
 import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import './drop-target-element.js';
+import './task-filter-bar.js';
 import './task-item.js';
 import { getTaskStatus } from './task-status.js';
+import { ALL_PROJECTS_FILTER, matchesProjectFilter } from './task-project.js';
 
 /**
  * Kanban board with four columns: Upcoming, In Progress, Review, Done
@@ -38,6 +40,8 @@ class KanbanBoard extends LitElement {
     }
   }
   static properties = {
+    filter: { type: String },
+    projectFilter: { type: String, attribute: 'project-filter' },
     tasks: { type: Array },
   };
 
@@ -52,6 +56,11 @@ class KanbanBoard extends LitElement {
       gap: 24px;
       align-items: flex-start;
       min-height: 320px;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
     }
     .column {
       background: var(--panel-background, #23272e);
@@ -105,6 +114,8 @@ class KanbanBoard extends LitElement {
 
   constructor() {
     super();
+    this.filter = 'all';
+    this.projectFilter = ALL_PROJECTS_FILTER;
     this.tasks = [];
   }
 
@@ -135,6 +146,18 @@ class KanbanBoard extends LitElement {
       done: [],
     };
     for (const task of this.tasks) {
+      if (!matchesProjectFilter(task, this.projectFilter)) {
+        continue;
+      }
+
+      if (this.filter === 'pending' && task.completed) {
+        continue;
+      }
+
+      if (this.filter === 'completed' && !task.completed) {
+        continue;
+      }
+
       const status = getTaskStatus(task);
       if (status === 'done') {
         columns.done.push(task);
@@ -179,6 +202,15 @@ class KanbanBoard extends LitElement {
     `;
 
     return html`
+      <div class="toolbar">
+        <task-filter-bar
+          .filter=${this.filter}
+          .projectFilter=${this.projectFilter}
+          .tasks=${this.tasks}
+          @filter-change=${this._bubbleEvent}
+          @project-filter-change=${this._bubbleEvent}
+        ></task-filter-bar>
+      </div>
       <div class="kanban">
         ${renderColumn('upcoming', 'Upcoming', '/up', columns.upcoming, 'No upcoming tasks')}
         ${renderColumn('in-progress', 'In Progress', '/in', columns['in-progress'], 'No tasks in progress')}

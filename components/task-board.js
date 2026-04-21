@@ -1,6 +1,7 @@
 import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import './task-filter-bar.js';
 import './task-item.js';
+import { ALL_PROJECTS_FILTER, matchesProjectFilter } from './task-project.js';
 
 /**
  * @typedef {Object} TaskRecord
@@ -24,6 +25,7 @@ import './task-item.js';
 class TaskBoard extends LitElement {
   static properties = {
     filter: { type: String },
+    projectFilter: { type: String, attribute: 'project-filter' },
     tasks: { type: Array },
   };
 
@@ -72,6 +74,7 @@ class TaskBoard extends LitElement {
   constructor() {
     super();
     this.filter = 'all';
+    this.projectFilter = ALL_PROJECTS_FILTER;
     /** @type {TaskRecord[]} */
     this.tasks = [];
   }
@@ -84,7 +87,13 @@ class TaskBoard extends LitElement {
         <div>
           <h2 class="panel-title">Current tasks</h2>
         </div>
-        <task-filter-bar .filter=${this.filter} @filter-change=${this.emitFilterChange}></task-filter-bar>
+        <task-filter-bar
+          .filter=${this.filter}
+          .projectFilter=${this.projectFilter}
+          .tasks=${this.tasks}
+          @filter-change=${this.emitFilterChange}
+          @project-filter-change=${this.emitProjectFilterChange}
+        ></task-filter-bar>
       </div>
 
       <div class="list">
@@ -110,15 +119,21 @@ class TaskBoard extends LitElement {
   getVisibleTasks() {
     const tasks = Array.isArray(this.tasks) ? this.tasks : [];
 
-    if (this.filter === 'pending') {
-      return tasks.filter((task) => !task.completed);
-    }
+    return tasks.filter((task) => {
+      if (!matchesProjectFilter(task, this.projectFilter)) {
+        return false;
+      }
 
-    if (this.filter === 'completed') {
-      return tasks.filter((task) => task.completed);
-    }
+      if (this.filter === 'pending') {
+        return !task.completed;
+      }
 
-    return tasks;
+      if (this.filter === 'completed') {
+        return task.completed;
+      }
+
+      return true;
+    });
   }
 
   /**
@@ -132,6 +147,18 @@ class TaskBoard extends LitElement {
         bubbles: true,
         composed: true,
         detail: { filter },
+      }),
+    );
+  }
+
+  emitProjectFilterChange(event) {
+    event.stopPropagation();
+    const projectFilter = event.detail.projectFilter;
+    this.dispatchEvent(
+      new CustomEvent('project-filter-change', {
+        bubbles: true,
+        composed: true,
+        detail: { projectFilter },
       }),
     );
   }

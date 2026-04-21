@@ -1,6 +1,6 @@
 import { css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import { LitReduxElement } from './components/lit-redux-element.js';
-import { store, setTasks, addTask, editTask, toggleTask, deleteTask, setFilter, setTheme } from './components/redux-store.js';
+import { store, setTasks, addTask, editTask, toggleTask, deleteTask, setFilter, setProjectFilter, setTheme } from './components/redux-store.js';
 import './components/task-composer.js';
 import './components/task-board.js';
 import './components/task-hero.js';
@@ -9,6 +9,12 @@ import './components/task-snackbar.js';
 import './components/task-transfer-controls.js';
 import './components/task-utility-bar.js';
 import { parseTaskInput } from './components/task-input-codec.js';
+import {
+  ALL_PROJECTS_FILTER,
+  isNamedProjectFilter,
+  matchesProjectFilter,
+  normalizeTaskProject,
+} from './components/task-project.js';
 
 const STORAGE_KEY = 'task-manager-items';
 const THEME_STORAGE_KEY = 'task-manager-theme';
@@ -53,7 +59,7 @@ function getWebMcpConstructor() {
  * Owns persisted task state, theme state, and WebMCP tool registration.
  */
 class TaskManagerApp extends LitReduxElement {
-  // --- Compatibility: expose .tasks, .filter, .theme for tests/tools ---
+  // --- Compatibility: expose .tasks, .filter, .projectFilter, .theme for tests/tools ---
   get tasks() {
     return this.reduxState.tasks;
   }
@@ -68,6 +74,14 @@ class TaskManagerApp extends LitReduxElement {
   }
   set filter(val) {
     this.dispatch(setFilter(val));
+    this.requestUpdate();
+  }
+
+  get projectFilter() {
+    return this.reduxState.projectFilter;
+  }
+  set projectFilter(val) {
+    this.dispatch(setProjectFilter(val));
     this.requestUpdate();
   }
 
@@ -169,7 +183,7 @@ class TaskManagerApp extends LitReduxElement {
   }
 
   render() {
-    const { tasks, filter, theme } = this.reduxState;
+    const { tasks, filter, projectFilter, theme } = this.reduxState;
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter((task) => task.completed).length;
     const pendingTasks = totalTasks - completedTasks;
@@ -209,7 +223,11 @@ class TaskManagerApp extends LitReduxElement {
 
           ${this.showKanban
             ? html`<kanban-board
+                .filter=${filter}
+                .projectFilter=${projectFilter}
                 .tasks=${tasks}
+                @filter-change=${this.handleFilterChange}
+                @project-filter-change=${this.handleProjectFilterChange}
                 @task-edit=${this.handleTaskEdit}
                 @task-toggle=${this.handleTaskToggle}
                 @task-delete=${this.handleTaskDelete}
@@ -217,8 +235,10 @@ class TaskManagerApp extends LitReduxElement {
               ></kanban-board>`
             : html`<task-board
                 .filter=${filter}
+                .projectFilter=${projectFilter}
                 .tasks=${tasks}
                 @filter-change=${this.handleFilterChange}
+                @project-filter-change=${this.handleProjectFilterChange}
                 @task-edit=${this.handleTaskEdit}
                 @task-toggle=${this.handleTaskToggle}
                 @task-delete=${this.handleTaskDelete}
@@ -344,6 +364,8 @@ class TaskManagerApp extends LitReduxElement {
   handleTaskAdd(event) {
     const taskDetails = event.detail ?? {};
     const taskText = String(taskDetails.text || '').trim();
+    const explicitProject = normalizeTaskProject(taskDetails.project);
+    const inheritedProject = isNamedProjectFilter(this.projectFilter) ? this.projectFilter : null;
 
     if (!taskText) {
       return;
@@ -355,7 +377,7 @@ class TaskManagerApp extends LitReduxElement {
       completed: Boolean(taskDetails.completed),
       createdAt: new Date().toISOString(),
       dueDate: taskDetails.dueDate ?? null,
-      project: taskDetails.project ?? null,
+      project: explicitProject ?? inheritedProject,
       importance: taskDetails.importance ?? null,
       dependsOn: Array.isArray(taskDetails.dependsOn) ? taskDetails.dependsOn : [],
       workloadEstimate: typeof taskDetails.workloadEstimate === 'number' ? taskDetails.workloadEstimate : 4,
@@ -375,6 +397,10 @@ class TaskManagerApp extends LitReduxElement {
   handleFilterChange(event) {
     this.dispatch(setFilter(event.detail.filter));
   }
+
+  handleProjectFilterChange = (event) => {
+    this.dispatch(setProjectFilter(event.detail.projectFilter || ALL_PROJECTS_FILTER));
+  };
 
   /**
    * Toggles completion state for the requested task id.
@@ -686,7 +712,7 @@ class TaskManagerApp extends LitReduxElement {
         },
         (args = {}) => {
           const filter = args.filter || 'all';
-          const tasks = this.getFilteredTasks(filter);
+          const tasks = this.getFilteredTasks(filter, this.projectFilter);
           const lines = tasks.length
             ? tasks.map((task, index) => `${index + 1}. [${task.completed ? 'x' : ' '}] ${task.text} (${task.id})`)
             : ['No tasks found for this filter.'];
@@ -797,16 +823,22 @@ class TaskManagerApp extends LitReduxElement {
   /**
    * Returns the task list subset used by both the UI and the browse_tasks tool.
    */
-  getFilteredTasks(filter) {
-    if (filter === 'pending') {
-      return this.tasks.filter((task) => !task.completed);
-    }
+  getFilteredTasks(filter, projectFilter = ALL_PROJECTS_FILTER) {
+    return this.tasks.filter((task) => {
+      if (!matchesProjectFilter(task, projectFilter)) {
+        return false;
+      }
 
-    if (filter === 'completed') {
-      return this.tasks.filter((task) => task.completed);
-    }
+      if (filter === 'pending') {
+        return !task.completed;
+      }
 
-    return this.tasks;
+      if (filter === 'completed') {
+        return task.completed;
+      }
+
+      return true;
+    });
   }
 
   /**

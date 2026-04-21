@@ -4,6 +4,7 @@ import {
   mountTaskManagerApp,
   setTasks,
   setFilter,
+  setProjectFilter,
 } from '../fixtures/task-manager-app.fixture.js';
 
 let fixture;
@@ -104,4 +105,5 @@ export {
   waitForRender,
   setTasks,
   setFilter,
+  setProjectFilter,
 };

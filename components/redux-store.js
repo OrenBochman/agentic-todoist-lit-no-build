@@ -6,6 +6,7 @@ import { configureStore, createSlice } from 'https://esm.sh/@reduxjs/toolkit@1.9
 const initialState = {
   tasks: [],
   filter: 'all',
+  projectFilter: 'all-projects',
   theme: 'light',
 };
 
@@ -35,6 +36,9 @@ const tasksSlice = createSlice({
     setFilter(state, action) {
       state.filter = action.payload;
     },
+    setProjectFilter(state, action) {
+      state.projectFilter = action.payload;
+    },
     setTheme(state, action) {
       state.theme = action.payload;
     },
@@ -42,7 +46,7 @@ const tasksSlice = createSlice({
 });
 
 export const {
-  setTasks, addTask, editTask, toggleTask, deleteTask, setFilter, setTheme
+  setTasks, addTask, editTask, toggleTask, deleteTask, setFilter, setProjectFilter, setTheme
 } = tasksSlice.actions;
 
 export const store = configureStore({
@@ -52,5 +56,6 @@ export const store = configureStore({
 export const resetStoreState = () => {
   store.dispatch(setTasks([]));
   store.dispatch(setFilter('all'));
+  store.dispatch(setProjectFilter('all-projects'));
   store.dispatch(setTheme('light'));
 };

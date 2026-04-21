@@ -16,6 +16,14 @@ export const mountTaskFilterBar = async (opts = {}) => {
     filterBar.filter = opts.filter;
   }
 
+  if (typeof opts.projectFilter === 'string') {
+    filterBar.projectFilter = opts.projectFilter;
+  }
+
+  if (Array.isArray(opts.tasks)) {
+    filterBar.tasks = opts.tasks;
+  }
+
   mount.append(filterBar);
   await customElements.whenDefined('task-filter-bar');
   await waitForRender();
@@ -25,5 +33,6 @@ export const mountTaskFilterBar = async (opts = {}) => {
     filterBar,
     shadow: filterBar.shadowRoot,
     buttons: [...filterBar.shadowRoot.querySelectorAll('button')],
+    projectSelect: filterBar.shadowRoot.querySelector('select'),
   };
 };

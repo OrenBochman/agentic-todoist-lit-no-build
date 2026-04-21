@@ -1,5 +1,6 @@
 import { expect, waitForRender } from '../helpers/browser-test-harness.js';
 import { mountTaskBoard } from '../fixtures/task-board.fixture.js';
+import { DEFAULT_PROJECT_FILTER } from '../../components/task-project.js';
 
 describe('Task Board Unit Tests', () => {
   it('renders the empty state when there are no visible tasks', async () => {
@@ -27,6 +28,21 @@ describe('Task Board Unit Tests', () => {
     ]);
   });
 
+  it('filters tasks by named project and maps missing projects into the default project', async () => {
+    const tasks = [
+      { id: 'default', text: 'Inbox task', completed: false, createdAt: new Date().toISOString(), project: null },
+      { id: 'work', text: 'Work task', completed: false, createdAt: new Date().toISOString(), project: 'Work' },
+    ];
+
+    const defaultFixture = await mountTaskBoard({ tasks, projectFilter: DEFAULT_PROJECT_FILTER });
+    let renderedItems = [...defaultFixture.shadow.querySelectorAll('task-item')];
+    expect(renderedItems.map((item) => item.task.text)).to.deep.equal(['Inbox task']);
+
+    const workFixture = await mountTaskBoard({ tasks, projectFilter: 'Work' });
+    renderedItems = [...workFixture.shadow.querySelectorAll('task-item')];
+    expect(renderedItems.map((item) => item.task.text)).to.deep.equal(['Work task']);
+  });
+
   it('forwards filter-change events from the filter bar', async () => {
     const fixture = await mountTaskBoard();
     let emittedDetail = null;
@@ -45,6 +61,26 @@ describe('Task Board Unit Tests', () => {
     await waitForRender();
 
     expect(emittedDetail).to.deep.equal({ filter: 'pending' });
+  });
+
+  it('forwards project-filter-change events from the filter bar', async () => {
+    const fixture = await mountTaskBoard();
+    let emittedDetail = null;
+
+    fixture.board.addEventListener('project-filter-change', (event) => {
+      emittedDetail = event.detail;
+    }, { once: true });
+
+    fixture.shadow.querySelector('task-filter-bar').dispatchEvent(
+      new CustomEvent('project-filter-change', {
+        bubbles: true,
+        composed: true,
+        detail: { projectFilter: DEFAULT_PROJECT_FILTER },
+      }),
+    );
+    await waitForRender();
+
+    expect(emittedDetail).to.deep.equal({ projectFilter: DEFAULT_PROJECT_FILTER });
   });
 
   it('forwards task interaction events with the original task payload', async () => {

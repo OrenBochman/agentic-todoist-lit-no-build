@@ -16,6 +16,10 @@ export const mountTaskBoard = async (opts = {}) => {
     board.filter = opts.filter;
   }
 
+  if (typeof opts.projectFilter === 'string') {
+    board.projectFilter = opts.projectFilter;
+  }
+
   if (Array.isArray(opts.tasks)) {
     board.tasks = opts.tasks;
   }
