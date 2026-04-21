@@ -6,6 +6,7 @@ import './components/task-board.js';
 import './components/task-hero.js';
 import './components/kanban-board.js';
 import './components/gantt-view.js';
+import './components/gantt-canvas-view.js';
 import './components/task-snackbar.js';
 import './components/task-transfer-controls.js';
 import './components/task-utility-bar.js';
@@ -263,16 +264,11 @@ class TaskManagerApp extends LitReduxElement {
                 @task-move=${this.handleTaskMove}
               ></kanban-board>`
             : this.activeView === 'gantt'
-              ? html`<gantt-view
+              ? html`<gantt-canvas-view
                   .filter=${filter}
                   .projectFilter=${projectFilter}
                   .tasks=${tasks}
-                  @filter-change=${this.handleFilterChange}
-                  @project-filter-change=${this.handleProjectFilterChange}
-                  @task-edit=${this.handleTaskEdit}
-                  @task-toggle=${this.handleTaskToggle}
-                  @task-delete=${this.handleTaskDelete}
-                ></gantt-view>`
+                ></gantt-canvas-view>`
             : html`<task-board
                 .filter=${filter}
                 .projectFilter=${projectFilter}
