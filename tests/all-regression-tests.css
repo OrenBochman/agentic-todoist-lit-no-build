@@ -22,6 +22,14 @@ body {
   color: var(--text-strong);
 }
 
+regression-dashboard,
+regression-summary,
+regression-metrics,
+regression-toolbar,
+regression-failure-list {
+  display: block;
+}
+
 main {
   width: min(1100px, 100%);
   margin: 0 auto;
