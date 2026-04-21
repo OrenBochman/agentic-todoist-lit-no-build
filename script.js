@@ -8,6 +8,7 @@ import './components/kanban-board.js';
 import './components/task-snackbar.js';
 import './components/task-transfer-controls.js';
 import './components/task-utility-bar.js';
+import { parseTaskInput } from './components/task-input-codec.js';
 
 const STORAGE_KEY = 'task-manager-items';
 const THEME_STORAGE_KEY = 'task-manager-theme';
@@ -379,9 +380,27 @@ class TaskManagerApp extends LitReduxElement {
    */
   handleTaskEdit(event) {
     const taskId = event.detail.taskId;
-    const nextText = String(event.detail.text || '').trim();
+    const rawInput = String(event.detail.input || '').trim();
+    if (!rawInput) return;
+    const parsedTask = parseTaskInput(rawInput);
+    const nextText = String(parsedTask.text || '').trim();
     if (!nextText) return;
-    this.dispatch(editTask({ id: taskId, text: nextText }));
+
+    this.dispatch(editTask({
+      id: taskId,
+      text: nextText,
+      dueDate: parsedTask.dueDate ?? null,
+      project: parsedTask.project ?? null,
+      importance: parsedTask.importance ?? null,
+      dependsOn: Array.isArray(parsedTask.dependsOn) ? parsedTask.dependsOn : [],
+      workloadEstimate: typeof parsedTask.workloadEstimate === 'number' ? parsedTask.workloadEstimate : 4,
+      workloadUncertainty: typeof parsedTask.workloadUncertainty === 'number' ? parsedTask.workloadUncertainty : 1,
+      tags: Array.isArray(parsedTask.tags) ? parsedTask.tags : [],
+      inProgress: Boolean(parsedTask.inProgress),
+      completed: Boolean(parsedTask.completed),
+      sectionShortcut: parsedTask.sectionShortcut ?? null,
+      section: parsedTask.section ?? null,
+    }));
     this.saveTasks();
     this.clearTransferStatus();
   }

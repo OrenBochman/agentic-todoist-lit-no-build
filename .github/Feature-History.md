@@ -18,6 +18,9 @@
   - [x] Persist tasks in localStorage
   - [x] Import/export tasks as JSON files to allow users to back up their tasks or transfer them between instances of the app.
   - [x] Add edit task by long-pressing a task to open an edit form, allowing users to modify existing tasks without needing to delete and recreate them.
+  - [x] **Schema-Update** task schema for new fields to support due dates, projects, importance, depends on, work-load estimation, work-load uncertainty, and any other fields needed to support the new features.
+  - [x] **Parser-Update** Add Todoist-style date, project, importance parsing (parser and unit tests, including todoist-parser-element.spec.js integrated in main regression suite)
+  - [x] **Reducer-Pattern** Use a redux style reducer pattern for state management to ensure predictable state updates and easier debugging, especially as the app grows in complexity.
 - Filtering
   - [x] Filter tasks by status
 - WebMCP Integration

@@ -20,9 +20,9 @@ const tasksSlice = createSlice({
       state.tasks.unshift(action.payload);
     },
     editTask(state, action) {
-      const { id, text } = action.payload;
+      const { id, ...updates } = action.payload;
       const task = state.tasks.find(t => t.id === id);
-      if (task) task.text = text;
+      if (task) Object.assign(task, updates);
     },
     toggleTask(state, action) {
       const id = action.payload;

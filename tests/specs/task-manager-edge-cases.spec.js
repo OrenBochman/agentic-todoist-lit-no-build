@@ -219,6 +219,19 @@ describe('Task Manager Edge Cases', () => {
     expect(getBoardItems()[0]?.task?.text, 'Board should render special character/emoji task.').to.equal(specialText);
   });
 
+  it('should display parsed tags in task meta (unit: edge case)', async () => {
+    const fixture = getFixture();
+    fixture.input.value = 'tagged task @home @deep';
+    fixture.button.click();
+    await waitForRender();
+
+    const metaRows = [...(getBoardItem()?.shadowRoot?.querySelectorAll('.task-meta') ?? [])];
+    const tagMeta = metaRows.map((node) => node.textContent?.trim() ?? '').find((text) => text.includes('Tags:'));
+
+    expect(fixture.app.tasks[0]?.tags, 'Task state should preserve parsed tags.').to.deep.equal(['home', 'deep']);
+    expect(tagMeta, 'Task meta should render parsed tags.').to.equal('Tags: @home @deep');
+  });
+
   it('should allow duplicate task names and treat them independently (unit: edge case)', async () => {
     const fixture = getFixture();
     fixture.input.value = 'duplicate';

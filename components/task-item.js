@@ -1,5 +1,6 @@
 import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import { getTaskStatusShortcut } from './task-status.js';
+import { buildTaskInput } from './task-input-codec.js';
 
 /**
  * @typedef {Object} TaskRecord
@@ -202,9 +203,15 @@ class TaskItem extends LitElement {
     if (changedProperties.has('editing') && this.editing) {
       this.updateComplete.then(() => {
         const input = this.renderRoot?.querySelector('wa-input');
+        const internalInput = input?.shadowRoot?.querySelector('input');
+        internalInput?.addEventListener('input', this.handleNativeEditInput);
         input?.focus();
         input?.select?.();
+        internalInput?.focus();
+        internalInput?.select?.();
       });
+    } else if (changedProperties.has('editing') && !this.editing) {
+      this.removeNativeEditListener();
     }
   }
 
@@ -218,6 +225,9 @@ class TaskItem extends LitElement {
     if (this.task.dueDate) meta.push(`Due: ${this.task.dueDate}`);
     if (this.task.project) meta.push(`Project: ${this.task.project}`);
     if (this.task.importance) meta.push(`Priority: ${this.task.importance}`);
+    if (Array.isArray(this.task.tags) && this.task.tags.length) {
+      meta.push(`Tags: ${this.task.tags.map((tag) => `@${tag}`).join(' ')}`);
+    }
     const pillText = this.showStatusBadge ? getTaskStatusShortcut(this.task) : null;
     const pill = pillText
       ? html`<wa-badge pill style="margin-left:8px;">${pillText}</wa-badge>`
@@ -291,25 +301,30 @@ class TaskItem extends LitElement {
   };
 
   startEditing() {
-    this.draftText = this.task?.text || '';
+    this.draftText = buildTaskInput(this.task);
     this.editError = '';
     this.editing = true;
   }
 
   getCurrentEditValue(event, includeInternalFallback = false) {
     const input = this.renderRoot?.querySelector('wa-input');
+    const internalInput = input?.shadowRoot?.querySelector('input');
+    const internalValue = typeof internalInput?.value === 'string' ? internalInput.value : '';
     const hostValue = typeof event?.target?.value === 'string'
       ? event.target.value
       : typeof input?.value === 'string'
         ? input.value
         : this.draftText;
 
+    if (includeInternalFallback && internalValue) {
+      return internalValue;
+    }
+
     if (hostValue || !includeInternalFallback) {
       return hostValue;
     }
 
-    const internalInput = input?.shadowRoot?.querySelector('input');
-    return typeof internalInput?.value === 'string' ? internalInput.value : hostValue;
+    return internalValue || hostValue;
   }
 
   handleEditInput(event) {
@@ -321,15 +336,33 @@ class TaskItem extends LitElement {
     }
   }
 
+  handleNativeEditInput = (event) => {
+    const nextValue = typeof event?.target?.value === 'string' ? event.target.value : '';
+    this.draftText = nextValue;
+
+    if (this.editError && nextValue.trim()) {
+      this.editError = '';
+    }
+  };
+
+  removeNativeEditListener() {
+    const input = this.renderRoot?.querySelector('wa-input');
+    const internalInput = input?.shadowRoot?.querySelector('input');
+    internalInput?.removeEventListener('input', this.handleNativeEditInput);
+  }
+
   cancelEdit = () => {
+    this.removeNativeEditListener();
     this.editing = false;
     this.editError = '';
-    this.draftText = this.task?.text || '';
+    this.draftText = buildTaskInput(this.task);
   };
 
   handleEditSubmit(event) {
     event?.preventDefault?.();
-    const nextValue = this.getCurrentEditValue(event, true);
+    const nextValue = String(this.draftText || '').trim()
+      ? this.draftText
+      : this.getCurrentEditValue(event, true);
     const nextText = nextValue.trim();
 
     this.draftText = nextValue;
@@ -345,11 +378,12 @@ class TaskItem extends LitElement {
         composed: true,
         detail: {
           taskId: this.task.id,
-          text: nextText,
+          input: nextText,
         },
       }),
     );
 
+    this.removeNativeEditListener();
     this.editing = false;
     this.editError = '';
     this.draftText = nextText;

@@ -1,8 +1,3 @@
-# Known Issues (Kanban & Parser)
-
-- Section shortcuts (e.g. `/in`, `/sec`) are removed from the text but not added to the task state, so tasks are not grouped in kanban columns.
-
-
 # Project coding guidelines
 
 ## Project Context
@@ -17,17 +12,18 @@
 Completed features are listed in [Feature History](Feature-History.md) and the current feature roadmap is in the `Agenda` section of that file.
   
 ### Action ITems
-
-- Storage and Data
-  - [x] **Schema-Update** task schema for new fields to support due dates, projects, importance, depends on, work-load estimation, work-load uncertainty, and any other fields needed to support the new features.
-  - [x] **Parser-Update** Add Todoist-style date, project, importance parsing (parser and unit tests, including todoist-parser-element.spec.js integrated in main regression suite)
-  - [x] **Reducer-Pattern** Use a redux style reducer pattern for state management to ensure predictable state updates and easier debugging, especially as the app grows in complexity.
-  - [ ] **Google-Drive-Integration** Support storage to google drive. 
-  - [ ] **Filter-Update** Add more filters for date, project, importance
+- Bugs
+  - [ ] When editing and adding or a date the new date is not saved.
+      - 'goto /hell' long click  'goto /hell today' -> saves as 'goto /hell' . 
+      - 'meeting 2021-12-12 /up' long click  'meeting 2020-12-12 /up' -> saves as 'meeting 2021-12-12 /up' 
 - Project management
   - [ ] **kanban view** (web component, tests, docs)
   - [ ] drag-drop-element interface for task reordering and project organization.
   - [ ] drop-target-element interface for drag-drop-element to enable drag and drop between projects and kanban columns. 
+- Storage and Data
+
+  - [ ] **Google-Drive-Integration** Support storage to google drive. 
+  - [ ] **Filter-Update** Add more filters for date, project, importance
 - Tests and Documentation
   - [ ] Improve documentation with Mermaid UML charts (class diagrams, sequence diagrams) to illustrate app architecture, component relationships, and data flow.
 - UI/UX

@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import './todoist-parser-element.js';
-import { normalizeSection } from './task-status.js';
+import { parseTaskInput } from './task-input-codec.js';
 
 /**
  * Compact task input component.
@@ -215,24 +215,7 @@ class TaskComposer extends LitElement {
    * Returns a new task object with all schema fields and defaults.
    */
   createTask(text) {
-    const parser = document.createElement('todoist-parser');
-    const parsed = parser.parse(text);
-    const normalizedSection = normalizeSection(parsed.section);
-    const displayText = parsed.title || text;
-    return {
-      text: displayText,
-      dueDate: parsed.due ?? null,
-      project: parsed.project ?? null,
-      importance: parsed.priority ?? null,
-      dependsOn: [],
-      workloadEstimate: 4,
-      workloadUncertainty: 1,
-      tags: parsed.labels ?? [],
-      inProgress: normalizedSection?.status === 'in-progress',
-      completed: normalizedSection?.status === 'done',
-      sectionShortcut: normalizedSection?.shortcut ?? null,
-      section: parsed.section ?? null,
-    };
+    return parseTaskInput(text);
   }
 
   /**
