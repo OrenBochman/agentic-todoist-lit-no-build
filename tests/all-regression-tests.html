@@ -8,246 +8,22 @@
     <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.5.0/styles/themes/default.css" />
     <link rel="stylesheet" href="./all-regression-tests.css" />
     <script type="module" src="https://ka-f.webawesome.com/webawesome@3.5.0/webawesome.loader.js"></script>
+    <script type="module" src="./components/regression-dashboard.js"></script>
   </head>
   <body>
-    <main>
-      <section class="card">
-        <h1>Task Manager Regression Dashboard</h1>
-        <p>
-          This page runs the full browser regression suite in one Mocha session so you can verify
-          composer, app, hero, and transfer behavior from a single dashboard.
-        </p>
-
-        <div id="summary" data-status="running" aria-live="polite">
-          <div class="summary-layout">
-            <div class="summary-ring" id="summary-ring">
-              <div class="summary-ring-value" id="summary-percent">0%</div>
-            </div>
-            <div class="summary-copy">
-              <h2 class="summary-heading" id="summary-heading">Running regression suite...</h2>
-              <div class="summary-body" id="summary-body">Collecting results from the browser suite.</div>
-              <div class="summary-meta">
-                <span class="summary-chip" id="summary-tests-chip">0 tests</span>
-                <span class="summary-chip fail" id="summary-failures-chip">0 failures</span>
-                <span class="summary-chip" id="summary-duration-chip">0 ms</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="dashboard-grid" aria-label="Regression metrics">
-          <article class="metric-card">
-            <div class="metric-label">Registered</div>
-            <div class="metric-value" id="metric-total">0</div>
-            <div class="metric-subcopy" id="metric-filtered">No results yet</div>
-          </article>
-          <article class="metric-card">
-            <div class="metric-label">Failing</div>
-            <div class="metric-value fail" id="metric-failures">0</div>
-            <div class="metric-subcopy" id="metric-top-failure">No failures recorded</div>
-          </article>
-          <article class="metric-card">
-            <div class="metric-label">Duration</div>
-            <div class="metric-value duration" id="metric-duration">0 ms</div>
-            <div class="metric-subcopy" id="metric-slowest">No timing data yet</div>
-          </article>
-        </div>
-
-        <div class="dashboard-toolbar" aria-label="Dashboard controls">
-          <div class="toolbar-group">
-            <button class="filter-button" type="button" data-filter="all" data-active="true">All</button>
-            <button class="filter-button" type="button" data-filter="fail" data-active="false">Failures</button>
-            <button class="filter-button" type="button" data-filter="pass">Passing</button>
-          </div>
-          <div class="toolbar-group">
-            <input id="test-search" type="search" placeholder="Filter tests by title or suite" aria-label="Filter tests by title or suite" />
-          </div>
-        </div>
-
-        <section id="failure-panel" class="failure-panel" aria-live="polite" data-visible="false">
-          <h2 class="failure-title">Failure List</h2>
-          <ol id="failure-list" class="failure-list"></ol>
-        </section>
-
-        <div id="mocha"></div>
-        <div id="mount"></div>
-      </section>
-    </main>
+    <regression-dashboard></regression-dashboard>
 
     <script src="https://unpkg.com/mocha@10.7.3/mocha.js"></script>
     <script src="https://unpkg.com/chai@4.5.0/chai.js"></script>
     <script type="module">
       import { runBrowserTests } from './helpers/browser-test-harness.js';
-      const summary = document.getElementById('summary');
-      const summaryRing = document.getElementById('summary-ring');
-      const summaryPercent = document.getElementById('summary-percent');
-      const summaryHeading = document.getElementById('summary-heading');
-      const summaryBody = document.getElementById('summary-body');
-      const summaryTestsChip = document.getElementById('summary-tests-chip');
-      const summaryFailuresChip = document.getElementById('summary-failures-chip');
-      const summaryDurationChip = document.getElementById('summary-duration-chip');
-      const metricTotal = document.getElementById('metric-total');
-      const metricFiltered = document.getElementById('metric-filtered');
-      const metricFailures = document.getElementById('metric-failures');
-      const metricDuration = document.getElementById('metric-duration');
-      const metricSlowest = document.getElementById('metric-slowest');
-      const metricTopFailure = document.getElementById('metric-top-failure');
-      const failurePanel = document.getElementById('failure-panel');
-      const failureList = document.getElementById('failure-list');
-      const searchInput = document.getElementById('test-search');
-      const filterButtons = [...document.querySelectorAll('.filter-button')];
+      const dashboard = document.querySelector('regression-dashboard');
       const runMetrics = {
         allTests: [],
         passedTests: [],
         failedTests: [],
         registeredTests: 0,
       };
-      let activeFilter = 'all';
-
-      const countRegisteredTests = (suite) => {
-        if (!suite) {
-          return 0;
-        }
-
-        const childSuites = Array.isArray(suite.suites) ? suite.suites : [];
-        const ownTests = Array.isArray(suite.tests) ? suite.tests.length : 0;
-        return ownTests + childSuites.reduce((total, childSuite) => total + countRegisteredTests(childSuite), 0);
-      };
-
-      const formatDuration = (duration) => {
-        if (!Number.isFinite(duration)) {
-          return '0 ms';
-        }
-        return duration >= 1000 ? `${(duration / 1000).toFixed(2)} s` : `${Math.round(duration)} ms`;
-      };
-
-      const testLabel = (entry) => entry.fullTitle || entry.title || 'Unnamed test';
-
-      const assignTestRowIds = () => {
-        const testRows = [...document.querySelectorAll('#mocha-report > li.test, #mocha-report li.test')];
-        testRows.forEach((row, index) => {
-          row.dataset.testIndex = String(index);
-          if (!row.id) {
-            row.id = `test-row-${index}`;
-          }
-        });
-      };
-
-      const updateMetrics = () => {
-        const total = runMetrics.registeredTests || runMetrics.allTests.length;
-        const executed = runMetrics.allTests.length;
-        const failures = runMetrics.failedTests.length;
-        const passes = runMetrics.passedTests.length;
-        const duration = runMetrics.allTests.reduce((sum, test) => sum + (test.duration || 0), 0);
-        const passRate = total ? Math.round((passes / total) * 100) : 0;
-
-        metricTotal.textContent = String(total);
-        metricFailures.textContent = String(runMetrics.failedTests.length);
-        metricDuration.textContent = formatDuration(duration);
-
-        summaryPercent.textContent = `${passRate}%`;
-        summaryRing.style.setProperty('--progress', `${(passRate / 100) * 360}deg`);
-        summaryTestsChip.textContent = `${total} registered`;
-        summaryFailuresChip.textContent = `${failures} ${failures === 1 ? 'failure' : 'failures'}`;
-        summaryDurationChip.textContent = formatDuration(duration);
-
-        if (!total) {
-          summaryHeading.textContent = 'Running regression suite...';
-          summaryBody.textContent = 'Collecting results from the browser suite.';
-        } else if (!failures) {
-          summaryHeading.textContent = 'Regression suite passed';
-          summaryBody.textContent = 'No failures detected. The dashboard is focused on failure triage, so the test list can stay filtered unless you need to inspect passes.';
-        } else {
-          summaryHeading.textContent = `${failures} ${failures === 1 ? 'failure' : 'failures'} need attention`;
-          summaryBody.textContent = 'The list below is filtered to failing tests by default so the useful information stays on screen.';
-        }
-
-        const slowest = [...runMetrics.allTests]
-          .sort((a, b) => (b.duration || 0) - (a.duration || 0))[0];
-        metricSlowest.textContent = slowest
-          ? `${testLabel(slowest)} • ${formatDuration(slowest.duration || 0)}`
-          : 'No timing data yet';
-
-        metricTopFailure.textContent = runMetrics.failedTests.length
-          ? testLabel(runMetrics.failedTests[0])
-          : 'No failures recorded';
-      };
-
-      const updateFailureList = () => {
-        failureList.replaceChildren();
-
-        if (!runMetrics.failedTests.length) {
-          failurePanel.dataset.visible = 'false';
-          return;
-        }
-
-        runMetrics.failedTests.forEach((entry, index) => {
-          const item = document.createElement('li');
-          const link = document.createElement('a');
-          const row = document.querySelector(`#test-row-${entry.index}`);
-
-          link.href = row ? `#${row.id}` : '#mocha';
-          link.textContent = `${index + 1}. ${testLabel(entry)}`;
-          link.addEventListener('click', () => {
-            document.querySelectorAll('#mocha .test.highlighted').forEach((node) => {
-              node.classList.remove('highlighted');
-            });
-            if (row) {
-              row.classList.add('highlighted');
-            }
-          });
-
-          item.append(link);
-          failureList.append(item);
-        });
-
-        failurePanel.dataset.visible = 'true';
-      };
-
-      const applyDashboardFilters = () => {
-        const searchTerm = searchInput.value.trim().toLowerCase();
-        const testRows = [...document.querySelectorAll('#mocha li.test')];
-        let visibleCount = 0;
-
-        testRows.forEach((row) => {
-          const isPass = row.classList.contains('pass');
-          const isFail = row.classList.contains('fail');
-          const text = row.textContent.toLowerCase();
-          const matchesFilter = activeFilter === 'all'
-            || (activeFilter === 'pass' && isPass)
-            || (activeFilter === 'fail' && isFail);
-          const matchesSearch = !searchTerm || text.includes(searchTerm);
-          const visible = matchesFilter && matchesSearch;
-
-          row.classList.toggle('is-hidden', !visible);
-          if (visible) {
-            visibleCount += 1;
-          }
-        });
-
-        const suiteRows = [...document.querySelectorAll('#mocha-report li.suite')].reverse();
-        suiteRows.forEach((suiteRow) => {
-          const visibleChildTests = suiteRow.querySelectorAll(':scope > ul > li.test:not(.is-hidden)');
-          const visibleChildSuites = suiteRow.querySelectorAll(':scope > ul > li.suite:not(.is-hidden)');
-          const hasVisibleContent = visibleChildTests.length > 0 || visibleChildSuites.length > 0;
-          suiteRow.classList.toggle('is-hidden', !hasVisibleContent);
-        });
-
-        metricFiltered.textContent = `${visibleCount} visible • ${runMetrics.allTests.length} executed`;
-      };
-
-      filterButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          activeFilter = button.dataset.filter;
-          filterButtons.forEach((candidate) => {
-            candidate.dataset.active = String(candidate === button);
-          });
-          applyDashboardFilters();
-        });
-      });
-
-      searchInput.addEventListener('input', () => {
-        applyDashboardFilters();
-      });
 
       // Add global error logging for test failures
       if (window.mocha) {
@@ -282,6 +58,7 @@
                 duration: test.duration || 0,
                 state: test.state || 'unknown',
               });
+              dashboard.setExecutedCount(testIndex + 1);
               testIndex += 1;
             });
             return runner;
@@ -290,16 +67,9 @@
       }
 
       await import('./specs/all-regression.spec.js?v=2026-04-21-coverage-pass-2');
-      runMetrics.registeredTests = countRegisteredTests(window.mocha?.suite);
+      runMetrics.registeredTests = dashboard.countRegisteredTests(window.mocha?.suite);
       const failures = await runBrowserTests();
-
-      summary.dataset.status = failures === 0 ? 'passed' : 'failed';
-      document.getElementById('mount').dataset.hidden = 'true';
-
-      assignTestRowIds();
-      updateMetrics();
-      updateFailureList();
-      applyDashboardFilters();
+      dashboard.finalizeRun({ failures, runMetrics });
     </script>
   </body>
 </html>
