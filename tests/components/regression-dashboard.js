@@ -64,8 +64,36 @@ export class RegressionDashboard extends LitElement {
     return this;
   }
 
+  countRegisteredTests(suite) {
+    if (!suite) {
+      return 0;
+    }
+
+    const childSuites = Array.isArray(suite.suites) ? suite.suites : [];
+    const ownTests = Array.isArray(suite.tests) ? suite.tests.length : 0;
+    return ownTests + childSuites.reduce((total, childSuite) => total + this.countRegisteredTests(childSuite), 0);
+  }
+
+  formatDuration(duration) {
+    if (!Number.isFinite(duration)) {
+      return '0 ms';
+    }
+
+    return duration >= 1000 ? `${(duration / 1000).toFixed(2)} s` : `${Math.round(duration)} ms`;
+  }
+
   getEntryLabel(entry) {
     return entry.fullTitle || entry.title || 'Unnamed test';
+  }
+
+  assignTestRowIds() {
+    const testRows = [...this.querySelectorAll('#mocha-report > li.test, #mocha-report li.test')];
+    testRows.forEach((row, index) => {
+      row.dataset.testIndex = String(index);
+      if (!row.id) {
+        row.id = `test-row-${index}`;
+      }
+    });
   }
 
   handleToolbarClick = (event) => {
@@ -188,6 +216,70 @@ export class RegressionDashboard extends LitElement {
 
   setExecutedCount(count) {
     this.executedCount = count;
+  }
+
+  syncRunMetrics(runMetrics) {
+    const total = runMetrics.registeredTests || runMetrics.allTests.length;
+    const executed = runMetrics.allTests.length;
+    const failures = runMetrics.failedTests.length;
+    const passes = runMetrics.passedTests.length;
+    const duration = runMetrics.allTests.reduce((sum, test) => sum + (test.duration || 0), 0);
+    const passRate = total ? Math.round((passes / total) * 100) : 0;
+    const durationLabel = this.formatDuration(duration);
+    const slowest = [...runMetrics.allTests]
+      .sort((a, b) => (b.duration || 0) - (a.duration || 0))[0];
+
+    if (!total) {
+      this.setSummary({
+        passRate,
+        totalLabel: `${total} registered`,
+        failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
+        durationLabel,
+        heading: 'Running regression suite...',
+        body: 'Collecting results from the browser suite.',
+      });
+    } else if (!failures) {
+      this.setSummary({
+        passRate,
+        totalLabel: `${total} registered`,
+        failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
+        durationLabel,
+        heading: 'Regression suite passed',
+        body: 'No failures detected. The dashboard is focused on failure triage, so the test list can stay filtered unless you need to inspect passes.',
+      });
+    } else {
+      this.setSummary({
+        passRate,
+        totalLabel: `${total} registered`,
+        failuresLabel: `${failures} ${failures === 1 ? 'failure' : 'failures'}`,
+        durationLabel,
+        heading: `${failures} ${failures === 1 ? 'failure' : 'failures'} need attention`,
+        body: 'The list below is filtered to failing tests by default so the useful information stays on screen.',
+      });
+    }
+
+    this.setMetrics({
+      total,
+      filtered: `${this.querySelectorAll('#mocha li.test:not(.is-hidden)').length} visible • ${executed} executed`,
+      failures,
+      duration: durationLabel,
+      slowest: slowest
+        ? `${this.getEntryLabel(slowest)} • ${this.formatDuration(slowest.duration || 0)}`
+        : 'No timing data yet',
+      topFailure: runMetrics.failedTests.length
+        ? this.getEntryLabel(runMetrics.failedTests[0])
+        : 'No failures recorded',
+    });
+  }
+
+  finalizeRun({ failures, runMetrics }) {
+    this.setStatus(failures === 0 ? 'passed' : 'failed');
+    this.setExecutedCount(runMetrics.allTests.length);
+    this.hideMount();
+    this.assignTestRowIds();
+    this.syncRunMetrics(runMetrics);
+    this.renderFailureEntries(runMetrics.failedTests);
+    this.applyFilters();
   }
 
   setStatus(status) {

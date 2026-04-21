@@ -13,3 +13,4 @@ await import('./task-transfer-controls.spec.js');
 await import('./task-utility-bar.spec.js');
 await import('./task-utility-bar-visibility.spec.js');
 await import('./todoist-parser-element.spec.js');
+await import('./regression-dashboard.spec.js');
