@@ -12,6 +12,7 @@ format: gfm
 
 ## Project Structure 
 
+```
 index.html                # App entry point, loads all scripts and styles via CDN
 script.js                 # Main app logic, Redux store integration, and root component wiring
 styles.css                # Global styles and theme variables
@@ -32,6 +33,7 @@ tests/                    # All test specs, fixtures, helpers, and regression da
 .vscode/                  # VS Code workspace settings and MCP server config
 README.md                 # Project overview and feature summary
 WEBAWESOME.md             # WebAwesome component usage notes
+```
 
 ## Libraries and Frameworks
 - Lit for building web components and managing reactive state within components.

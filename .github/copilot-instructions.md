@@ -9,27 +9,29 @@
 - The tech stack is plain JavaScript Libraries that are loaded via CDN
   links without a build step.
 - The app exposes tools via WebMCP to support agentic operations.
-- The app
 
 ## Project Structure
 
-index.html \# App entry point, loads all scripts and styles via CDN
-script.js \# Main app logic, Redux store integration, and root component
-wiring styles.css \# Global styles and theme variables components/ \#
-All custom Lit and WebAwesome-based web components memory/ \# (Reserved
-for future use, currently empty) tests/ \# All test specs, fixtures,
-helpers, and regression dashboards all-regression-tests.html fixtures/
-\# Test fixtures for mounting and manipulating components helpers/ \#
-Test harness and setup utilities specs/ \# Mocha/Chai test suites for
-all components and flows components/ \# Regression dashboard UI
-components .github/ \# Project configuration, skills, and documentation
-copilot-instructions.md \# Main coding guidelines (Markdown)
-copilot-instructions.qmd# Quarto/Markdown hybrid for publishing
-action-items.qmd \# Feature and bug roadmap feature-history.qmd \#
-Completed features log skills/ \# Custom skills for testing, branching,
-and debugging .vscode/ \# VS Code workspace settings and MCP server
-config README.md \# Project overview and feature summary WEBAWESOME.md
-\# WebAwesome component usage notes
+    index.html                # App entry point, loads all scripts and styles via CDN
+    script.js                 # Main app logic, Redux store integration, and root component wiring
+    styles.css                # Global styles and theme variables
+    components/               # All custom Lit and WebAwesome-based web components
+    memory/                   # (Reserved for future use, currently empty)
+    tests/                    # All test specs, fixtures, helpers, and regression dashboards
+      all-regression-tests.html
+      fixtures/               # Test fixtures for mounting and manipulating components
+      helpers/                # Test harness and setup utilities
+      specs/                  # Mocha/Chai test suites for all components and flows
+      components/             # Regression dashboard UI components
+    .github/                  # Project configuration, skills, and documentation
+      copilot-instructions.md # Main coding guidelines (Markdown)
+      copilot-instructions.qmd# Quarto/Markdown hybrid for publishing
+      action-items.qmd        # Feature and bug roadmap
+      feature-history.qmd     # Completed features log
+      skills/                 # Custom skills for testing, branching, and debugging
+    .vscode/                  # VS Code workspace settings and MCP server config
+    README.md                 # Project overview and feature summary
+    WEBAWESOME.md             # WebAwesome component usage notes
 
 ## Libraries and Frameworks
 
@@ -140,17 +142,36 @@ and the current feature roadmap is in the `Agenda` section of that file.
   - [ ] Add a gantt view that shows tasks on a timeline based on their
     due dates and durations, allowing for easy visualization of task
     dependencies and scheduling.
+
   - [ ] Add a view selector to toggle to the gantt view.
+
   - [ ] support dragging an arrow from one task to another to indicate a
     dependency between the two tasks.
+
   - [ ] support highlighting tasks that are on the critical path in red.
+
   - [ ] support dragging tasks to change their due dates and durations,
     with the gantt chart updating accordingly.
+
   - [ ] support zooming in and out of the timeline for better visibility
     of tasks with different durations.
+
   - [ ] support filtering tasks by project in the gantt view.
+
+  - [ ] shrink the note to a single line hide the badges and show just
+    the title.
+
+  - [ ] add handles in the left center and right for
+
+  - [ ] drag the bars left/right using a handle in the the left tip -
+    thus changing the start date of the task
+
+  - [ ] extend the duration by dragging a handle in the right tip
+
+  - [ ] drag an arrow to link a task that depends on the current task’s
+    completion - by dragging a small handle from the center
 - BugsFixes (on bugfix branch Bug-fixes)
-  - [ ] The testing dashboard filters dont respond to clicks.
+  - [ ] The testing dashboard filters don’t respond to clicks.
   - [ ] The task composer input should repond to enter as a submit
     action.
 - Storage and Data

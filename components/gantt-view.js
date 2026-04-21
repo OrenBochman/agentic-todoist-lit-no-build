@@ -42,6 +42,56 @@ const formatHeaderDate = (date) => date.toLocaleDateString(undefined, {
 const getDayOffset = (left, right) => Math.round((right.getTime() - left.getTime()) / DAY_MS);
 
 class GanttView extends LitElement {
+    // Drag state for left handle
+    _dragTaskIdx = null;
+    _dragStartX = null;
+    _dragOrigDate = null;
+    _dragPx = 0;
+
+    _onLeftHandlePointerDown(idx, event, entry, timeline, laneWidthPx) {
+      event.preventDefault();
+      this._dragTaskIdx = idx;
+      this._dragStartX = event.clientX;
+      this._dragOrigDate = new Date(entry.startDate);
+      this._dragPx = 0;
+      window.addEventListener('pointermove', this._onPointerMove);
+      window.addEventListener('pointerup', this._onPointerUp);
+      this.requestUpdate();
+    }
+
+    _onPointerMove = (event) => {
+      if (this._dragTaskIdx == null) return;
+      this._dragPx = event.clientX - this._dragStartX;
+      this.requestUpdate();
+    };
+
+    _onPointerUp = () => {
+      if (this._dragTaskIdx == null) return;
+      const timeline = this.getTimelineModel();
+      const laneWidthPx = 1200;
+      const totalDays = timeline.totalDays;
+      const pxPerDay = laneWidthPx / totalDays;
+      const dayDelta = Math.round(this._dragPx / pxPerDay);
+      const entry = timeline.visibleTasks[this._dragTaskIdx];
+      if (entry && dayDelta !== 0) {
+        const newDate = new Date(this._dragOrigDate.getTime() + dayDelta * 24 * 60 * 60 * 1000);
+        if (newDate.getTime() <= entry.endDate.getTime()) {
+          const tasks = [...this.tasks];
+          const taskIdx = tasks.findIndex(t => t.id === entry.task.id);
+          if (taskIdx !== -1) {
+            tasks[taskIdx] = { ...tasks[taskIdx], createdAt: newDate.toISOString().slice(0, 10) };
+            this.tasks = tasks;
+          }
+        }
+      }
+      this._dragTaskIdx = null;
+      this._dragStartX = null;
+      this._dragOrigDate = null;
+      this._dragPx = 0;
+      window.removeEventListener('pointermove', this._onPointerMove);
+      window.removeEventListener('pointerup', this._onPointerUp);
+      this.requestUpdate();
+    };
   static properties = {
     filter: { type: String },
     projectFilter: { type: String, attribute: 'project-filter' },
@@ -53,28 +103,25 @@ class GanttView extends LitElement {
       display: block;
       width: 100%;
     }
-
     .toolbar {
       display: flex;
       justify-content: flex-end;
       margin-bottom: 20px;
     }
-
     .surface {
       border: 1px solid var(--panel-border);
       border-radius: 28px;
       overflow: hidden;
       background: color-mix(in srgb, var(--panel-background) 96%, transparent);
       box-shadow: var(--panel-shadow);
-    }
-
-    .header,
-    .row {
+        .bar-handle-right {
+          background: #3867d6;
+          right: 0;
+          transform: translateX(50%) translateY(-50%);
       display: grid;
       grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
       gap: 0;
     }
-
     .header {
       border-bottom: 1px solid var(--panel-border);
       background: color-mix(in srgb, var(--panel-background) 90%, transparent);
@@ -82,27 +129,25 @@ class GanttView extends LitElement {
       top: 0;
       z-index: 1;
     }
-
     .header-title,
     .lane {
       padding: 18px 20px;
     }
-
     .header-title {
       font-size: 0.95rem;
       font-weight: 700;
       color: var(--text-strong);
-      border-right: 1px solid var(--panel-border);
-      display: flex;
-      align-items: center;
+            background: #3867d6;
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translate(50%, -50%);
     }
-
     .timeline-grid {
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: minmax(56px, 1fr);
     }
-
     .tick {
       padding: 10px 8px;
       border-right: 1px solid color-mix(in srgb, var(--text-strong) 10%, transparent);
@@ -112,17 +157,23 @@ class GanttView extends LitElement {
       font-weight: 600;
       white-space: nowrap;
     }
-
     .row + .row {
       border-top: 1px solid color-mix(in srgb, var(--text-strong) 8%, transparent);
     }
-
     .task-cell {
       padding: 16px;
       border-right: 1px solid var(--panel-border);
       background: color-mix(in srgb, var(--panel-background) 98%, transparent);
     }
-
+    .gantt-task-title {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--text-strong);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
     .lane {
       min-height: 112px;
       position: relative;
@@ -135,7 +186,6 @@ class GanttView extends LitElement {
           color-mix(in srgb, var(--text-strong) 8%, transparent) calc(100% / var(--day-count))
         );
     }
-
     .bar {
       position: absolute;
       top: 50%;
@@ -145,13 +195,14 @@ class GanttView extends LitElement {
       background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 68%, white));
       box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent);
       min-width: 14px;
+      display: flex;
+      align-items: center;
+      z-index: 1;
     }
-
     .bar[data-completed='true'] {
       background: linear-gradient(90deg, #36a269, #7acb98);
       box-shadow: 0 8px 20px rgba(54, 162, 105, 0.2);
     }
-
     .bar-label {
       position: absolute;
       top: calc(50% - 28px);
@@ -159,23 +210,58 @@ class GanttView extends LitElement {
       color: var(--text-muted);
       white-space: nowrap;
     }
-
+    .bar-handle {
+      display: inline-block;
+      width: 14px;
+      height: 18px;
+      background: var(--panel-border);
+      opacity: 0.7;
+      .bar {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 18px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 68%, white));
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent);
+        min-width: 14px;
+        display: block;
+        z-index: 1;
+      }
+      .bar-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: stretch;
+      }
+    .bar-handle-center {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 18px;
+        background: var(--panel-border);
+        opacity: 0.7;
+        cursor: pointer;
+        border-radius: 3px;
+        transition: background 0.2s, opacity 0.2s;
     .empty {
       padding: 40px 28px;
-      text-align: center;
-      color: var(--text-muted);
+        background: #f7b731;
+        left: -7px;
     }
-
     @media (max-width: 900px) {
-      .header,
-      .row {
+        background: #3867d6;
+        right: -7px;
         grid-template-columns: 1fr;
       }
-
-      .header-title,
-      .task-cell {
-        border-right: 0;
-        border-bottom: 1px solid var(--panel-border);
+        background: #20bf6b;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 12px;
+        border-radius: 50%;
       }
     }
   `;
@@ -293,18 +379,22 @@ class GanttView extends LitElement {
     });
   }
 
-  getBarStyle(schedule, timelineStart, totalDays) {
+  getBarGeometry(schedule, timelineStart, totalDays, laneWidthPx = 1000) {
+    // Returns {x, width} in px for SVG rendering
     const startOffset = getDayOffset(timelineStart, schedule.startDate);
     const durationDays = Math.max(1, getDayOffset(schedule.startDate, schedule.endDate) + 1);
-    const left = (startOffset / totalDays) * 100;
-    const width = (durationDays / totalDays) * 100;
-
-    return `left:${left}%;width:${width}%;`;
+    const left = (startOffset / totalDays) * laneWidthPx;
+    const width = (durationDays / totalDays) * laneWidthPx;
+    return { x: left, width };
   }
 
   render() {
     const timeline = this.getTimelineModel();
     const ticks = this.buildTimelineTicks(timeline.startDate, timeline.totalDays);
+    const laneWidthPx = 1200; // SVG width for each lane, ~2 months
+    const barHeight = 20;
+    const handleRadius = 7;
+    const svgHeight = 8; // Further shrink row height, keep bar/handles centered
 
     return html`
       <div class="toolbar">
@@ -326,26 +416,44 @@ class GanttView extends LitElement {
                   ${ticks.map((tick) => html`<div class="tick">${tick.label}</div>`)}
                 </div>
               </div>
-              ${timeline.visibleTasks.map((entry) => html`
-                <div class="row">
-                  <div class="task-cell">
-                    <task-item .task=${entry.task}></task-item>
-                  </div>
-                  <div class="lane" style=${`--day-count:${timeline.totalDays};`}>
-                    <div
-                      class="bar-label"
-                      style=${`left:${(getDayOffset(timeline.startDate, entry.startDate) / timeline.totalDays) * 100}%;`}
-                    >
-                      ${formatHeaderDate(entry.startDate)}${entry.endDate.getTime() !== entry.startDate.getTime() ? ` - ${formatHeaderDate(entry.endDate)}` : ''}
+              ${timeline.visibleTasks.map((entry, idx) => {
+                const { x, width } = this.getBarGeometry(entry, timeline.startDate, timeline.totalDays, laneWidthPx);
+                const y = (svgHeight - barHeight) / 2;
+                // If dragging this bar, offset by drag px
+                const dragPx = (this._dragTaskIdx === idx) ? this._dragPx : 0;
+                return html`
+                  <div class="row" style="min-height:${svgHeight}px;">
+                    <div class="task-cell">
+                      <div class="gantt-task-title" title=${entry.task.text}>${entry.task.text}</div>
                     </div>
-                    <div
-                      class="bar"
-                      data-completed=${String(Boolean(entry.task.completed))}
-                      style=${this.getBarStyle(entry, timeline.startDate, timeline.totalDays)}
-                    ></div>
+                    <div class="lane" style="position:relative;min-height:${svgHeight}px;">
+                      <svg width="${laneWidthPx}" height="${svgHeight}" style="display:block;overflow:visible;">
+                        <!-- Date label above bar -->
+                        <text x="${x+dragPx}" y="${y-4}" text-anchor="start" font-size="11" fill="#888">
+                          ${formatHeaderDate(entry.startDate)}
+                        </text>
+                        <!-- Bar -->
+                        <rect x="${x+dragPx}" y="${y}" width="${width}" height="${barHeight}" rx="3" fill="#ECECFE" stroke="#bfc7e6" stroke-width="2" />
+                        <!-- Left handle -->
+                        <circle
+                          cx="${x+dragPx}"
+                          cy="${y+barHeight/2}"
+                          r="${handleRadius}"
+                          fill="#facc15" stroke="#fff" stroke-width="1.5"
+                          style="cursor:ew-resize;"
+                          @pointerdown=${(ev) => this._onLeftHandlePointerDown(idx, ev, entry, timeline, laneWidthPx)}
+                        />
+                        <!-- Center handle -->
+                        <circle cx="${x+width/2+dragPx}" cy="${y+barHeight/2}" r="${handleRadius}" fill="#ef4444" stroke="#fff" stroke-width="1.5" />
+                        <!-- Right handle -->
+                        <circle cx="${x+width+dragPx}" cy="${y+barHeight/2}" r="${handleRadius}" fill="#3b82f6" stroke="#fff" stroke-width="1.5" />
+                        <!-- Task label -->
+                        <text x="${x+width/2+dragPx}" y="${y+barHeight/2+4}" text-anchor="middle" font-size="13" fill="#333">${entry.task.text}</text>
+                      </svg>
+                    </div>
                   </div>
-                </div>
-              `)}
+                `;
+              })}
             `
           : html`<div class="empty">No tasks available for the current filters.</div>`}
       </section>

@@ -11,7 +11,14 @@
   - [ ] support zooming in and out of the timeline for better visibility of tasks with different durations.
   - [ ] support filtering tasks by project in the gantt view. 
 
+  - [ ] shrink the note to a single line hide the badges and show just the title.
+  - [ ] add handles in the left center and right for
+  - [ ] drag the bars left/right using a handle in the the left tip - thus changing the start date of the task
+  - [ ] extend the duration by dragging a handle in the right tip
+  - [ ] drag an arrow to link a task that depends on the current task's completion - by dragging a small handle from the center
+
+
 - BugsFixes (on bugfix branch Bug-fixes)
-  - [ ] The testing dashboard filters dont respond to clicks.
+  - [ ] The testing dashboard filters don't respond to clicks.
   - [ ] The task composer input should repond to enter as a submit action.
 - Storage and Data
