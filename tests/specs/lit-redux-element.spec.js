@@ -1,6 +1,7 @@
-import { expect, waitForRender } from '../helpers/browser-test-harness.js';
+import { expect } from '../helpers/browser-test-harness.js';
 import { setTheme, setTasks } from '../../components/redux-store.js';
 import {
+  clearLitReduxFixture,
   mountLitReduxElement,
   resetReduxFixtureState,
   store,
@@ -12,12 +13,12 @@ describe('Lit Redux Element Unit Tests', () => {
   });
 
   afterEach(async () => {
+    clearLitReduxFixture();
     await resetReduxFixtureState();
   });
 
-  it('captures the current store state in the constructor', async () => {
+  it('captures the current store state in the constructor', () => {
     store.dispatch(setTheme('dark'));
-    await waitForRender();
 
     const element = document.createElement('test-lit-redux-element');
 
@@ -28,11 +29,10 @@ describe('Lit Redux Element Unit Tests', () => {
     const element = document.createElement('test-lit-redux-element');
 
     store.dispatch(setTheme('dark'));
-    await waitForRender();
 
     document.getElementById('mount').replaceChildren(element);
     await customElements.whenDefined('test-lit-redux-element');
-    await waitForRender();
+    await element.updateComplete;
 
     expect(element.reduxState.theme, 'Connected element should refresh stale constructor state from the store.').to.equal('dark');
     expect(
@@ -46,7 +46,7 @@ describe('Lit Redux Element Unit Tests', () => {
 
     store.dispatch(setTasks([{ id: 'one', text: 'One', completed: false, createdAt: new Date().toISOString() }]));
     store.dispatch(setTheme('dark'));
-    await waitForRender();
+    await element.updateComplete;
 
     expect(element.reduxState.tasks.length, 'Connected element should receive task updates from the store.').to.equal(1);
     expect(element.reduxState.theme, 'Connected element should receive theme updates from the store.').to.equal('dark');
@@ -60,7 +60,6 @@ describe('Lit Redux Element Unit Tests', () => {
     const { element } = await mountLitReduxElement();
 
     element.dispatch(setTheme('dark'));
-    await waitForRender();
 
     expect(store.getState().theme, 'dispatch should forward the action to the Redux store.').to.equal('dark');
     expect(element.reduxState.theme, 'dispatch should refresh the element redux snapshot.').to.equal('dark');
@@ -70,9 +69,7 @@ describe('Lit Redux Element Unit Tests', () => {
     const { element } = await mountLitReduxElement();
 
     element.remove();
-    await waitForRender();
     store.dispatch(setTheme('dark'));
-    await waitForRender();
 
     expect(element.reduxState.theme, 'Disconnected element should keep its last known redux snapshot.').to.equal('light');
   });

@@ -1,8 +1,6 @@
 import { html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import { LitReduxElement } from '../../components/lit-redux-element.js';
 import { store, resetStoreState } from '../../components/redux-store.js';
-import { waitForRender } from '../helpers/browser-test-harness.js';
-
 const TEST_TAG = 'test-lit-redux-element';
 
 if (!customElements.get(TEST_TAG)) {
@@ -19,9 +17,14 @@ if (!customElements.get(TEST_TAG)) {
   customElements.define(TEST_TAG, TestLitReduxElement);
 }
 
-export const resetReduxFixtureState = async () => {
+export const resetReduxFixtureState = () => {
+  const maybeMountedElement = document.getElementById('mount')?.querySelector(TEST_TAG);
   resetStoreState();
-  await waitForRender();
+  return maybeMountedElement?.updateComplete ?? Promise.resolve();
+};
+
+export const clearLitReduxFixture = () => {
+  document.getElementById('mount')?.replaceChildren();
 };
 
 export const mountLitReduxElement = async () => {
@@ -37,7 +40,7 @@ export const mountLitReduxElement = async () => {
   mount.append(element);
 
   await customElements.whenDefined(TEST_TAG);
-  await waitForRender();
+  await element.updateComplete;
 
   return {
     mount,
