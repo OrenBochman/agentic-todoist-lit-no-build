@@ -63,12 +63,12 @@ describe('Gantt View Unit Tests', () => {
     document.body.append(view);
     await view.updateComplete;
 
-    // Check that there are two rows
-    const rows = view.shadowRoot.querySelectorAll('.row');
+    // Check that there are two rows (gantt-row)
+    const rows = view.shadowRoot.querySelectorAll('.gantt-row');
     expect(rows.length).to.equal(2);
 
     // Check that each row has a status cell with the correct value
-    const statusCells = Array.from(view.shadowRoot.querySelectorAll('.gantt-task-status'));
+    const statusCells = Array.from(view.shadowRoot.querySelectorAll('.gantt-body-cell.status-col'));
     expect(statusCells.length).to.equal(2);
     expect(statusCells[0].textContent).to.include('In Progress');
     expect(statusCells[1].textContent).to.include('Review');
@@ -80,5 +80,16 @@ describe('Gantt View Unit Tests', () => {
       barCount += svg.querySelectorAll('rect').length;
     });
     expect(barCount).to.equal(2);
+  });
+
+  it('renders gantt rows for all tasks in tm.json fixture', async () => {
+    const resp = await fetch('/tests/fixtures/tm.json');
+    const { tasks } = await resp.json();
+    const view = createGanttView(tasks);
+    document.body.append(view);
+    await view.updateComplete;
+    const rows = view.shadowRoot.querySelectorAll('.gantt-row');
+    // Should match the number of tasks in the fixture (filtered by default filter)
+    expect(rows.length).to.equal(tasks.length);
   });
 });
