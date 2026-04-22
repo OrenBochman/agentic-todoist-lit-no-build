@@ -262,6 +262,7 @@ class TaskItem extends LitElement {
                   aria-label="Edit task"
                   @wa-input=${this.handleEditInput}
                   @wa-change=${this.handleEditInput}
+                  @keydown=${this.handleEditKeydown}
                 ></wa-input>
                 ${this.editError ? html`<p class="edit-error" role="status" aria-live="polite">${this.editError}</p>` : ''}
                 <div class="edit-actions">
