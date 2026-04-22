@@ -20,6 +20,6 @@
 
 
 - BugsFixes (on bugfix branch Bug-fixes)
-  - [ ] The testing dashboard filters don't respond to clicks.
+  - [x] The testing dashboard filters don't respond to clicks.
   - [ ] The task composer input should repond to enter as a submit action.
 - Storage and Data
