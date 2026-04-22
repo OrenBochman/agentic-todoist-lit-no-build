@@ -5,15 +5,25 @@ import './task-item.js';
 import { getTaskStatus } from './task-status.js';
 import { ALL_PROJECTS_FILTER, matchesProjectFilter } from './task-project.js';
 
+
 /**
- * Kanban board with four columns: Upcoming, In Progress, Review, Done
- * Tasks are grouped by their status field (or fallback to completed/pending)
+ * <kanban-board>
+ * LitElement-based Kanban board with three columns: Upcoming, In Progress, Done.
+ * Tasks are grouped by their status field (or fallback to completed/pending).
  *
- * Props:
+ * Properties:
  *   tasks: Array of TaskRecord
- *   onTaskMove: function({taskId, toColumn})
+ *   filter: Task status filter string
+ *   projectFilter: Project filter string
+ *
+ * Emits:
+ *   'task-move' when a task is moved between columns
+ *   'task-delete', 'task-toggle', 'task-edit' bubbled from children
  */
 class KanbanBoard extends LitElement {
+  /**
+   * Lifecycle: Called when element is added to the DOM. Sets up event listeners.
+   */
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('task-delete', this._bubbleEvent);
@@ -21,6 +31,10 @@ class KanbanBoard extends LitElement {
     this.addEventListener('task-edit', this._bubbleEvent);
   }
 
+
+  /**
+   * Lifecycle: Called when element is removed from the DOM. Cleans up listeners.
+   */
   disconnectedCallback() {
     this.removeEventListener('task-delete', this._bubbleEvent);
     this.removeEventListener('task-toggle', this._bubbleEvent);
@@ -28,6 +42,10 @@ class KanbanBoard extends LitElement {
     super.disconnectedCallback();
   }
 
+  /**
+   * Helper to re-dispatch events from child components.
+   * @param {Event} e
+   */
   _bubbleEvent(e) {
     // Only re-dispatch if the event originated from a child (not already bubbled)
     if (e.target !== this) {
@@ -39,6 +57,9 @@ class KanbanBoard extends LitElement {
       }));
     }
   }
+  /**
+   * LitElement reactive properties.
+   */
   static properties = {
     filter: { type: String },
     projectFilter: { type: String, attribute: 'project-filter' },
@@ -114,20 +135,26 @@ class KanbanBoard extends LitElement {
 
   constructor() {
     super();
+    /** @type {string} */
     this.filter = 'all';
+    /** @type {string} */
     this.projectFilter = ALL_PROJECTS_FILTER;
+    /** @type {Array} */
     this.tasks = [];
   }
 
+  /**
+   * Handler for drop-receive event from drop-target-element.
+   * Dispatches 'task-move' event if valid.
+   * @param {CustomEvent} event
+   */
   handleDropReceive(event) {
     const taskId = event.detail?.payload?.taskId;
     const fromColumn = event.detail?.payload?.fromColumn;
     const toColumn = event.detail?.targetValue;
-
     if (!taskId || !toColumn || fromColumn === toColumn) {
       return;
     }
-
     this.dispatchEvent(new CustomEvent('task-move', {
       bubbles: true,
       composed: true,
@@ -139,6 +166,10 @@ class KanbanBoard extends LitElement {
     }));
   }
 
+  /**
+   * Groups tasks into columns based on their status and current filters.
+   * @returns {object} columns
+   */
   getColumns() {
     const columns = {
       upcoming: [],
@@ -149,15 +180,12 @@ class KanbanBoard extends LitElement {
       if (!matchesProjectFilter(task, this.projectFilter)) {
         continue;
       }
-
       if (this.filter === 'pending' && task.completed) {
         continue;
       }
-
       if (this.filter === 'completed' && !task.completed) {
         continue;
       }
-
       const status = getTaskStatus(task);
       if (status === 'done') {
         columns.done.push(task);
@@ -170,6 +198,10 @@ class KanbanBoard extends LitElement {
     return columns;
   }
 
+  /**
+   * Renders the Kanban board columns and filter bar.
+   * @returns {import('lit').TemplateResult}
+   */
   render() {
     const columns = this.getColumns();
     const renderColumnTitle = (label, shortcut) => html`
