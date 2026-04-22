@@ -18,13 +18,13 @@ export class RegressionDashboard extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.addEventListener('click', this.handleToolbarClick);
-    this.addEventListener('input', this.handleToolbarInput);
+    this.addEventListener('filter-change', this.handleToolbarFilterChange);
+    this.addEventListener('search-change', this.handleToolbarSearchChange);
   }
 
   disconnectedCallback() {
-    this.removeEventListener('click', this.handleToolbarClick);
-    this.removeEventListener('input', this.handleToolbarInput);
+    this.removeEventListener('filter-change', this.handleToolbarFilterChange);
+    this.removeEventListener('search-change', this.handleToolbarSearchChange);
     super.disconnectedCallback();
   }
 
@@ -96,21 +96,13 @@ export class RegressionDashboard extends LitElement {
     });
   }
 
-  handleToolbarClick = (event) => {
-    const button = event.target.closest('.filter-button');
-    if (!button || !this.contains(button)) {
-      return;
-    }
-
-    this.setToolbarFilter(button.dataset.filter || 'all');
+  handleToolbarFilterChange = (event) => {
+    const { filter } = event.detail;
+    this.setToolbarFilter(filter || 'all');
     this.applyFilters();
   };
 
-  handleToolbarInput = (event) => {
-    if (event.target?.id !== 'test-search' || !this.contains(event.target)) {
-      return;
-    }
-
+  handleToolbarSearchChange = (event) => {
     this.applyFilters();
   };
 

@@ -85,14 +85,27 @@ export class RegressionToolbar extends LitElement {
   render() {
     return html`
       <div class="toolbar-group">
-        <button class="filter-button" type="button" data-filter="all" data-active=${String(this.activeFilter === 'all')}>All</button>
-        <button class="filter-button" type="button" data-filter="fail" data-active=${String(this.activeFilter === 'fail')}>Failures</button>
-        <button class="filter-button" type="button" data-filter="pass" data-active=${String(this.activeFilter === 'pass')}>Passing</button>
+        <button class="filter-button" type="button" data-filter="all" data-active=${String(this.activeFilter === 'all')}
+          @click=${() => this._onFilterClick('all')}>All</button>
+        <button class="filter-button" type="button" data-filter="fail" data-active=${String(this.activeFilter === 'fail')}
+          @click=${() => this._onFilterClick('fail')}>Failures</button>
+        <button class="filter-button" type="button" data-filter="pass" data-active=${String(this.activeFilter === 'pass')}
+          @click=${() => this._onFilterClick('pass')}>Passing</button>
       </div>
       <div class="toolbar-group">
-        <input id="test-search" type="search" placeholder="Filter tests by title or suite" aria-label="Filter tests by title or suite" />
+        <input id="test-search" type="search" placeholder="Filter tests by title or suite" aria-label="Filter tests by title or suite"
+          @input=${this._onSearchInput} />
       </div>
     `;
+  }
+
+  _onFilterClick(filter) {
+    this.setActiveFilter(filter);
+    this.dispatchEvent(new CustomEvent('filter-change', { detail: { filter }, bubbles: true, composed: true }));
+  }
+
+  _onSearchInput = (e) => {
+    this.dispatchEvent(new CustomEvent('search-change', { detail: { value: e.target.value }, bubbles: true, composed: true }));
   }
 }
 

@@ -139,37 +139,29 @@ and the current feature roadmap is in the `Agenda` section of that file.
 ### Action Items
 
 - Gantt view (feature branch Gantt-view;web component, tests, docs)
-  - [ ] Add a gantt view that shows tasks on a timeline based on their
+  - [x] Add a gantt view that shows tasks on a timeline based on their
     due dates and durations, allowing for easy visualization of task
     dependencies and scheduling.
-
-  - [ ] Add a view selector to toggle to the gantt view.
-
-  - [ ] support dragging an arrow from one task to another to indicate a
+  - [x] Add a view selector to toggle to the gantt view.
+  - [x] support dragging an arrow from one task to another to indicate a
     dependency between the two tasks.
-
   - [ ] support highlighting tasks that are on the critical path in red.
-
-  - [ ] support dragging tasks to change their due dates and durations,
+  - [x] support dragging tasks to change their due dates and durations,
     with the gantt chart updating accordingly.
-
-  - [ ] support zooming in and out of the timeline for better visibility
+  - [x] support zooming in and out of the timeline for better visibility
     of tasks with different durations.
-
-  - [ ] support filtering tasks by project in the gantt view.
-
-  - [ ] shrink the note to a single line hide the badges and show just
+  - [x] visualize uncertainty with a boxplot whisker
+  - [x] milestones are tasks with zero duration, and are visualized as
+    diamonds on the gantt chart.
+  - [x] shrink the note to a single line hide the badges and show just
     the title.
-
-  - [ ] add handles in the left center and right for
-
-  - [ ] drag the bars left/right using a handle in the the left tip -
+  - [x] add handles in the left center and right for
+  - [x] drag the bars left/right using a handle in the the left tip -
     thus changing the start date of the task
-
-  - [ ] extend the duration by dragging a handle in the right tip
-
-  - [ ] drag an arrow to link a task that depends on the current task’s
+  - [x] extend the duration by dragging a handle in the right tip
+  - [x] drag an arrow to link a task that depends on the current task’s
     completion - by dragging a small handle from the center
+  - [ ] support filtering tasks by project in the gantt view.
 - BugsFixes (on bugfix branch Bug-fixes)
   - [ ] The testing dashboard filters don’t respond to clicks.
   - [ ] The task composer input should repond to enter as a submit
