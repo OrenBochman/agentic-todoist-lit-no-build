@@ -41,37 +41,52 @@ const formatHeaderDate = (date) => date.toLocaleDateString(undefined, {
 
 const getDayOffset = (left, right) => Math.round((right.getTime() - left.getTime()) / DAY_MS);
 
+/**
+ * <gantt-view>
+ * LitElement-based Gantt chart view for visualizing tasks on a grid timeline.
+ * Supports drag handles for start and end dates.
+ *
+ * Properties:
+ *   tasks: Array of task objects
+ *   filter: Task status filter string
+ *   projectFilter: Project filter string
+ */
 class GanttView extends LitElement {
-      buildMonthTicks(startDate, totalDays) {
-        // Returns array of {label, span} for each month in the visible range
-        const months = [];
-        let current = new Date(startDate);
-        let lastMonth = current.getMonth();
-        let lastYear = current.getFullYear();
-        let monthStartIdx = 0;
-        for (let i = 0; i < totalDays; i++) {
-          const d = new Date(startDate.getTime() + i * DAY_MS);
-          if (d.getMonth() !== lastMonth || d.getFullYear() !== lastYear) {
-            const span = i - monthStartIdx;
-            months.push({
-              label: new Date(startDate.getTime() + monthStartIdx * DAY_MS).toLocaleString(undefined, { month: 'short', year: 'numeric' }),
-              span,
-            });
-            monthStartIdx = i;
-            lastMonth = d.getMonth();
-            lastYear = d.getFullYear();
-          }
-        }
-        // Push the last month
-        if (monthStartIdx < totalDays) {
-          const d = new Date(startDate.getTime() + monthStartIdx * DAY_MS);
-          months.push({
-            label: d.toLocaleString(undefined, { month: 'short', year: 'numeric' }),
-            span: totalDays - monthStartIdx,
-          });
-        }
-        return months;
+  /**
+   * Returns array of {label, span} for each month in the visible range.
+   * @param {Date} startDate
+   * @param {number} totalDays
+   * @returns {Array<{label: string, span: number}>}
+   */
+  buildMonthTicks(startDate, totalDays) {
+    const months = [];
+    let current = new Date(startDate);
+    let lastMonth = current.getMonth();
+    let lastYear = current.getFullYear();
+    let monthStartIdx = 0;
+    for (let i = 0; i < totalDays; i++) {
+      const d = new Date(startDate.getTime() + i * DAY_MS);
+      if (d.getMonth() !== lastMonth || d.getFullYear() !== lastYear) {
+        const span = i - monthStartIdx;
+        months.push({
+          label: new Date(startDate.getTime() + monthStartIdx * DAY_MS).toLocaleString(undefined, { month: 'short', year: 'numeric' }),
+          span,
+        });
+        monthStartIdx = i;
+        lastMonth = d.getMonth();
+        lastYear = d.getFullYear();
       }
+    }
+    // Push the last month
+    if (monthStartIdx < totalDays) {
+      const d = new Date(startDate.getTime() + monthStartIdx * DAY_MS);
+      months.push({
+        label: d.toLocaleString(undefined, { month: 'short', year: 'numeric' }),
+        span: totalDays - monthStartIdx,
+      });
+    }
+    return months;
+  }
     // Drag state for handles
     _dragTaskIdx = null;
     _dragStartX = null;
@@ -147,6 +162,9 @@ class GanttView extends LitElement {
       window.removeEventListener('pointerup', this._onPointerUp);
       this.requestUpdate();
     };
+  /**
+   * LitElement reactive properties.
+   */
   static properties = {
     filter: { type: String },
     projectFilter: { type: String, attribute: 'project-filter' },
@@ -240,11 +258,18 @@ class GanttView extends LitElement {
 
   constructor() {
     super();
+    /** @type {string} */
     this.filter = 'all';
+    /** @type {string} */
     this.projectFilter = ALL_PROJECTS_FILTER;
+    /** @type {Array} */
     this.tasks = [];
   }
 
+
+  /**
+   * Lifecycle: Called when element is added to the DOM. Sets up event listeners.
+   */
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('task-delete', this._bubbleEvent);
@@ -252,6 +277,10 @@ class GanttView extends LitElement {
     this.addEventListener('task-edit', this._bubbleEvent);
   }
 
+
+  /**
+   * Lifecycle: Called when element is removed from the DOM. Cleans up listeners.
+   */
   disconnectedCallback() {
     this.removeEventListener('task-delete', this._bubbleEvent);
     this.removeEventListener('task-toggle', this._bubbleEvent);
@@ -259,6 +288,10 @@ class GanttView extends LitElement {
     super.disconnectedCallback();
   }
 
+  /**
+   * Helper to re-dispatch events from child components.
+   * @param {Event} event
+   */
   _bubbleEvent = (event) => {
     if (event.target !== this) {
       event.stopPropagation();
@@ -270,6 +303,10 @@ class GanttView extends LitElement {
     }
   };
 
+  /**
+   * Returns the list of tasks visible under current filters.
+   * @returns {Array}
+   */
   getVisibleTasks() {
     const tasks = Array.isArray(this.tasks) ? this.tasks : [];
 
@@ -290,6 +327,11 @@ class GanttView extends LitElement {
     });
   }
 
+  /**
+   * Computes the schedule for a task (start and end date).
+   * @param {object} task
+   * @returns {object}
+   */
   getTaskSchedule(task) {
     const createdDate = parseDateValue(task?.createdAt);
     const dueDate = parseDateValue(task?.dueDate);
@@ -305,6 +347,10 @@ class GanttView extends LitElement {
     return { startDate, endDate };
   }
 
+  /**
+   * Builds the timeline model for rendering (visible tasks, start/end date, total days).
+   * @returns {object}
+   */
   getTimelineModel() {
     const visibleTasks = this.getVisibleTasks()
       .map((task) => ({
@@ -341,6 +387,12 @@ class GanttView extends LitElement {
     };
   }
 
+  /**
+   * Returns an array of timeline ticks for each day.
+   * @param {Date} startDate
+   * @param {number} totalDays
+   * @returns {Array<{iso: string, label: string}>}
+   */
   buildTimelineTicks(startDate, totalDays) {
     return Array.from({ length: totalDays }, (_, index) => {
       const date = new Date(startDate.getTime() + index * DAY_MS);
@@ -351,6 +403,14 @@ class GanttView extends LitElement {
     });
   }
 
+  /**
+   * Returns {x, width} in px for SVG rendering of a bar.
+   * @param {object} schedule
+   * @param {Date} timelineStart
+   * @param {number} totalDays
+   * @param {number} [laneWidthPx=1000]
+   * @returns {object}
+   */
   getBarGeometry(schedule, timelineStart, totalDays, laneWidthPx = 1000) {
     // Returns {x, width} in px for SVG rendering
     const startOffset = getDayOffset(timelineStart, schedule.startDate);
@@ -360,6 +420,10 @@ class GanttView extends LitElement {
     return { x: left, width };
   }
 
+  /**
+   * Renders the Gantt chart toolbar and grid.
+   * @returns {import('lit').TemplateResult}
+   */
   render() {
     const timeline = this.getTimelineModel();
     const days = Array.from({ length: timeline.totalDays }, (_, i) => new Date(timeline.startDate.getTime() + i * DAY_MS));
@@ -416,6 +480,9 @@ class GanttView extends LitElement {
     `;
   }
 
+  /**
+   * Lit lifecycle: Called after first render. (Syncs scroll if needed)
+   */
   firstUpdated() {
     // Sync scroll between header and body timeline
     const headerScroll = this.renderRoot.querySelector('.gantt-header-scroll');
