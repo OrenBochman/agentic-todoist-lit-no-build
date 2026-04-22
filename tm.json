@@ -105,6 +105,22 @@
       "inProgress": false,
       "sectionShortcut": "/up",
       "section": "up"
+    },
+        {
+      "id": "2ce6173e-bd1f-4cf1-8100-c85448880b72",
+      "text": "task0",
+      "completed": false,
+      "createdAt": "2026-04-20",
+      "dueDate": null,
+      "project": "toys",
+      "importance": null,
+      "dependsOn": [],
+      "workloadEstimate": 0,
+      "workloadUncertainty": 0,
+      "tags": [],
+      "inProgress": false,
+      "sectionShortcut": "/up",
+      "section": "up"
     }
   ]
 }

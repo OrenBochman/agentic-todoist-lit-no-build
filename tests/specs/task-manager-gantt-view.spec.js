@@ -97,6 +97,137 @@ describe('Task Manager Gantt View Regression', () => {
     app.remove();
   });
 
+  it('renders gantt zoom controls bounded between 14 and 30 days', async () => {
+    await customElements.whenDefined('task-manager-app');
+
+    const app = document.createElement('task-manager-app');
+    app.tasks = [
+      { id: '1', text: 'Plan roadmap', completed: false, createdAt: '2026-04-01', dueDate: '2026-04-20', workloadEstimate: 20, dependsOn: [] },
+    ];
+    app.activeView = 'gantt';
+    document.body.append(app);
+    await app.updateComplete;
+
+    const gantt = app.shadowRoot.querySelector('gantt-canvas-view');
+    const zoomIn = gantt.shadowRoot.querySelector('button[aria-label="Zoom in gantt timeline"]');
+    const zoomOut = gantt.shadowRoot.querySelector('button[aria-label="Zoom out gantt timeline"]');
+    const zoomLabel = gantt.shadowRoot.querySelector('.zoom-label');
+
+    expect(zoomLabel.textContent).to.include('21 days');
+
+    for (let index = 0; index < 10; index += 1) {
+      zoomIn.click();
+    }
+    await gantt.updateComplete;
+    expect(gantt.zoomDays).to.equal(14);
+    expect(zoomLabel.textContent).to.include('14 days');
+
+    for (let index = 0; index < 20; index += 1) {
+      zoomOut.click();
+    }
+    await gantt.updateComplete;
+    expect(gantt.zoomDays).to.equal(30);
+    expect(zoomLabel.textContent).to.include('30 days');
+
+    app.remove();
+  });
+
+  it('pads the visible timeline with three days before the earliest task', async () => {
+    await customElements.whenDefined('task-manager-app');
+
+    const app = document.createElement('task-manager-app');
+    app.tasks = [
+      { id: '1', text: 'Plan roadmap', completed: false, createdAt: '2026-04-20', dueDate: '2026-04-27', workloadEstimate: 8, dependsOn: [] },
+    ];
+    app.activeView = 'gantt';
+    document.body.append(app);
+    await app.updateComplete;
+
+    const gantt = app.shadowRoot.querySelector('gantt-canvas-view');
+    const timeline = gantt.getTimelineModel([...gantt.getVisibleTasks()].reverse());
+
+    expect(timeline.startDate.getFullYear()).to.equal(2026);
+    expect(timeline.startDate.getMonth()).to.equal(3);
+    expect(timeline.startDate.getDate()).to.equal(17);
+    expect(timeline.totalDays).to.equal(21);
+
+    app.remove();
+  });
+
+  it('includes workload uncertainty in the computed gantt schedule', async () => {
+    await customElements.whenDefined('task-manager-app');
+
+    const app = document.createElement('task-manager-app');
+    app.tasks = [
+      { id: '1', text: 'Plan roadmap', completed: false, createdAt: '2026-04-20', dueDate: '2026-04-27', workloadEstimate: 8, workloadUncertainty: 3, dependsOn: [] },
+    ];
+    app.activeView = 'gantt';
+    document.body.append(app);
+    await app.updateComplete;
+
+    const gantt = app.shadowRoot.querySelector('gantt-canvas-view');
+    const schedule = gantt.getTaskSchedule(app.tasks[0]);
+
+    expect(schedule.workloadEstimate).to.equal(8);
+    expect(schedule.workloadUncertainty).to.equal(3);
+    expect(schedule.uncertainEndDate.getFullYear()).to.equal(2026);
+    expect(schedule.uncertainEndDate.getMonth()).to.equal(3);
+    expect(schedule.uncertainEndDate.getDate()).to.equal(30);
+
+    app.remove();
+  });
+
+  it('treats zero workload as a milestone schedule', async () => {
+    await customElements.whenDefined('task-manager-app');
+
+    const app = document.createElement('task-manager-app');
+    app.tasks = [
+      { id: '1', text: 'Launch', completed: false, createdAt: '2026-04-20', dueDate: '2026-04-20', workloadEstimate: 0, workloadUncertainty: 0, dependsOn: [] },
+    ];
+    app.activeView = 'gantt';
+    document.body.append(app);
+    await app.updateComplete;
+
+    const gantt = app.shadowRoot.querySelector('gantt-canvas-view');
+    const schedule = gantt.getTaskSchedule(app.tasks[0]);
+
+    expect(schedule.workloadEstimate).to.equal(0);
+    expect(schedule.isMilestone).to.equal(true);
+    expect(schedule.startDate.getDate()).to.equal(20);
+    expect(schedule.endDate.getDate()).to.equal(20);
+
+    app.remove();
+  });
+
+  it('applies gantt uncertainty updates to persisted task state', async () => {
+    await customElements.whenDefined('task-manager-app');
+
+    const app = document.createElement('task-manager-app');
+    app.tasks = [
+      { id: '1', text: 'Plan roadmap', completed: false, createdAt: '2026-04-20', dueDate: '2026-04-27', workloadEstimate: 8, workloadUncertainty: 1, dependsOn: [] },
+    ];
+    app.activeView = 'gantt';
+    document.body.append(app);
+    await app.updateComplete;
+
+    const gantt = app.shadowRoot.querySelector('gantt-canvas-view');
+    gantt.dispatchEvent(new CustomEvent('task-update', {
+      detail: {
+        taskId: '1',
+        updates: {
+          workloadUncertainty: 4,
+        },
+      },
+      bubbles: true,
+      composed: true,
+    }));
+    await app.updateComplete;
+
+    expect(app.tasks[0].workloadUncertainty).to.equal(4);
+
+    app.remove();
+  });
+
   it('restores gantt from persisted view storage', async () => {
     await customElements.whenDefined('task-manager-app');
 

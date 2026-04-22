@@ -4,6 +4,11 @@ import { ALL_PROJECTS_FILTER, matchesProjectFilter } from './task-project.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_TIMELINE_DAYS = 7;
 const HANDLE_RADIUS = 7;
+const MIN_VISIBLE_DAYS = 14;
+const MAX_VISIBLE_DAYS = 30;
+const DEFAULT_VISIBLE_DAYS = 21;
+const LEADING_VISIBLE_PADDING_DAYS = 3;
+const MILESTONE_SIZE = 16;
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -50,12 +55,44 @@ export class GanttCanvasView extends LitElement {
     endDate: { type: Object },
     projectFilter: { type: String },
     filter: { type: String },
+    zoomDays: { type: Number },
   };
 
   static styles = css`
     :host {
       display: block;
       width: 100%;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .zoom-label {
+      font: 600 12px Atkinson Hyperlegible, sans-serif;
+      color: #475569;
+      min-width: 72px;
+      text-align: center;
+    }
+
+    .zoom-button {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #0f172a;
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      font: 600 18px/1 Atkinson Hyperlegible, sans-serif;
+      cursor: pointer;
+    }
+
+    .zoom-button:disabled {
+      opacity: 0.45;
+      cursor: default;
     }
 
     .viewport {
@@ -80,13 +117,32 @@ export class GanttCanvasView extends LitElement {
     this.endDate = null;
     this.projectFilter = ALL_PROJECTS_FILTER;
     this.filter = 'all';
+    this.zoomDays = DEFAULT_VISIBLE_DAYS;
     this._layout = null;
     this._dragState = null;
     this._resizeObserver = null;
   }
 
   render() {
+    const zoomDays = clamp(Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
     return html`
+      <div class="toolbar">
+        <button
+          class="zoom-button"
+          type="button"
+          aria-label="Zoom in gantt timeline"
+          ?disabled=${zoomDays <= MIN_VISIBLE_DAYS}
+          @click=${this._zoomIn}
+        >+</button>
+        <div class="zoom-label">${zoomDays} days</div>
+        <button
+          class="zoom-button"
+          type="button"
+          aria-label="Zoom out gantt timeline"
+          ?disabled=${zoomDays >= MAX_VISIBLE_DAYS}
+          @click=${this._zoomOut}
+        >-</button>
+      </div>
       <div class="viewport">
         <canvas id="ganttCanvas"></canvas>
       </div>
@@ -153,15 +209,22 @@ export class GanttCanvasView extends LitElement {
       ? Math.max(1, Math.round((parseDateValue(task.dueDate).getTime() - startDate.getTime()) / DAY_MS) + 1)
       : 1;
     const workloadEstimate = Math.max(
-      1,
+      0,
       Math.round(Number.isFinite(workloadFromTask) ? workloadFromTask : workloadFromDueDate),
     );
-    const endDate = addDays(startDate, workloadEstimate - 1);
+    const workloadUncertainty = Math.max(
+      0,
+      Math.round(Number.isFinite(overrides.workloadUncertainty) ? overrides.workloadUncertainty : task?.workloadUncertainty ?? 0),
+    );
+    const isMilestone = workloadEstimate === 0;
+    const endDate = isMilestone ? startDate : addDays(startDate, workloadEstimate - 1);
+    const uncertainEndDate = addDays(endDate, workloadUncertainty);
 
-    return { startDate, endDate, workloadEstimate };
+    return { startDate, endDate, workloadEstimate, workloadUncertainty, uncertainEndDate, isMilestone };
   }
 
   getTimelineModel(visibleTasks) {
+    const zoomDays = clamp(Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
     const rows = visibleTasks.map((task) => ({
       task,
       ...this.getTaskSchedule(task),
@@ -184,12 +247,20 @@ export class GanttCanvasView extends LitElement {
       (current, entry) => (entry.endDate.getTime() > current.getTime() ? entry.endDate : current),
       rows[0].endDate,
     );
-
-    const totalDays = Math.max(MIN_TIMELINE_DAYS, Math.round((latestEnd.getTime() - earliestStart.getTime()) / DAY_MS) + 1);
+    const latestPossibleEnd = rows.reduce(
+      (current, entry) => (entry.uncertainEndDate.getTime() > current.getTime() ? entry.uncertainEndDate : current),
+      rows[0].uncertainEndDate,
+    );
+    const taskSpanDays = Math.round((latestPossibleEnd.getTime() - earliestStart.getTime()) / DAY_MS) + 1;
+    const totalDays = Math.max(
+      MIN_TIMELINE_DAYS,
+      zoomDays,
+      taskSpanDays + LEADING_VISIBLE_PADDING_DAYS,
+    );
 
     return {
       rows,
-      startDate: earliestStart,
+      startDate: addDays(earliestStart, -LEADING_VISIBLE_PADDING_DAYS),
       totalDays,
     };
   }
@@ -222,8 +293,21 @@ export class GanttCanvasView extends LitElement {
     }
 
     if (this._dragState.type === 'workload') {
-      const workloadEstimate = Math.max(1, dayIndex - taskGeometry.startIndex + 1);
+      const deltaDays = Math.round((this._dragState.pointer.x - this._dragState.origin.x) / this._layout.dayWidth);
+      const workloadEstimate = Math.max(
+        0,
+        Number(this._dragState.initialWorkloadEstimate ?? taskGeometry.workloadEstimate) + deltaDays,
+      );
       return { workloadEstimate };
+    }
+
+    if (this._dragState.type === 'uncertainty') {
+      const deltaDays = Math.round((this._dragState.pointer.x - this._dragState.origin.x) / this._layout.dayWidth);
+      const workloadUncertainty = Math.max(
+        0,
+        Number(this._dragState.initialWorkloadUncertainty ?? taskGeometry.workloadUncertainty) + deltaDays,
+      );
+      return { workloadUncertainty };
     }
 
     return null;
@@ -246,8 +330,10 @@ export class GanttCanvasView extends LitElement {
     const leftPad = taskColWidth + statusColWidth;
     const topPad = 44;
     const bottomPad = 16;
-    const dayWidth = 34;
-    const timelineWidth = Math.max(viewport.clientWidth - leftPad, timeline.totalDays * dayWidth);
+    const zoomDays = clamp(Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
+    const viewportTimelineWidth = Math.max(392, viewport.clientWidth - leftPad);
+    const dayWidth = Math.max(22, viewportTimelineWidth / zoomDays);
+    const timelineWidth = Math.max(viewportTimelineWidth, timeline.totalDays * dayWidth);
     const width = leftPad + timelineWidth;
     const height = Math.max(220, topPad + visibleTasks.length * rowHeight + bottomPad);
     const dpr = window.devicePixelRatio || 1;
@@ -266,24 +352,31 @@ export class GanttCanvasView extends LitElement {
       const previewOverrides = this._getPreviewOverrides(entry.task.id);
       const schedule = previewOverrides ? this.getTaskSchedule(entry.task, previewOverrides) : entry;
       const startIndex = Math.round((schedule.startDate.getTime() - timeline.startDate.getTime()) / DAY_MS);
-      const barX = leftPad + startIndex * dayWidth;
-      const barWidth = schedule.workloadEstimate * dayWidth;
+      const anchorX = leftPad + startIndex * dayWidth;
+      const barWidth = schedule.isMilestone ? 0 : schedule.workloadEstimate * dayWidth;
+      const barX = schedule.isMilestone ? anchorX - MILESTONE_SIZE / 2 : anchorX;
       const barY = topPad + rowIndex * rowHeight + 9;
       const centerY = barY + barHeight / 2;
       bars.set(entry.task.id, {
         task: entry.task,
         rowIndex,
+        anchorX,
         x: barX,
         y: barY,
         width: barWidth,
+        uncertaintyWidth: schedule.workloadUncertainty * dayWidth,
         height: barHeight,
         startIndex,
         workloadEstimate: schedule.workloadEstimate,
+        workloadUncertainty: schedule.workloadUncertainty,
+        isMilestone: schedule.isMilestone,
         startDate: schedule.startDate,
         endDate: schedule.endDate,
-        startHandle: { x: barX, y: centerY, radius: HANDLE_RADIUS },
-        endHandle: { x: barX + barWidth, y: centerY, radius: HANDLE_RADIUS },
-        dependencyHandle: { x: barX + barWidth / 2, y: centerY, radius: HANDLE_RADIUS },
+        uncertainEndDate: schedule.uncertainEndDate,
+        startHandle: { x: schedule.isMilestone ? anchorX - 6 : barX, y: centerY, radius: HANDLE_RADIUS },
+        endHandle: { x: schedule.isMilestone ? anchorX + 6 : barX + barWidth, y: centerY, radius: HANDLE_RADIUS },
+        dependencyHandle: { x: schedule.isMilestone ? anchorX : barX + barWidth / 2, y: centerY, radius: HANDLE_RADIUS },
+        uncertaintyHandle: { x: anchorX + barWidth + schedule.workloadUncertainty * dayWidth, y: centerY, radius: HANDLE_RADIUS - 1 },
       });
     });
 
@@ -371,11 +464,53 @@ export class GanttCanvasView extends LitElement {
       ctx.restore();
 
       ctx.save();
+      if (bar.uncertaintyWidth > 0) {
+        const whiskerStartX = bar.anchorX + bar.width;
+        const whiskerEndX = whiskerStartX + bar.uncertaintyWidth;
+        const centerY = bar.y + bar.height / 2;
+        const boxWidth = Math.max(14, Math.min(bar.uncertaintyWidth, 28));
+        const boxX = whiskerStartX + Math.max(0, (bar.uncertaintyWidth - boxWidth) / 2);
+        const boxY = bar.y + 4;
+        const medianX = boxX + boxWidth / 2;
+
+        ctx.strokeStyle = '#b45309';
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.16)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(whiskerStartX, centerY);
+        ctx.lineTo(whiskerEndX, centerY);
+        ctx.moveTo(whiskerStartX, centerY - 5);
+        ctx.lineTo(whiskerStartX, centerY + 5);
+        ctx.moveTo(whiskerEndX, centerY - 5);
+        ctx.lineTo(whiskerEndX, centerY + 5);
+        ctx.stroke();
+
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(boxX, boxY, boxWidth, bar.height - 8, 5);
+        } else {
+          ctx.rect(boxX, boxY, boxWidth, bar.height - 8);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(medianX, boxY);
+        ctx.lineTo(medianX, boxY + bar.height - 8);
+        ctx.stroke();
+      }
+
       ctx.fillStyle = '#e0e7ff';
       ctx.strokeStyle = isDependencyTarget ? '#f97316' : '#a5b4fc';
       ctx.lineWidth = isDependencyTarget ? 3 : 1.5;
       ctx.beginPath();
-      if (ctx.roundRect) {
+      if (bar.isMilestone) {
+        ctx.moveTo(bar.anchorX, bar.y);
+        ctx.lineTo(bar.anchorX + MILESTONE_SIZE / 2, bar.y + bar.height / 2);
+        ctx.lineTo(bar.anchorX, bar.y + bar.height);
+        ctx.lineTo(bar.anchorX - MILESTONE_SIZE / 2, bar.y + bar.height / 2);
+        ctx.closePath();
+      } else if (ctx.roundRect) {
         ctx.roundRect(bar.x, bar.y, bar.width, bar.height, 10);
       } else {
         ctx.rect(bar.x, bar.y, bar.width, bar.height);
@@ -386,6 +521,7 @@ export class GanttCanvasView extends LitElement {
       this._drawHandle(ctx, bar.startHandle, '#1976d2');
       this._drawHandle(ctx, bar.endHandle, '#ffd43b');
       this._drawHandle(ctx, bar.dependencyHandle, '#64748b');
+      this._drawHandle(ctx, bar.uncertaintyHandle, '#f59e0b');
       ctx.restore();
     });
   }
@@ -516,6 +652,10 @@ export class GanttCanvasView extends LitElement {
       if (Math.hypot(point.x - bar.dependencyHandle.x, point.y - bar.dependencyHandle.y) <= bar.dependencyHandle.radius + 2) {
         return { type: 'dependency', taskId };
       }
+
+      if (Math.hypot(point.x - bar.uncertaintyHandle.x, point.y - bar.uncertaintyHandle.y) <= bar.uncertaintyHandle.radius + 3) {
+        return { type: 'uncertainty', taskId };
+      }
     }
 
     return null;
@@ -532,8 +672,8 @@ export class GanttCanvasView extends LitElement {
       }
 
       if (
-        point.x >= bar.x
-        && point.x <= bar.x + bar.width
+        point.x >= bar.x - 8
+        && point.x <= bar.x + Math.max(bar.width, MILESTONE_SIZE) + 8
         && point.y >= bar.y - 8
         && point.y <= bar.y + bar.height + 8
       ) {
@@ -557,12 +697,16 @@ export class GanttCanvasView extends LitElement {
     event.preventDefault();
     const canvas = this._getCanvas();
     const point = this._getCanvasPoint(event);
+    const bar = this._layout?.bars?.get(hit.taskId) ?? null;
     canvas?.setPointerCapture?.(event.pointerId);
     this._dragState = {
       pointerId: event.pointerId,
       type: hit.type,
       taskId: hit.taskId,
       pointer: point,
+      origin: point,
+      initialWorkloadEstimate: bar?.workloadEstimate ?? null,
+      initialWorkloadUncertainty: bar?.workloadUncertainty ?? null,
       hoverTaskId: null,
     };
     canvas?.addEventListener('pointermove', this._onPointerMove);
@@ -640,7 +784,7 @@ export class GanttCanvasView extends LitElement {
 
     if (this._dragState.type === 'start') {
       const nextStartDate = parseDateValue(previewOverrides.createdAt);
-      const nextDueDate = formatDateToken(addDays(nextStartDate, bar.workloadEstimate - 1));
+      const nextDueDate = formatDateToken(bar.workloadEstimate === 0 ? nextStartDate : addDays(nextStartDate, bar.workloadEstimate - 1));
 
       if (sameDateToken(task.createdAt, previewOverrides.createdAt) && sameDateToken(task.dueDate, nextDueDate)) {
         return;
@@ -661,8 +805,8 @@ export class GanttCanvasView extends LitElement {
     }
 
     if (this._dragState.type === 'workload') {
-      const workloadEstimate = Math.max(1, previewOverrides.workloadEstimate);
-      const nextDueDate = formatDateToken(addDays(bar.startDate, workloadEstimate - 1));
+      const workloadEstimate = Math.max(0, previewOverrides.workloadEstimate);
+      const nextDueDate = formatDateToken(workloadEstimate === 0 ? bar.startDate : addDays(bar.startDate, workloadEstimate - 1));
 
       if (Number(task.workloadEstimate) === workloadEstimate && sameDateToken(task.dueDate, nextDueDate)) {
         return;
@@ -680,6 +824,24 @@ export class GanttCanvasView extends LitElement {
         composed: true,
       }));
     }
+
+    if (this._dragState.type === 'uncertainty') {
+      const workloadUncertainty = Math.max(0, previewOverrides.workloadUncertainty);
+      if (Number(task.workloadUncertainty ?? 0) === workloadUncertainty) {
+        return;
+      }
+
+      this.dispatchEvent(new CustomEvent('task-update', {
+        detail: {
+          taskId: task.id,
+          updates: {
+            workloadUncertainty,
+          },
+        },
+        bubbles: true,
+        composed: true,
+      }));
+    }
   }
 
   _endDrag() {
@@ -691,6 +853,14 @@ export class GanttCanvasView extends LitElement {
     }
     this._dragState = null;
   }
+
+  _zoomIn = () => {
+    this.zoomDays = clamp((Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS) - 2, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
+  };
+
+  _zoomOut = () => {
+    this.zoomDays = clamp((Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS) + 2, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
+  };
 }
 
 customElements.define('gantt-canvas-view', GanttCanvasView);
