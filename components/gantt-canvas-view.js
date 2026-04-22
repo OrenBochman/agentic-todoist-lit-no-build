@@ -48,7 +48,23 @@ const parseDateValue = (value) => {
 
 const sameDateToken = (left, right) => String(left || '').slice(0, 10) === String(right || '').slice(0, 10);
 
+/**
+ * <gantt-canvas-view>
+ * LitElement-based Gantt chart view for visualizing tasks on a timeline.
+ * Supports drag handles for start, duration, uncertainty, and dependencies.
+ *
+ * Properties:
+ *   tasks: Array of task objects
+ *   startDate: Timeline start date
+ *   endDate: Timeline end date
+ *   projectFilter: Project filter string
+ *   filter: Task status filter string
+ *   zoomDays: Number of days visible in the timeline
+ */
 export class GanttCanvasView extends LitElement {
+  /**
+   * LitElement reactive properties.
+   */
   static properties = {
     tasks: { type: Array },
     startDate: { type: Object },
@@ -112,17 +128,30 @@ export class GanttCanvasView extends LitElement {
 
   constructor() {
     super();
+    /** @type {Array} */
     this.tasks = [];
+    /** @type {Date|null} */
     this.startDate = null;
+    /** @type {Date|null} */
     this.endDate = null;
+    /** @type {string} */
     this.projectFilter = ALL_PROJECTS_FILTER;
+    /** @type {string} */
     this.filter = 'all';
+    /** @type {number} */
     this.zoomDays = DEFAULT_VISIBLE_DAYS;
+    /** @private */
     this._layout = null;
+    /** @private */
     this._dragState = null;
+    /** @private */
     this._resizeObserver = null;
   }
 
+  /**
+   * Renders the Gantt chart toolbar and canvas.
+   * @returns {import('lit').TemplateResult}
+   */
   render() {
     const zoomDays = clamp(Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
     return html`
@@ -149,6 +178,9 @@ export class GanttCanvasView extends LitElement {
     `;
   }
 
+  /**
+   * Lit lifecycle: Called after first render. Sets up canvas and resize observer.
+   */
   firstUpdated() {
     const canvas = this._getCanvas();
     if (canvas) {
@@ -164,10 +196,16 @@ export class GanttCanvasView extends LitElement {
     this._draw();
   }
 
+  /**
+   * Lit lifecycle: Called after every update. Redraws the chart.
+   */
   updated() {
     this._draw();
   }
 
+  /**
+   * Lit lifecycle: Called when element is removed from DOM. Cleans up listeners.
+   */
   disconnectedCallback() {
     this._endDrag();
     this._resizeObserver?.disconnect();
@@ -178,6 +216,10 @@ export class GanttCanvasView extends LitElement {
     super.disconnectedCallback();
   }
 
+  /**
+   * Returns the list of tasks visible under current filters.
+   * @returns {Array}
+   */
   getVisibleTasks() {
     const tasks = Array.isArray(this.tasks) ? this.tasks : [];
 
@@ -198,6 +240,12 @@ export class GanttCanvasView extends LitElement {
     });
   }
 
+  /**
+   * Computes the schedule for a task (start, end, uncertainty, milestone).
+   * @param {object} task
+   * @param {object} [overrides]
+   * @returns {object}
+   */
   getTaskSchedule(task, overrides = {}) {
     const startDate = parseDateValue(overrides.createdAt ?? task?.createdAt)
       || parseDateValue(task?.dueDate)
@@ -223,6 +271,11 @@ export class GanttCanvasView extends LitElement {
     return { startDate, endDate, workloadEstimate, workloadUncertainty, uncertainEndDate, isMilestone };
   }
 
+  /**
+   * Builds the timeline model for rendering (rows, start date, total days).
+   * @param {Array} visibleTasks
+   * @returns {object}
+   */
   getTimelineModel(visibleTasks) {
     const zoomDays = clamp(Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
     const rows = visibleTasks.map((task) => ({
@@ -265,14 +318,27 @@ export class GanttCanvasView extends LitElement {
     };
   }
 
+  /**
+   * Returns the canvas element used for drawing.
+   * @returns {HTMLCanvasElement|null}
+   */
   _getCanvas() {
     return this.renderRoot?.getElementById('ganttCanvas') ?? null;
   }
 
+  /**
+   * Returns the viewport container element.
+   * @returns {HTMLElement|null}
+   */
   _getViewport() {
     return this.renderRoot?.querySelector('.viewport') ?? null;
   }
 
+  /**
+   * Returns preview overrides for a task during drag operations.
+   * @param {string} taskId
+   * @returns {object|null}
+   */
   _getPreviewOverrides(taskId) {
     if (!this._dragState || this._dragState.taskId !== taskId) {
       return null;
@@ -313,6 +379,10 @@ export class GanttCanvasView extends LitElement {
     return null;
   }
 
+  /**
+   * Draws the entire Gantt chart on the canvas.
+   * @private
+   */
   _draw() {
     const canvas = this._getCanvas();
     const viewport = this._getViewport();
@@ -403,6 +473,10 @@ export class GanttCanvasView extends LitElement {
     this._drawDependencyPreview(ctx, bars);
   }
 
+  /**
+   * Draws the grid (days, months, rows) on the canvas.
+   * @private
+   */
   _drawGrid(ctx, width, height, leftPad, topPad, rowHeight, dayWidth, timeline) {
     ctx.save();
     ctx.font = '600 14px Atkinson Hyperlegible, sans-serif';
@@ -443,6 +517,10 @@ export class GanttCanvasView extends LitElement {
     ctx.restore();
   }
 
+  /**
+   * Draws the task rows and bars on the canvas.
+   * @private
+   */
   _drawRows(ctx, width, rowHeight, topPad, taskColWidth, visibleTasks, bars) {
     visibleTasks.forEach((task, rowIndex) => {
       const rowY = topPad + rowIndex * rowHeight;
@@ -526,6 +604,10 @@ export class GanttCanvasView extends LitElement {
     });
   }
 
+  /**
+   * Draws a draggable handle for a bar.
+   * @private
+   */
   _drawHandle(ctx, handle, fillStyle) {
     ctx.beginPath();
     ctx.arc(handle.x, handle.y, handle.radius, 0, 2 * Math.PI);
@@ -536,6 +618,10 @@ export class GanttCanvasView extends LitElement {
     ctx.stroke();
   }
 
+  /**
+   * Draws dependency arrows between tasks.
+   * @private
+   */
   _drawDependencies(ctx, bars) {
     bars.forEach((dependentBar) => {
       const dependencies = Array.isArray(dependentBar.task.dependsOn) ? dependentBar.task.dependsOn : [];
@@ -567,6 +653,10 @@ export class GanttCanvasView extends LitElement {
     });
   }
 
+  /**
+   * Draws a preview arrow during dependency drag.
+   * @private
+   */
   _drawDependencyPreview(ctx, bars) {
     if (this._dragState?.type !== 'dependency') {
       return;
@@ -588,6 +678,10 @@ export class GanttCanvasView extends LitElement {
     ctx.restore();
   }
 
+  /**
+   * Draws an arrowhead for dependency lines.
+   * @private
+   */
   _drawArrowHead(ctx, from, to, fillStyle) {
     const angle = Math.atan2(to.y - from.y, to.x - from.x);
     const arrowLength = 11;
@@ -607,6 +701,10 @@ export class GanttCanvasView extends LitElement {
     ctx.fill();
   }
 
+  /**
+   * Converts a pointer event to canvas coordinates.
+   * @private
+   */
   _getCanvasPoint(event) {
     const canvas = this._getCanvas();
     if (!canvas || !this._layout) {
@@ -623,6 +721,10 @@ export class GanttCanvasView extends LitElement {
     };
   }
 
+  /**
+   * Returns the day index for a given x coordinate.
+   * @private
+   */
   _getDayIndexForX(x) {
     if (!this._layout) {
       return 0;
@@ -635,6 +737,10 @@ export class GanttCanvasView extends LitElement {
     );
   }
 
+  /**
+   * Finds which handle (if any) is under the pointer.
+   * @private
+   */
   _findHitTarget(point) {
     if (!this._layout) {
       return null;
@@ -661,6 +767,10 @@ export class GanttCanvasView extends LitElement {
     return null;
   }
 
+  /**
+   * Finds the bar at a given point, excluding a specific task.
+   * @private
+   */
   _findBarAtPoint(point, excludedTaskId = null) {
     if (!this._layout) {
       return null;
@@ -684,6 +794,10 @@ export class GanttCanvasView extends LitElement {
     return null;
   }
 
+  /**
+   * Handler for pointerdown event on the canvas (start drag).
+   * @private
+   */
   _onPointerDown = (event) => {
     if (event.button !== 0) {
       return;
@@ -715,6 +829,10 @@ export class GanttCanvasView extends LitElement {
     this._draw();
   };
 
+  /**
+   * Handler for pointermove event during drag.
+   * @private
+   */
   _onPointerMove = (event) => {
     if (!this._dragState || event.pointerId !== this._dragState.pointerId) {
       return;
@@ -731,6 +849,10 @@ export class GanttCanvasView extends LitElement {
     this._draw();
   };
 
+  /**
+   * Handler for pointerup event (end drag and commit changes).
+   * @private
+   */
   _onPointerUp = (event) => {
     if (!this._dragState || event.pointerId !== this._dragState.pointerId) {
       return;
@@ -741,6 +863,10 @@ export class GanttCanvasView extends LitElement {
     this._draw();
   };
 
+  /**
+   * Handler for pointercancel event (cancel drag).
+   * @private
+   */
   _onPointerCancel = (event) => {
     if (!this._dragState || event.pointerId !== this._dragState.pointerId) {
       return;
@@ -750,6 +876,10 @@ export class GanttCanvasView extends LitElement {
     this._draw();
   };
 
+  /**
+   * Commits the drag operation and dispatches update events.
+   * @private
+   */
   _commitDrag() {
     if (!this._dragState || !this._layout) {
       return;
@@ -844,6 +974,10 @@ export class GanttCanvasView extends LitElement {
     }
   }
 
+  /**
+   * Ends the drag operation and cleans up listeners.
+   * @private
+   */
   _endDrag() {
     const canvas = this._getCanvas();
     if (canvas) {
@@ -854,10 +988,16 @@ export class GanttCanvasView extends LitElement {
     this._dragState = null;
   }
 
+  /**
+   * Zooms in the timeline (fewer days).
+   */
   _zoomIn = () => {
     this.zoomDays = clamp((Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS) - 2, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
   };
 
+  /**
+   * Zooms out the timeline (more days).
+   */
   _zoomOut = () => {
     this.zoomDays = clamp((Number(this.zoomDays) || DEFAULT_VISIBLE_DAYS) + 2, MIN_VISIBLE_DAYS, MAX_VISIBLE_DAYS);
   };
