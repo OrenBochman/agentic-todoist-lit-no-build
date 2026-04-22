@@ -268,6 +268,8 @@ class TaskManagerApp extends LitReduxElement {
                   .filter=${filter}
                   .projectFilter=${projectFilter}
                   .tasks=${tasks}
+                  @task-update=${this.handleGanttTaskUpdate}
+                  @dependency-create=${this.handleGanttDependencyCreate}
                 ></gantt-canvas-view>`
             : html`<task-board
                 .filter=${filter}
@@ -511,6 +513,48 @@ class TaskManagerApp extends LitReduxElement {
     this.dispatch(editTask({
       id: taskId,
       ...statusUpdate,
+    }));
+    this.saveTasks();
+    this.clearTransferStatus();
+  };
+
+  handleGanttTaskUpdate = (event) => {
+    const taskId = event.detail?.taskId;
+    const updates = event.detail?.updates;
+
+    if (!taskId || !updates || typeof updates !== 'object') {
+      return;
+    }
+
+    this.dispatch(editTask({
+      id: taskId,
+      ...updates,
+    }));
+    this.saveTasks();
+    this.clearTransferStatus();
+  };
+
+  handleGanttDependencyCreate = (event) => {
+    const sourceTaskId = event.detail?.sourceTaskId;
+    const targetTaskId = event.detail?.targetTaskId;
+
+    if (!sourceTaskId || !targetTaskId || sourceTaskId === targetTaskId) {
+      return;
+    }
+
+    const targetTask = this.tasks.find((task) => task.id === targetTaskId);
+    if (!targetTask) {
+      return;
+    }
+
+    const dependsOn = Array.isArray(targetTask.dependsOn) ? targetTask.dependsOn : [];
+    if (dependsOn.includes(sourceTaskId)) {
+      return;
+    }
+
+    this.dispatch(editTask({
+      id: targetTaskId,
+      dependsOn: [...dependsOn, sourceTaskId],
     }));
     this.saveTasks();
     this.clearTransferStatus();
