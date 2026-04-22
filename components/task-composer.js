@@ -179,9 +179,10 @@ class TaskComposer extends LitElement {
             .value=${this.value}
             @wa-input=${this.handleInput}
             @wa-change=${this.handleInput}
+            @keydown=${this.handleInputKeydown}
           ></wa-input>
           <div class="composer-actions">
-            <wa-button variant="brand" type="button" aria-label="Add task" @click=${this.handleSubmit}>+</wa-button>
+            <wa-button variant="brand" type="submit" aria-label="Add task">+</wa-button>
           </div>
           ${this.errorMessage
             ? html`<p class="validation" role="status" aria-live="polite">${this.errorMessage}</p>`
@@ -189,6 +190,17 @@ class TaskComposer extends LitElement {
         </form>
       </div>
     `;
+  }
+
+  handleInputKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+      // Let the form handle submit, but if wa-input swallows it, call submit manually
+      const form = this.renderRoot?.querySelector('form');
+      if (form) {
+        event.preventDefault();
+        form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    }
   }
 
   /**
